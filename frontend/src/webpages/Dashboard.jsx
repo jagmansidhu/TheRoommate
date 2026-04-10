@@ -58,12 +58,12 @@ const Dashboard = () => {
             <div className="dashboard-stats">
                 <div className="stat-card">
                     <div className="stat-icon stat-icon-chores"></div>
-                    <div className="stat-value">{chores.length}</div>
+                    <div className="stat-value">{userChores.length}</div>
                     <div className="stat-label">Pending Chores</div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon stat-icon-bills"></div>
-                    <div className="stat-value">{utilities.length}</div>
+                    <div className="stat-value">{userUtilities.length}</div>
                     <div className="stat-label">Upcoming Bills</div>
                 </div>
                 <div className="stat-card">
