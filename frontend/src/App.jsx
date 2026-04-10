@@ -1,4 +1,4 @@
-import React, {createContext, useCallback, useContext, useEffect, useState} from 'react';
+import React, {createContext, useCallback, useContext, useEffect, useRef, useState} from 'react';
 import {BrowserRouter as Router, Link, Route, Routes, useNavigate} from 'react-router-dom';
 import Login from './webpages/auth/Login';
 import Register from './webpages/auth/Register';
@@ -17,11 +17,13 @@ import VerifyHandler from "./webpages/VerifyHandler";
 const ThemeContext = createContext();
 const AuthContext = createContext();
 const UserContext = createContext();
+const AppDataContext = createContext();
 const OnboardingContext = createContext();
 
 export const useTheme = () => useContext(ThemeContext);
 export const useAuth = () => useContext(AuthContext);
 export const useUser = () => useContext(UserContext);
+export const useAppData = () => useContext(AppDataContext);
 export const useOnboarding = () => useContext(OnboardingContext);
 
 const ThemeProvider = ({children}) => {
@@ -145,6 +147,137 @@ const UserProvider = ({children}) => {
         <UserContext.Provider value={{user, userLoading, refreshUser: fetchUser}}>
             {children}
         </UserContext.Provider>
+    );
+};
+
+// ---------------------------------------------------------------------------
+// AppDataProvider
+// Caches shared app data so pages don't re-fetch on every navigation.
+//
+// Eager (fetched on login):  rooms, userChores, userUtilities
+// Lazy  (fetched on demand): events  — call loadEvents() from Calendar
+//
+// Mutation helpers (append / remove) update the cache in-place.
+// Call the corresponding refresh* function only when a full server round-trip
+// is genuinely necessary (e.g. joining a room where the server builds the
+// full room+members payload).
+// ---------------------------------------------------------------------------
+const AppDataProvider = ({children}) => {
+    const {isAuthenticated, isLoading} = useAuth();
+
+    // --- rooms ---
+    const [rooms, setRooms] = useState([]);
+    const [roomsLoading, setRoomsLoading] = useState(false);
+
+    const fetchRooms = useCallback(async () => {
+        setRoomsLoading(true);
+        try {
+            const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/api/rooms`, {credentials: 'include'});
+            if (res.ok) setRooms(await res.json());
+        } catch (err) {
+            console.error('AppData: failed to fetch rooms', err);
+        } finally {
+            setRoomsLoading(false);
+        }
+    }, []);
+
+    const appendRoom       = useCallback(r  => setRooms(prev => [...prev, r]), []);
+    const removeRoom       = useCallback(id => setRooms(prev => prev.filter(r => r.id !== id)), []);
+    const updateRoom       = useCallback(r  => setRooms(prev => prev.map(x => x.id === r.id ? r : x)), []);
+
+    // --- user chores ---
+    const [userChores, setUserChores] = useState([]);
+    const [userChoresLoading, setUserChoresLoading] = useState(false);
+
+    const fetchUserChores = useCallback(async () => {
+        setUserChoresLoading(true);
+        try {
+            const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/api/chores/user/me`, {credentials: 'include'});
+            if (res.ok) setUserChores(await res.json());
+        } catch (err) {
+            console.error('AppData: failed to fetch user chores', err);
+        } finally {
+            setUserChoresLoading(false);
+        }
+    }, []);
+
+    const appendUserChore = useCallback(c  => setUserChores(prev => [...prev, c]), []);
+    const removeUserChore = useCallback(id => setUserChores(prev => prev.filter(c => c.id !== id)), []);
+
+    // --- user utilities ---
+    const [userUtilities, setUserUtilities] = useState([]);
+    const [userUtilitiesLoading, setUserUtilitiesLoading] = useState(false);
+
+    const fetchUserUtilities = useCallback(async () => {
+        setUserUtilitiesLoading(true);
+        try {
+            const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/api/utility/user/me`, {credentials: 'include'});
+            if (res.ok) setUserUtilities(await res.json());
+        } catch (err) {
+            console.error('AppData: failed to fetch user utilities', err);
+        } finally {
+            setUserUtilitiesLoading(false);
+        }
+    }, []);
+
+    const appendUserUtility = useCallback(u  => setUserUtilities(prev => [...prev, u]), []);
+    const removeUserUtility = useCallback(id => setUserUtilities(prev => prev.filter(u => u.id !== id)), []);
+
+    // --- calendar events (lazy) ---
+    const [events, setEvents] = useState([]);
+    const [eventsLoading, setEventsLoading] = useState(false);
+    const eventsLoadedRef = useRef(false);
+
+    const fetchEvents = useCallback(async () => {
+        setEventsLoading(true);
+        try {
+            const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/api/events/user`, {credentials: 'include'});
+            if (res.ok) setEvents(await res.json());
+        } catch (err) {
+            console.error('AppData: failed to fetch events', err);
+        } finally {
+            setEventsLoading(false);
+        }
+    }, []);
+
+    // loadEvents is safe to call on every Calendar mount — it's a no-op after the first load.
+    const loadEvents    = useCallback(() => {
+        if (eventsLoadedRef.current) return;
+        eventsLoadedRef.current = true;
+        fetchEvents();
+    }, [fetchEvents]);
+    const refreshEvents = useCallback(() => { eventsLoadedRef.current = false; fetchEvents(); }, [fetchEvents]);
+
+    const appendEvent = useCallback(e  => setEvents(prev => [...prev, e]), []);
+    const removeEvent = useCallback(id => setEvents(prev => prev.filter(e => e.id !== id)), []);
+
+    // --- eager load on login, reset on logout ---
+    useEffect(() => {
+        if (isAuthenticated && !isLoading) {
+            fetchRooms();
+            fetchUserChores();
+            fetchUserUtilities();
+        } else if (!isAuthenticated && !isLoading) {
+            setRooms([]);
+            setUserChores([]);
+            setUserUtilities([]);
+            setEvents([]);
+            eventsLoadedRef.current = false;
+        }
+    }, [isAuthenticated, isLoading, fetchRooms, fetchUserChores, fetchUserUtilities]);
+
+    return (
+        <AppDataContext.Provider value={{
+            rooms, roomsLoading,
+            refreshRooms: fetchRooms, appendRoom, removeRoom, updateRoom,
+            userChores, userChoresLoading,
+            refreshUserChores: fetchUserChores, appendUserChore, removeUserChore,
+            userUtilities, userUtilitiesLoading,
+            refreshUserUtilities: fetchUserUtilities, appendUserUtility, removeUserUtility,
+            events, eventsLoading, loadEvents, refreshEvents, appendEvent, removeEvent,
+        }}>
+            {children}
+        </AppDataContext.Provider>
     );
 };
 
@@ -336,9 +469,11 @@ export default function App() {
         <ThemeProvider>
             <AuthProvider>
                 <UserProvider>
-                    <Router>
-                        <AppContent/>
-                    </Router>
+                    <AppDataProvider>
+                        <Router>
+                            <AppContent/>
+                        </Router>
+                    </AppDataProvider>
                 </UserProvider>
             </AuthProvider>
         </ThemeProvider>

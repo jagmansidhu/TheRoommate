@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useUser } from '../App';
+import { useUser, useAppData } from '../App';
 import '../styling/Calendar.css';
 
 const Calendar = () => {
     const { user: userData } = useUser();
     const userEmail = userData?.email || userData?.username || null;
-    const [events, setEvents] = useState([]);
-    const [rooms, setRooms] = useState([]);
+    const {
+        rooms,
+        userChores: chores,
+        userUtilities: utilities,
+        events, eventsLoading, loadEvents,
+        appendEvent, removeEvent,
+    } = useAppData();
+
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [showEventModal, setShowEventModal] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [chores, setChores] = useState([]);
-    const [utilities, setUtilities] = useState([]);
 
     const [newEvent, setNewEvent] = useState({
         title: '',
@@ -26,49 +29,10 @@ const Calendar = () => {
 
     const [dateError, setDateError] = useState('');
 
+    // Lazy-load events once on first Calendar visit — no-op on subsequent visits.
     useEffect(() => {
-        const fetchData = async () => {
-            if (!userEmail) {
-                setLoading(false);
-                return;
-            }
-
-            try {
-                setLoading(true);
-                const [eventsResponse, roomsResponse, choresRes, utilitiesRes] = await Promise.all([
-                    axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/events/user`, {
-                        withCredentials: true,
-                        credentials: 'include',
-                    }),
-                    axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/rooms`, {
-                        withCredentials: true,
-                        credentials: 'include',
-                    }),
-                    axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/chores/upcoming?id=${userEmail}`, {
-                        withCredentials: true,
-                        credentials: 'include',
-                    }),
-                    axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/utility/upcoming?id=${userEmail}`, {
-                        withCredentials: true,
-                        credentials: 'include',
-                    }),
-                ]);
-
-                setEvents(eventsResponse.data);
-                setRooms(Array.isArray(roomsResponse.data) ? roomsResponse.data : (roomsResponse.data ? [roomsResponse.data] : []));
-                setChores(Array.isArray(choresRes.data) ? choresRes.data : (choresRes.data ? [choresRes.data] : []));
-                setUtilities(Array.isArray(utilitiesRes.data) ? utilitiesRes.data : (utilitiesRes.data ? [utilitiesRes.data] : []));
-                setError(null);
-            } catch (err) {
-                console.error('Error fetching data:', err);
-                setError('Failed to load calendar data');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [userEmail]);
+        loadEvents();
+    }, [loadEvents]);
 
     const createEvent = async (e) => {
         e.preventDefault();
@@ -102,24 +66,20 @@ const Calendar = () => {
                 endTime: endDateTime
             };
 
-            console.log('Sending event data:', requestData);
+            const response = await axios.post(
+                `${process.env.REACT_APP_BASE_API_URL}/api/events/room/${newEvent.roomId}`,
+                requestData,
+                { withCredentials: true, credentials: 'include' }
+            );
 
-            await axios.post(`${process.env.REACT_APP_BASE_API_URL}/api/events/room/${newEvent.roomId}`, requestData, {
-                method: 'POST',
-                withCredentials: true,
-                credentials: 'include',
-            });
+            // Append the server-returned event directly into the cache
+            if (response.data) {
+                appendEvent(response.data);
+            }
 
             setShowEventModal(false);
-            setNewEvent({
-                title: '',
-                description: '',
-                startTime: '',
-                endTime: '',
-                roomId: ''
-            });
+            setNewEvent({ title: '', description: '', startTime: '', endTime: '', roomId: '' });
             setDateError('');
-            // fetchData();
         } catch (error) {
             console.error('Error creating event:', error);
             if (error.response && error.response.data) {
@@ -144,11 +104,11 @@ const Calendar = () => {
 
         try {
             await axios.delete(`${process.env.REACT_APP_BASE_API_URL}/api/events/${eventId}`, {
-                method: 'DELETE',
                 withCredentials: true,
                 credentials: 'include',
             });
-            // fetchData();
+            removeEvent(eventId);
+            setSelectedEvent(null);
         } catch (error) {
             console.error('Error deleting event:', error);
             setError('Failed to delete event');
@@ -276,7 +236,7 @@ const Calendar = () => {
         });
     };
 
-    if (loading) {
+    if (eventsLoading) {
         return (
             <div className="calendar-container">
                 <div className="loading">

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styling/Rooms.css';
 
@@ -8,46 +7,26 @@ import JoinRoom from '../room/JoinRoom';
 import RoleManagement from '../room/RoleManage';
 import { ROLES } from '../../constants/roles';
 import useCurrentUser from './useCurrentUser';
+import { useAppData } from '../../App';
 
 const Rooms = () => {
     const navigate = useNavigate();
-    const { currentUser, loadingUser, errorUser } = useCurrentUser();
+    const { currentUser, loadingUser } = useCurrentUser();
+    const { rooms, roomsLoading, appendRoom, refreshRooms } = useAppData();
 
-    const [rooms, setRooms] = useState([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [showRoleManagement, setShowRoleManagement] = useState(false);
 
-    useEffect(() => {
-        fetchRooms();
-    }, []);
-
-    const fetchRooms = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/rooms`, {
-                withCredentials: true,
-            });
-            setRooms(response.data);
-            setError(null);
-        } catch (error) {
-            console.error('Error fetching rooms:', error);
-            setError('Failed to load rooms');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleCreateRoom = (newRoomData) => {
-        setRooms([...rooms, newRoomData]);
+        appendRoom(newRoomData);
     };
 
     const handleRoomJoined = () => {
-        fetchRooms();
+        refreshRooms();
     };
 
     const openRoomDetails = (room) => {
@@ -60,7 +39,7 @@ const Rooms = () => {
         setShowRoleManagement(true);
     };
 
-    if (loading) {
+    if (roomsLoading || loadingUser) {
         return (
             <div className="rooms-container">
                 <div className="loading">
@@ -151,7 +130,7 @@ const Rooms = () => {
                 show={showRoleManagement}
                 room={selectedRoom}
                 onClose={() => setShowRoleManagement(false)}
-                onUpdate={fetchRooms}
+                onUpdate={refreshRooms}
             />
         </div>
     );

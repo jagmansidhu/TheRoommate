@@ -1,46 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import '../styling/Dashboard.css';
 import OnboardingPage from './OnboardingPage';
-import { useOnboarding, useUser } from '../App';
+import { useOnboarding, useUser, useAppData } from '../App';
 
 const Dashboard = () => {
     const { setIsOnboarding } = useOnboarding();
     const { user } = useUser();
     const email = user?.email || user?.username || null;
-    const [loading, setLoading] = useState(false);
-    const [chores, setChores] = useState([]);
-    const [utilities, setUtilities] = useState([]);
-    const [rooms, setRooms] = useState([]);
-    const [roomsLoaded, setRoomsLoaded] = useState(false);
+    const { rooms, roomsLoading, userChores, userUtilities } = useAppData();
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => {
         return localStorage.getItem('hasSeenOnboarding') === 'true';
     });
 
+    // Show onboarding once rooms have loaded and the user has none
     useEffect(() => {
-        if (!email) return;
-        
-        axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/rooms`, { withCredentials: true })
-            .then(res => {
-                setRooms(res.data || []);
-                setRoomsLoaded(true);
-                if ((res.data || []).length === 0 && !hasSeenOnboarding) {
-                    setShowOnboarding(true);
-                }
-            })
-            .catch(() => setRoomsLoaded(true));
-
-        // Fetches chores assigned to the current user from the backend.
-        // The backend resolves identity from the JWT cookie — no user ID needed in the request.
-        // Returns a list of ChoreDto: { id, choreName, dueAt, roomName }
-        axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/chores/user/me`, { withCredentials: true })
-            .then(res => setChores(res.data || []))
-            .catch(() => {});
-        axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/utility/user/me`, { withCredentials: true })
-            .then(res => setUtilities(res.data || []))
-            .catch(() => {});
-    }, [email, hasSeenOnboarding]);
+        if (!roomsLoading && rooms.length === 0 && !hasSeenOnboarding) {
+            setShowOnboarding(true);
+        }
+    }, [roomsLoading, rooms.length, hasSeenOnboarding]);
 
     useEffect(() => {
         setIsOnboarding(showOnboarding);
@@ -52,7 +30,7 @@ const Dashboard = () => {
         localStorage.setItem('hasSeenOnboarding', 'true');
     };
 
-    if (loading || !roomsLoaded) {
+    if (roomsLoading) {
         return (
             <div className="loading">
                 <div className="spinner spinner-lg"></div>
@@ -65,8 +43,8 @@ const Dashboard = () => {
         return <OnboardingPage onComplete={handleOnboardingComplete} />;
     }
 
-    const upcomingChores = chores.slice(0, 5);
-    const upcomingUtilities = utilities.slice(0, 5);
+    const upcomingChores = userChores.slice(0, 5);
+    const upcomingUtilities = userUtilities.slice(0, 5);
 
     return (
         <div className="dashboard-container">
