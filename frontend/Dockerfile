@@ -21,31 +21,23 @@ RUN npm run build
 
 # Production stage
 FROM nginx:alpine
+RUN addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup
 WORKDIR /usr/share/nginx/html
 
 # Remove default nginx static files
-RUN rm -rf ./*
-
+RUN rm -rf /etc/nginx/conf.d/*
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built app from build stage
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build .
 
-# Create non-root user
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup && \
-    chown -R appuser:appgroup /usr/share/nginx/html && \
-    chown -R appuser:appgroup /var/cache/nginx && \
-    chown -R appuser:appgroup /var/log/nginx && \
+
+RUN chown -R appuser:appgroup /usr/share/nginx/html /var/cache/nginx /var/log/nginx /etc/nginx/conf.d /var/run/ && \
     touch /var/run/nginx.pid && \
-    chown -R appuser:appgroup /var/run/nginx.pid
+    chown appuser:appgroup /var/run/nginx.pid
 
-# Use non-root user
 USER appuser
-
-# Expose port 80 (Railway will map this to PORT)
-EXPOSE 80
-
-# Start nginx
+EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
