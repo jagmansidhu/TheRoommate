@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ROLES } from "../../constants/roles";
+import { useUser } from '../../App';
 import '../../styling/Rooms.css';
 import '../../styling/Dashboard.css';
 
@@ -10,7 +11,7 @@ const RoomDetailsPage = ({
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteStatus, setInviteStatus] = useState('');
-    const [user, setUser] = useState(null);
+    const { user } = useUser();
     const [utilities, setUtilities] = useState([]);
     const [showRemoveUtilityModal, setShowRemoveUtilityModal] = useState(false);
     const [selectedUtilityId, setSelectedUtilityId] = useState("");
@@ -92,19 +93,6 @@ const RoomDetailsPage = ({
         }
     };
 
-    useEffect(() => {
-        const fetchCurrentUser = async () => {
-            try {
-                const response = await axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/get-user`, {
-                    withCredentials: true,
-                });
-                setUser(response.data);
-            } catch (error) {
-                console.error('Error fetching current user:', error);
-            }
-        };
-        fetchCurrentUser();
-    }, []);
 
     useEffect(() => {
         const fetchChores = async () => {

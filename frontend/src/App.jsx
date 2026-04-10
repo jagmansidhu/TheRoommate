@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useEffect, useState} from 'react';
+import React, {createContext, useCallback, useContext, useEffect, useState} from 'react';
 import {BrowserRouter as Router, Link, Route, Routes, useNavigate} from 'react-router-dom';
 import Login from './webpages/auth/Login';
 import Register from './webpages/auth/Register';
@@ -16,10 +16,12 @@ import VerifyHandler from "./webpages/VerifyHandler";
 
 const ThemeContext = createContext();
 const AuthContext = createContext();
+const UserContext = createContext();
 const OnboardingContext = createContext();
 
 export const useTheme = () => useContext(ThemeContext);
 export const useAuth = () => useContext(AuthContext);
+export const useUser = () => useContext(UserContext);
 export const useOnboarding = () => useContext(OnboardingContext);
 
 const ThemeProvider = ({children}) => {
@@ -101,6 +103,48 @@ const AuthProvider = ({children}) => {
         <AuthContext.Provider value={{isAuthenticated, isLoading, login, logout}}>
             {children}
         </AuthContext.Provider>
+    );
+};
+
+// Fetches /api/get-user exactly once after login, then caches in context.
+// Call refreshUser() explicitly after any mutation that changes user data.
+const UserProvider = ({children}) => {
+    const {isAuthenticated, isLoading} = useAuth();
+    const [user, setUser] = useState(null);
+    const [userLoading, setUserLoading] = useState(false);
+
+    const fetchUser = useCallback(async () => {
+        setUserLoading(true);
+        try {
+            const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/api/get-user`, {
+                credentials: 'include',
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setUser(data);
+            } else {
+                setUser(null);
+            }
+        } catch (err) {
+            console.error('Error fetching user profile:', err);
+            setUser(null);
+        } finally {
+            setUserLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isAuthenticated && !isLoading) {
+            fetchUser();
+        } else if (!isAuthenticated && !isLoading) {
+            setUser(null);
+        }
+    }, [isAuthenticated, isLoading, fetchUser]);
+
+    return (
+        <UserContext.Provider value={{user, userLoading, refreshUser: fetchUser}}>
+            {children}
+        </UserContext.Provider>
     );
 };
 
@@ -291,9 +335,11 @@ export default function App() {
     return (
         <ThemeProvider>
             <AuthProvider>
-                <Router>
-                    <AppContent/>
-                </Router>
+                <UserProvider>
+                    <Router>
+                        <AppContent/>
+                    </Router>
+                </UserProvider>
             </AuthProvider>
         </ThemeProvider>
     );

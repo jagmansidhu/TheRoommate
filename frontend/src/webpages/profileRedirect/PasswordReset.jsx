@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '../../App';
 import '../../styling/Dashboard.css';
 
 const PasswordReset = () => {
-    const [data, setData] = useState(null);
+    const { user: data, userLoading } = useUser();
     const [validationError, setValidationError] = useState('');
     const [apiError, setApiError] = useState('');
-    const [apiLoading, setApiLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [password, setPassword] = useState('');
     const [curPassword, setCurPassword] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
@@ -32,24 +33,6 @@ const PasswordReset = () => {
         return null;
     }
 
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const response = await axios.get(
-                    `${process.env.REACT_APP_BASE_API_URL}/api/get-user`,
-                    { withCredentials: true }
-                );
-                setData(response.data);
-            } catch (err) {
-                console.error('Error fetching user data:', err);
-                setApiError("Failed to load user data.");
-            } finally {
-                setApiLoading(false);
-            }
-        };
-
-        fetchUserData();
-    }, []);
 
     const handlePasswordReset = async (e) => {
         e.preventDefault();
@@ -60,6 +43,7 @@ const PasswordReset = () => {
             return;
         }
 
+        setSaving(true);
         try {
             const response = await axios.put(
                 `${process.env.REACT_APP_BASE_API_URL}/user/updateProfile`,
@@ -82,10 +66,12 @@ const PasswordReset = () => {
         } catch (err) {
             console.error('Error resetting password:', err);
             setApiError("An error occurred while resetting the password.");
+        } finally {
+            setSaving(false);
         }
     };
 
-    if (apiLoading) {
+    if (userLoading) {
         return (
             <div className="loading">
                 <div className="spinner spinner-lg"></div>
@@ -173,7 +159,7 @@ const PasswordReset = () => {
                             <button 
                                 type="submit" 
                                 className="btn btn-primary"
-                                disabled={apiLoading}
+                                disabled={saving}
                             >
                                 Update Password
                             </button>

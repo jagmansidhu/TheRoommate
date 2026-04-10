@@ -1,31 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '../App';
 import '../styling/Dashboard.css';
 
 const Profile = () => {
-    const [data, setData] = useState(null);
-    const [error, setError] = useState(null);
-    const [apiLoading, setApiLoading] = useState(true);
+    const { user: data, userLoading: apiLoading } = useUser();
     const navigate = useNavigate();
-
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const response = await axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/get-user`, {
-                    withCredentials: true,
-                });
-                setData(response.data);
-            } catch (err) {
-                console.error('Error fetching user data:', err);
-                setError(err);
-            } finally {
-                setApiLoading(false);
-            }
-        };
-
-        fetchUserData();
-    }, []);
 
     if (apiLoading) {
         return (

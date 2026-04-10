@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../styling/Dashboard.css';
 import OnboardingPage from './OnboardingPage';
-import { useOnboarding } from '../App';
+import { useOnboarding, useUser } from '../App';
 
 const Dashboard = () => {
     const { setIsOnboarding } = useOnboarding();
-    const [email, setEmail] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { user } = useUser();
+    const email = user?.email || user?.username || null;
+    const [loading, setLoading] = useState(false);
     const [chores, setChores] = useState([]);
     const [utilities, setUtilities] = useState([]);
     const [rooms, setRooms] = useState([]);
@@ -16,15 +17,6 @@ const Dashboard = () => {
     const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => {
         return localStorage.getItem('hasSeenOnboarding') === 'true';
     });
-
-    useEffect(() => {
-        axios.get(`${process.env.REACT_APP_BASE_API_URL}/user/status`, { withCredentials: true })
-            .then(res => {
-                setEmail(res.data.username);
-                setLoading(false);
-            })
-            .catch(() => setLoading(false));
-    }, []);
 
     useEffect(() => {
         if (!email) return;

@@ -1,39 +1,22 @@
 import { useNavigate } from "react-router-dom";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
+import { useUser } from '../../App';
 import '../../styling/Dashboard.css';
 
 const Personal = () => {
     const navigate = useNavigate();
-    const [data, setData] = useState(null);
-    const [apiLoading, setApiLoading] = useState(true);
+    const { user: data, userLoading: apiLoading, refreshUser } = useUser();
     const [phone, setPhone] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
+    const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
 
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const response = await axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/get-user`, {
-                    withCredentials: true,
-                });
-                setData(response.data);
-            } catch (err) {
-                console.error('Error fetching user data:', err);
-                setError(err);
-            } finally {
-                setApiLoading(false);
-            }
-        };
-
-        fetchUserData();
-    }, []);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setApiLoading(true);
+        setSaving(true);
         setError(null);
         setSuccess(false);
 
@@ -47,13 +30,14 @@ const Personal = () => {
                 headers: { 'Content-Type': 'application/json' },
             });
 
+            await refreshUser(); // invalidate + re-fetch the global user cache
             setSuccess(true);
             setTimeout(() => navigate('/profile'), 1500);
         } catch (err) {
             console.error('Error updating profile:', err);
             setError(err.response?.data?.message || 'Failed to update profile. Please try again.');
         } finally {
-            setApiLoading(false);
+            setSaving(false);
         }
     };
 
@@ -127,9 +111,9 @@ const Personal = () => {
                             <button 
                                 type="submit" 
                                 className="btn btn-primary"
-                                disabled={apiLoading}
+                                disabled={saving}
                             >
-                                {apiLoading ? 'Saving...' : 'Save Changes'}
+                                {saving ? 'Saving...' : 'Save Changes'}
                             </button>
                             <button 
                                 type="button" 

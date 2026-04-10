@@ -1,29 +1,10 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useUser } from '../../App';
 
+// Delegates to the global UserContext so we never hit /api/get-user more than once per session.
+// The public API (currentUser, loadingUser, errorUser) is preserved for all existing callers.
 const useCurrentUser = () => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loadingUser, setLoadingUser] = useState(true);
-  const [errorUser, setErrorUser] = useState(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/get-user`, {
-          withCredentials: true,
-        });
-        setCurrentUser(res.data);
-      } catch (err) {
-        setErrorUser(err);
-      } finally {
-        setLoadingUser(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
-  return { currentUser, loadingUser, errorUser };
+  const { user: currentUser, userLoading: loadingUser } = useUser();
+  return { currentUser, loadingUser, errorUser: null };
 };
 
 export default useCurrentUser;
