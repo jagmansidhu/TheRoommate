@@ -4,20 +4,15 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.Refill;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
-import io.github.bucket4j.redis.lettuce.cas.LettuceBasedProxyManager;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.codec.ByteArrayCodec;
-import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.codec.StringCodec;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -26,36 +21,29 @@ import java.time.Duration;
 import java.util.function.Supplier;
 
 /**
- * Distributed rate limiting filter backed by Redis via Bucket4j.
+ * Rate limiting filter — distributed via Redis when available, fail-open otherwise.
  *
- * Limits (per IP, shared across all pods via Redis):
+ * Limits (per IP, shared across all pods):
  *   - Auth endpoints (/user/login, /user/register, /user/verify): 5 req/min
  *   - General endpoints: 100 req/min
  *
- * Graceful degradation: if Redis is unavailable the request is allowed through
- * and a warning is logged, so a Redis outage doesn't take down the API.
+ * If the Redis ProxyManager is null (Redis unreachable at startup) all requests are allowed
+ * through and a warning is logged so the API stays up.
  */
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitingFilter.class);
 
+    // Injected as optional — null when Redis was unavailable at startup
     private final ProxyManager<String> proxyManager;
 
-    // Bucket configurations — defined once, reused per-key in Redis
     private final Supplier<BucketConfiguration> authBucketConfig;
     private final Supplier<BucketConfiguration> generalBucketConfig;
 
-    public RateLimitingFilter(
-            @Value("${spring.data.redis.url:redis://localhost:6379}") String redisUrl) {
-
-        // Build a Lettuce RedisClient from the configured URL
-        RedisClient redisClient = RedisClient.create(redisUrl);
-        StatefulRedisConnection<String, byte[]> connection =
-                redisClient.connect(RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE));
-
-        this.proxyManager = LettuceBasedProxyManager.builderFor(connection)
-                .build();
+    // @Autowired(required = false) so Spring doesn't fail if rateLimitProxyManager bean is null
+    public RateLimitingFilter(@Autowired(required = false) @Nullable ProxyManager<String> proxyManager) {
+        this.proxyManager = proxyManager;
 
         // Auth: 5 requests per minute per IP
         this.authBucketConfig = () -> BucketConfiguration.builder()
@@ -74,11 +62,17 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                                     FilterChain chain)
             throws ServletException, IOException {
 
+        // Fail-open: if Redis wasn't available at startup, skip rate limiting
+        if (proxyManager == null) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String clientIp = getClientIP(request);
         String path = request.getRequestURI();
 
-        // Namespace the Redis key by endpoint type to keep auth and general limits separate
         boolean isAuth = isAuthEndpoint(path);
+        // Namespace Redis keys by type to keep auth and general counters separate
         String bucketKey = (isAuth ? "rate:auth:" : "rate:general:") + clientIp;
         Supplier<BucketConfiguration> configSupplier = isAuth ? authBucketConfig : generalBucketConfig;
 
@@ -97,8 +91,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                         "{\"error\":\"Too many requests\",\"message\":\"Rate limit exceeded. Please try again later.\"}");
             }
         } catch (Exception e) {
-            // Redis unavailable — fail open so an outage doesn't block the API
-            log.warn("Redis rate limiter unavailable for IP {}, allowing request through: {}", clientIp, e.getMessage());
+            // Redis error mid-request — fail open
+            log.warn("Rate limiter error for IP {}, allowing request: {}", clientIp, e.getMessage());
             chain.doFilter(request, response);
         }
     }

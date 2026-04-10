@@ -8,6 +8,10 @@ spring:
       # Railway sets REDIS_URL automatically when a Redis plugin is attached.
       # Format: redis://[:password@]host:port
       url: ${REDIS_URL:redis://localhost:6379}
+      # Disable Spring Data Redis repository scanning — we only use Redis for rate limiting,
+      # not as a key-value store for JPA entities.
+      repositories:
+        enabled: false
   datasource:
     url: jdbc:postgresql://${POSTGRESQL_HOST}:${POSTGRESQL_PORT}/${POSTGRESQL_DATABASE}
     username: ${POSTGRESQL_USERNAME}
