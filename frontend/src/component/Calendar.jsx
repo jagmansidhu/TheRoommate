@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useUser } from '../App';
 import '../styling/Calendar.css';
 
 const Calendar = () => {
-    const [user, setUser] = useState(null);
+    const { user: userData } = useUser();
+    const userEmail = userData?.email || userData?.username || null;
     const [events, setEvents] = useState([]);
     const [rooms, setRooms] = useState([]);
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -25,33 +27,8 @@ const Calendar = () => {
     const [dateError, setDateError] = useState('');
 
     useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const userRes = await fetch(`${process.env.REACT_APP_BASE_API_URL}/user/status`, {
-                    method: 'GET',
-                    withCredentials: true,
-                    credentials: 'include',
-                });
-                if (!userRes.ok) {
-                    throw new Error('Not authenticated');
-                }
-                const userData = await userRes.json();
-                const userEmail = userData.username || userData.email;
-                setUser(userEmail);
-                setError(null);
-            } catch (err) {
-                console.error('Error fetching user:', err);
-                setError('Failed to load user data. You might need to log in.');
-                setLoading(false);
-            }
-        };
-
-        fetchUser();
-    }, []);
-
-    useEffect(() => {
         const fetchData = async () => {
-            if (!user) {
+            if (!userEmail) {
                 setLoading(false);
                 return;
             }
@@ -67,11 +44,11 @@ const Calendar = () => {
                         withCredentials: true,
                         credentials: 'include',
                     }),
-                    axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/chores/upcoming?id=${user}`, {
+                    axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/chores/upcoming?id=${userEmail}`, {
                         withCredentials: true,
                         credentials: 'include',
                     }),
-                    axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/utility/upcoming?id=${user}`, {
+                    axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/utility/upcoming?id=${userEmail}`, {
                         withCredentials: true,
                         credentials: 'include',
                     }),
@@ -91,7 +68,7 @@ const Calendar = () => {
         };
 
         fetchData();
-    }, [user]);
+    }, [userEmail]);
 
     const createEvent = async (e) => {
         e.preventDefault();
