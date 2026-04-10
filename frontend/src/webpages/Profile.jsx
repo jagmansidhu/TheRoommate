@@ -59,7 +59,6 @@ const Profile = () => {
 
             {/* Main Content Grid */}
             <div className="dashboard-content">
-                {/* Login Information Section */}
                 <div className="dashboard-section profile-info-section">
                     <h3>Login Information</h3>
                     <ul>
@@ -85,7 +84,6 @@ const Profile = () => {
                     </div>
                 </div>
 
-                {/* Personal Information Section */}
                 <div className="dashboard-section profile-info-section">
                     <h3>Personal Information</h3>
                     <ul>

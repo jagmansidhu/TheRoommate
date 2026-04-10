@@ -29,12 +29,10 @@ const Dashboard = () => {
     useEffect(() => {
         if (!email) return;
         
-        // Fetch rooms to check if user has any
         axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/rooms`, { withCredentials: true })
             .then(res => {
                 setRooms(res.data || []);
                 setRoomsLoaded(true);
-                // Show onboarding page if no rooms and hasn't seen it before
                 if ((res.data || []).length === 0 && !hasSeenOnboarding) {
                     setShowOnboarding(true);
                 }
@@ -49,7 +47,6 @@ const Dashboard = () => {
             .catch(() => {});
     }, [email, hasSeenOnboarding]);
 
-    // Sync onboarding state with context (to hide navbar)
     useEffect(() => {
         setIsOnboarding(showOnboarding);
     }, [showOnboarding, setIsOnboarding]);
@@ -69,7 +66,6 @@ const Dashboard = () => {
         );
     }
 
-    // Show full-page onboarding for new users with no rooms
     if (showOnboarding) {
         return <OnboardingPage onComplete={handleOnboardingComplete} />;
     }
