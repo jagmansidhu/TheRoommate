@@ -16,18 +16,6 @@ const Profile = () => {
         );
     }
 
-    if (error) {
-        return (
-            <div className="dashboard-container">
-                <div className="dashboard-header">
-                    <h1>Profile</h1>
-                </div>
-                <div className="dashboard-section">
-                    <p className="empty-message">Failed to load profile data. Please try again later.</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="dashboard-container">
