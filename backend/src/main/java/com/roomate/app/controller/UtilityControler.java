@@ -6,6 +6,7 @@ import com.roomate.app.entities.UtilityEntity;
 import com.roomate.app.service.UtilityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,8 +30,9 @@ public class UtilityControler {
     }
 
     @GetMapping("/{memberId}/room/{roomId}")
-    public ResponseEntity<List<UtilityDto>> getUtilitiesByRoomabdMemberId(@PathVariable UUID roomId, @PathVariable UUID memberId) {
-        return ResponseEntity.ok(utilityService.getUtilitiesByRoomandMemberId(roomId,memberId));
+    public ResponseEntity<List<UtilityDto>> getUtilitiesByRoomabdMemberId(@PathVariable UUID roomId,
+            @PathVariable UUID memberId) {
+        return ResponseEntity.ok(utilityService.getUtilitiesByRoomandMemberId(roomId, memberId));
     }
 
     @GetMapping("/upcoming")
@@ -40,6 +42,16 @@ public class UtilityControler {
             return ResponseEntity.noContent().build();
         }
 
+        return ResponseEntity.ok(utilities);
+    }
+
+    // Returns utilities assigned to the currently authenticated user.
+    // Email is resolved from the JWT via the Spring Security context — no query
+    // param needed.
+    @GetMapping("/user/me")
+    public ResponseEntity<List<UtilityDto>> getMyUtilities() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<UtilityDto> utilities = utilityService.getUpcomingUtilities(email);
         return ResponseEntity.ok(utilities);
     }
 
