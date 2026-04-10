@@ -218,7 +218,13 @@ const AppContent = () => {
         }
     }, [isAuthenticated, isLoading]);
 
-    if (isLoading || (isAuthenticated && userVerified === null)) {
+    // Public paths that don't need auth — render immediately without waiting for the backend.
+    const publicPaths = ['/', '/login', '/register', '/verify'];
+    const isPublicPath = publicPaths.includes(window.location.pathname);
+
+    // Only block render on authenticated routes — avoids a blank screen on the home page
+    // while waiting for the /user/status round-trip to the backend.
+    if (!isPublicPath && (isLoading || (isAuthenticated && userVerified === null))) {
         return (
             <div className="loading">
                 <div className="spinner"></div>
