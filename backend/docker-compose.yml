@@ -24,8 +24,10 @@ services:
       - SPRING_MAIL_USERNAME=your-email@gmail.com
       - SPRING_MAIL_PASSWORD=your-app-password
       - CONTAINER_PORT=8085
+      - REDIS_URL=redis://redis:6379
     depends_on:
       - postgresdb
+      - redis
     networks:
       - roomate-network
 
@@ -40,6 +42,14 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - roomate-network
+
+  redis:
+    container_name: roomate-redis
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
     networks:
       - roomate-network
 

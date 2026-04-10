@@ -3,6 +3,11 @@ spring:
     current-web-url: http://localhost:8085
   profiles:
     active: ${ACTIVE_PROFILE:dev}
+  data:
+    redis:
+      # Railway sets REDIS_URL automatically when a Redis plugin is attached.
+      # Format: redis://[:password@]host:port
+      url: ${REDIS_URL:redis://localhost:6379}
   datasource:
     url: jdbc:postgresql://${POSTGRESQL_HOST}:${POSTGRESQL_PORT}/${POSTGRESQL_DATABASE}
     username: ${POSTGRESQL_USERNAME}
