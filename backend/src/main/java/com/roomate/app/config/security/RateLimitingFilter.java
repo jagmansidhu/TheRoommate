@@ -2,7 +2,6 @@ package com.roomate.app.config.security;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.BucketConfiguration;
-import io.github.bucket4j.Refill;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -47,12 +46,18 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         // Auth: 5 requests per minute per IP
         this.authBucketConfig = () -> BucketConfiguration.builder()
-                .addLimit(Bandwidth.classic(5, Refill.intervally(5, Duration.ofMinutes(1))))
+                .addLimit(Bandwidth.builder()
+                        .capacity(5)
+                        .refillIntervally(5, Duration.ofMinutes(1))
+                        .build())
                 .build();
 
         // General: 100 requests per minute per IP
         this.generalBucketConfig = () -> BucketConfiguration.builder()
-                .addLimit(Bandwidth.classic(100, Refill.intervally(100, Duration.ofMinutes(1))))
+                .addLimit(Bandwidth.builder()
+                        .capacity(100)
+                        .refillIntervally(100, Duration.ofMinutes(1))
+                        .build())
                 .build();
     }
 
