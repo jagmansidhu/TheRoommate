@@ -5,6 +5,7 @@ import com.roomate.app.dto.ChoreDto;
 import com.roomate.app.service.ChoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -43,6 +44,14 @@ public class ChoreController {
         List<ChoreDto> chores = choreService.getChoresByUserId(id);
 
         return ResponseEntity.ok(chores);
+    }
+
+    // Returns chores assigned to the currently authenticated user.
+    // Email is resolved from the JWT via the Spring Security context — no query param needed.
+    @GetMapping("/user/me")
+    public ResponseEntity<List<ChoreDto>> getMyChores() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(choreService.getChoresByUserId(email));
     }
 
     @DeleteMapping("/{choreId}")

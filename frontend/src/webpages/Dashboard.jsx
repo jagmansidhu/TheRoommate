@@ -39,10 +39,12 @@ const Dashboard = () => {
             })
             .catch(() => setRoomsLoaded(true));
 
-        // TODO: backend endpoint GET /api/chores/user/me not yet implemented
-        // axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/chores/user/me`, { withCredentials: true })
-        //     .then(res => setChores(res.data || []))
-        //     .catch(() => {});
+        // Fetches chores assigned to the current user from the backend.
+        // The backend resolves identity from the JWT cookie — no user ID needed in the request.
+        // Returns a list of ChoreDto: { id, choreName, dueAt, roomName }
+        axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/chores/user/me`, { withCredentials: true })
+            .then(res => setChores(res.data || []))
+            .catch(() => {});
         axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/utility/user/me`, { withCredentials: true })
             .then(res => setUtilities(res.data || []))
             .catch(() => {});
