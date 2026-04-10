@@ -32,7 +32,11 @@ const Login = () => {
             }
         } catch (err) {
             console.error(err);
-            setError('Invalid email or password. Please try again.');
+            if (err.response?.status === 429) {
+                setError('Too many requests. Please wait a moment and try again.');
+            } else {
+                setError('Invalid email or password. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -48,7 +52,6 @@ const Login = () => {
 
                 {error && (
                     <div className="error-message">
-                        <span className="error-icon">⚠️</span>
                         {error}
                     </div>
                 )}

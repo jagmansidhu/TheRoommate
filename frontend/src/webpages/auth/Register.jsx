@@ -52,7 +52,9 @@ const Register = () => {
             navigate('/login');
         } catch (err) {
             if (err.response) {
-                if (err.response.status === 409) {
+                if (err.response.status === 429) {
+                    setError('Too many requests. Please wait a moment and try again.');
+                } else if (err.response.status === 409) {
                     setError(err.response.data.message || 'User with this email already exists.');
                 } else {
                     setError('Failed to register. Please try again later.');
@@ -78,7 +80,6 @@ const Register = () => {
 
                 {error && (
                     <div className="error-message">
-                        <span className="error-icon">⚠️</span>
                         {error}
                     </div>
                 )}
@@ -166,7 +167,7 @@ const Register = () => {
                                             marginBottom: 'var(--spacing-1)'
                                         }}
                                     >
-                                        <span>{rule.test.test(password) ? '✓' : '○'}</span>
+                                        <span>{rule.test.test(password) ? 'ok' : '--'}</span>
                                         {rule.message}
                                     </li>
                                 ))}
