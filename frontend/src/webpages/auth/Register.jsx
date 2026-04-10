@@ -73,7 +73,7 @@ const Register = () => {
             <div className="auth-card">
                 <div className="auth-header">
                     <h1>Create an account</h1>
-                    <p>Join DaRoomate to manage your shared living</p>
+                    <p>Join TheRoomate to manage your shared living</p>
                 </div>
 
                 {error && (

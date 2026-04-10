@@ -39,9 +39,10 @@ const Dashboard = () => {
             })
             .catch(() => setRoomsLoaded(true));
 
-        axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/chores/user/me`, { withCredentials: true })
-            .then(res => setChores(res.data || []))
-            .catch(() => {});
+        // TODO: backend endpoint GET /api/chores/user/me not yet implemented
+        // axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/chores/user/me`, { withCredentials: true })
+        //     .then(res => setChores(res.data || []))
+        //     .catch(() => {});
         axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/utility/user/me`, { withCredentials: true })
             .then(res => setUtilities(res.data || []))
             .catch(() => {});

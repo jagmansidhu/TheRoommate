@@ -18,9 +18,11 @@ public class ChoreController {
     private final ChoreService choreService;
 
     @PostMapping("/room/createChores/{roomId}")
-    public ResponseEntity<List<ChoreDto>> createChores(@PathVariable UUID roomId, @RequestBody List<ChoreCreateDto> choreDTOs) {
+    public ResponseEntity<List<ChoreDto>> createChores(@PathVariable UUID roomId,
+            @RequestBody List<ChoreCreateDto> choreDTOs) {
 
-        List<ChoreDto> allChores = choreDTOs.stream().flatMap(dto -> choreService.distributeChores(roomId, dto).stream()).collect(Collectors.toList());
+        List<ChoreDto> allChores = choreDTOs.stream()
+                .flatMap(dto -> choreService.distributeChores(roomId, dto).stream()).collect(Collectors.toList());
 
         return ResponseEntity.ok(allChores);
     }
