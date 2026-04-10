@@ -102,13 +102,13 @@ const Home = () => {
             {/* Footer */}
             <footer className="landing-footer">
                 <div className="footer-content">
-                    <span className="footer-logo">DaRoommate</span>
+                    <span className="footer-logo">TheRoommate</span>
                     <div className="footer-links">
                         <a href="#features">Features</a>
                         <a href="#about">About</a>
                         <a href="#privacy">Privacy</a>
                     </div>
-                    <span className="footer-copyright">© 2024</span>
+                    <span className="footer-copyright">© 2026</span>
                 </div>
             </footer>
         </div>
