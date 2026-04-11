@@ -4,7 +4,6 @@ import React from 'react';
 import { ROLES } from "../../constants/roles";
 import { useUser, useAppData } from '../../App';
 import '../../styling/Rooms.css';
-import '../../styling/Dashboard.css';
 import RemoveUtilityModal from './modals/RemoveUtilityModal';
 import UtilityModal from './modals/UtilityModal';
 import RemoveChoreModal from './modals/RemoveChoreModal';
@@ -13,7 +12,7 @@ import InviteModal from './modals/InviteModal';
 import DeleteConfirmModal from './modals/DeleteConfirmModal';
 
 const RoomDetailsPage = ({
-    show, onClose, room, onLeaveRoom, onDeleteRoom, onManageRolesClick,
+    onClose, room, onLeaveRoom, onDeleteRoom,
 }) => {
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
@@ -35,7 +34,7 @@ const RoomDetailsPage = ({
     });
     const [selectedChoreType, setSelectedChoreType] = useState('');
     const [chores, setChores] = useState([]);
-    const [showRoleModal, setShowRoleModal] = useState(false);
+
     const [userUtilities, setUserUtilities] = useState([]);
     const [memberId, setMemberId] = useState(null);
     const [isCustomChore, setIsCustomChore] = useState(false);

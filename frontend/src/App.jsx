@@ -291,6 +291,7 @@ const LoggedInNavbar = () => {
         <header className="App-header">
             <div className="header-content">
                 <Link to="/dashboard" className="logo">
+                    TheRoomate
                 </Link>
                 <nav className="nav">
                     <Link to="/dashboard" className="nav-link">Dashboard</Link>
