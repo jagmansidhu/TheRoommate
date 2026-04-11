@@ -149,26 +149,15 @@ const Register = () => {
                         />
                         
                         {showPasswordRules && (
-                            <ul className="password-rules" style={{ 
-                                listStyle: 'none', 
-                                padding: 0, 
-                                marginTop: 'var(--spacing-3)',
-                                fontSize: 'var(--font-size-sm)'
-                            }}>
+                            <ul className="password-rules">
                                 {passwordRules.map((rule, i) => (
                                     <li
                                         key={i}
-                                        style={{
-                                            color: rule.test.test(password) 
-                                                ? 'var(--success-600)' 
-                                                : 'var(--text-muted)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 'var(--spacing-2)',
-                                            marginBottom: 'var(--spacing-1)'
-                                        }}
+                                        className={rule.test.test(password) ? 'rule-valid' : 'rule-invalid'}
                                     >
-                                        <span>{rule.test.test(password) ? 'ok' : '--'}</span>
+                                        <span className="rule-icon">
+                                            {rule.test.test(password) ? '✓' : '·'}
+                                        </span>
                                         {rule.message}
                                     </li>
                                 ))}

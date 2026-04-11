@@ -12,6 +12,24 @@
    Design Tokens - Light Theme (Default)
    ========================================== */
 :root {
+  /* ── Brand fonts (Fraunces · Syne · DM Mono) ── */
+  --f-display: 'Fraunces', Georgia, serif;
+  --f-label:   'Syne', sans-serif;
+  --f-body:    'DM Mono', 'Courier New', monospace;
+
+  /* ── Living-paper palette (global) ── */
+  --lp-cream:     #F5F0E8;
+  --lp-parchment: #EAE4D6;
+  --lp-card:      #F0EAE0;
+  --lp-ink:       #18120A;
+  --lp-ink-soft:  #4A3F34;
+  --lp-ink-muted: #8A7E72;
+  --lp-orange:    #C94A1A;
+  --lp-green:     #1E3B2A;
+  --lp-green-lt:  #C6D9CC;
+  --lp-yellow:    #F0DC78;
+  --lp-border:    #C9C2B4;
+  --lp-rule:      #C0B8A8;
   /* Primary Colors - Clean Blue (trusted, professional) */
   --primary-50: #eff6ff;
   --primary-100: #dbeafe;
