@@ -273,6 +273,7 @@ const LoggedOutNavbar = () => {
         <header className="App-header">
             <div className="header-content">
                 <Link to="/" className="logo">
+                    <div className="logo-icon">D</div>
                     <span>TheRoomate</span>
                 </Link>
                 <nav className="nav">
@@ -283,30 +284,29 @@ const LoggedOutNavbar = () => {
     );
 };
 
+
 const LoggedInNavbar = () => {
     const {logout} = useAuth();
-    const {toggleTheme, isDarkMode} = useTheme();
 
     return (
         <header className="App-header">
             <div className="header-content">
                 <Link to="/dashboard" className="logo">
-                    TheRoomate
+                    <div className="logo-icon">D</div>
+                    <span>TheRoomate</span>
                 </Link>
                 <nav className="nav">
                     <Link to="/dashboard" className="nav-link">Dashboard</Link>
                     <Link to="/calendar" className="nav-link">Calendar</Link>
                     <Link to="/profile" className="nav-link">Profile</Link>
                     <Link to="/rooms" className="nav-link">Rooms</Link>
-                    <button onClick={toggleTheme} className="theme-toggle">
-                        {isDarkMode ? "☀️" : "🌙"}
-                    </button>
                     <button onClick={logout} className="btn btn-secondary">Logout</button>
                 </nav>
             </div>
         </header>
     );
 };
+
 
 const CheckEmailPage = () => {
     const [hasSent, setHasSent] = useState(false);
