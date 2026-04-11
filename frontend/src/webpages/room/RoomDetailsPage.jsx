@@ -1,9 +1,16 @@
+import apiClient from '../../apiClient';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ROLES } from "../../constants/roles";
 import { useUser, useAppData } from '../../App';
 import '../../styling/Rooms.css';
 import '../../styling/Dashboard.css';
+import RemoveUtilityModal from './modals/RemoveUtilityModal';
+import UtilityModal from './modals/UtilityModal';
+import RemoveChoreModal from './modals/RemoveChoreModal';
+import ChoreModal from './modals/ChoreModal';
+import InviteModal from './modals/InviteModal';
+import DeleteConfirmModal from './modals/DeleteConfirmModal';
 
 const RoomDetailsPage = ({
     show, onClose, room, onLeaveRoom, onDeleteRoom, onManageRolesClick,
@@ -49,16 +56,14 @@ const RoomDetailsPage = ({
     const handleSubmitChores = async () => {
         if (pendingChores.length === 0) return;
         try {
-            const response = await axios.post(
-                `${process.env.REACT_APP_BASE_API_URL}/api/chores/room/createChores/${room.id}`,
+            const response = await apiClient.post(`/api/chores/room/createChores/${room.id}`,
                 pendingChores,
                 { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
             );
             if (response.status === 200) {
                 setShowChoreModal(false);
                 setPendingChores([]);
-                const choresResponse = await axios.get(
-                    `${process.env.REACT_APP_BASE_API_URL}/api/chores/room/${room.id}`,
+                const choresResponse = await apiClient.get(`/api/chores/room/${room.id}`,
                     { withCredentials: true }
                 );
                 setChores(choresResponse.data);
@@ -81,12 +86,10 @@ const RoomDetailsPage = ({
     const handleRemoveChoresByType = async () => {
         if (!selectedChoreType) return;
         try {
-            await axios.delete(
-                `${process.env.REACT_APP_BASE_API_URL}/api/chores/room/${room.id}/type/${selectedChoreType}`,
+            await apiClient.delete(`/api/chores/room/${room.id}/type/${selectedChoreType}`,
                 { withCredentials: true }
             );
-            const choresResponse = await axios.get(
-                `${process.env.REACT_APP_BASE_API_URL}/api/chores/room/${room.id}`,
+            const choresResponse = await apiClient.get(`/api/chores/room/${room.id}`,
                 { withCredentials: true }
             );
             setChores(choresResponse.data);
@@ -101,8 +104,7 @@ const RoomDetailsPage = ({
         const fetchChores = async () => {
             if (room?.id) {
                 try {
-                    const response = await axios.get(
-                        `${process.env.REACT_APP_BASE_API_URL}/api/chores/room/${room.id}`,
+                    const response = await apiClient.get(`/api/chores/room/${room.id}`,
                         { withCredentials: true }
                     );
                     setChores(response.data);
@@ -115,8 +117,7 @@ const RoomDetailsPage = ({
         const fetchAllUtilities = async () => {
             if (room?.id) {
                 try {
-                    const response = await axios.get(
-                        `${process.env.REACT_APP_BASE_API_URL}/api/utility/room/${room.id}`,
+                    const response = await apiClient.get(`/api/utility/room/${room.id}`,
                         { withCredentials: true }
                     );
                     setUtilities(response.data);
@@ -132,8 +133,7 @@ const RoomDetailsPage = ({
                     const memberId = room.members?.find(m => m.userId === user.email)?.id;
                     setMemberId(memberId);
                     if (memberId) {
-                        const response = await axios.get(
-                            `${process.env.REACT_APP_BASE_API_URL}/api/utility/${memberId}/room/${room.id}`,
+                        const response = await apiClient.get(`/api/utility/${memberId}/room/${room.id}`,
                             { withCredentials: true }
                         );
                         setUserUtilities(response.data);
@@ -157,8 +157,7 @@ const RoomDetailsPage = ({
 
     const handleInviteUser = async () => {
         try {
-            const response = await axios.post(
-                `${process.env.REACT_APP_BASE_API_URL}/api/rooms/invite`,
+            const response = await apiClient.post(`/api/rooms/invite`,
                 { email: inviteEmail, roomId: room.id },
                 { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
             );
@@ -177,8 +176,7 @@ const RoomDetailsPage = ({
     const handleSubmitUtility = async () => {
         try {
             const payload = { ...utilityData, roomId: room.id };
-            const response = await axios.post(
-                `${process.env.REACT_APP_BASE_API_URL}/api/utility/create`,
+            const response = await apiClient.post(`/api/utility/create`,
                 payload,
                 { withCredentials: true, headers: { "Content-Type": "application/json" } }
             );
@@ -189,8 +187,7 @@ const RoomDetailsPage = ({
                     utilDistributionEnum: "EQUALSPLIT", customSplit: {}
                 });
                 if (memberId) {
-                    const userUtilitiesResponse = await axios.get(
-                        `${process.env.REACT_APP_BASE_API_URL}/api/utility/${memberId}/room/${room.id}`,
+                    const userUtilitiesResponse = await apiClient.get(`/api/utility/${memberId}/room/${room.id}`,
                         { withCredentials: true }
                     );
                     setUserUtilities(userUtilitiesResponse.data);
@@ -205,13 +202,11 @@ const RoomDetailsPage = ({
     const handleRemoveUtility = async () => {
         if (!selectedUtilityId) return;
         try {
-            await axios.delete(
-                `${process.env.REACT_APP_BASE_API_URL}/api/utility/${selectedUtilityId}`,
+            await apiClient.delete(`/api/utility/${selectedUtilityId}`,
                 { withCredentials: true }
             );
             if (memberId) {
-                const userUtilitiesResponse = await axios.get(
-                    `${process.env.REACT_APP_BASE_API_URL}/api/utility/${memberId}/room/${room.id}`,
+                const userUtilitiesResponse = await apiClient.get(`/api/utility/${memberId}/room/${room.id}`,
                     { withCredentials: true }
                 );
                 setUserUtilities(userUtilitiesResponse.data);
@@ -419,346 +414,62 @@ const RoomDetailsPage = ({
                 </div>
             )}
 
-            {/* Remove Utility Modal */}
-            {showRemoveUtilityModal && (
-                <div className="modal-overlay">
-                    <div className="modal">
-                        <div className="modal-header">
-                            <h3>Remove Utility</h3>
-                            <button className="modal-close" onClick={() => setShowRemoveUtilityModal(false)}>×</button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="form-group">
-                                <label htmlFor="utilitySelectModal">Select utility:</label>
-                                <select
-                                    id="utilitySelectModal"
-                                    className="form-input"
-                                    value={selectedUtilityId}
-                                    onChange={e => setSelectedUtilityId(e.target.value)}
-                                >
-                                    <option value="">Select a utility</option>
-                                    {utilities.map(u => (
-                                        <option key={u.id} value={u.id}>
-                                            {u.utilityName} - ${u.utilityPrice.toFixed(2)}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="modal-actions">
-                            <button className="btn btn-danger" onClick={handleRemoveUtility} disabled={!selectedUtilityId}>
-                                Remove
-                            </button>
-                            <button className="btn btn-secondary" onClick={() => setShowRemoveUtilityModal(false)}>
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <RemoveUtilityModal
+                show={showRemoveUtilityModal}
+                onClose={() => setShowRemoveUtilityModal(false)}
+                utilities={utilities}
+                selectedUtilityId={selectedUtilityId}
+                setSelectedUtilityId={setSelectedUtilityId}
+                handleRemoveUtility={handleRemoveUtility}
+            />
 
-            {/* Utility Modal */}
-            {showUtilityModal && (
-                <div className="modal-overlay">
-                    <div className="modal">
-                        <div className="modal-header">
-                            <h3>Create Utility</h3>
-                            <button className="modal-close" onClick={() => setShowUtilityModal(false)}>×</button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="form-group">
-                                <label>Utility Name</label>
-                                <input
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="Utility name"
-                                    value={utilityData.utilityName}
-                                    onChange={e => setUtilityData({ ...utilityData, utilityName: e.target.value })}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Description</label>
-                                <textarea
-                                    className="form-input"
-                                    placeholder="Description"
-                                    value={utilityData.description}
-                                    onChange={e => setUtilityData({ ...utilityData, description: e.target.value })}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Total Price</label>
-                                <input
-                                    type="number"
-                                    className="form-input"
-                                    placeholder="Total Price"
-                                    value={utilityData.utilityPrice || ""}
-                                    onChange={e => {
-                                        const value = parseFloat(e.target.value);
-                                        if (value >= 0 || e.target.value === "") {
-                                            setUtilityData({
-                                                ...utilityData, utilityPrice: e.target.value === "" ? "" : value
-                                            });
-                                        }
-                                    }}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Distribution</label>
-                                <select
-                                    className="form-input"
-                                    value={utilityData.utilDistributionEnum}
-                                    onChange={e => setUtilityData({ ...utilityData, utilDistributionEnum: e.target.value })}
-                                >
-                                    <option value="EQUALSPLIT">Equal Split</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div className="modal-actions">
-                            <button className="btn btn-primary" onClick={handleSubmitUtility}>Create Utility</button>
-                            <button className="btn btn-secondary" onClick={() => setShowUtilityModal(false)}>Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <UtilityModal
+                show={showUtilityModal}
+                onClose={() => setShowUtilityModal(false)}
+                utilityData={utilityData}
+                setUtilityData={setUtilityData}
+                handleSubmitUtility={handleSubmitUtility}
+            />
 
-            {/* Remove Chore Modal */}
-            {showRemoveChoreModal && (
-                <div className="modal-overlay">
-                    <div className="modal">
-                        <div className="modal-header">
-                            <h3>Remove Chores</h3>
-                            <button className="modal-close" onClick={() => setShowRemoveChoreModal(false)}>×</button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="form-group">
-                                <label htmlFor="choreTypeSelectModal">Select chore type:</label>
-                                <select
-                                    id="choreTypeSelectModal"
-                                    className="form-input"
-                                    value={selectedChoreType}
-                                    onChange={e => setSelectedChoreType(e.target.value)}
-                                >
-                                    <option value="">Select chore type</option>
-                                    {[...new Set(chores.map(chore => chore.choreName))].map(name => (
-                                        <option key={name} value={name}>{name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="modal-actions">
-                            <button
-                                className="btn btn-danger"
-                                onClick={() => {
-                                    handleRemoveChoresByType();
-                                    setShowRemoveChoreModal(false);
-                                }}
-                                disabled={!selectedChoreType}
-                            >
-                                Remove
-                            </button>
-                            <button className="btn btn-secondary" onClick={() => setShowRemoveChoreModal(false)}>
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <RemoveChoreModal
+                show={showRemoveChoreModal}
+                onClose={() => setShowRemoveChoreModal(false)}
+                selectedChoreType={selectedChoreType}
+                setSelectedChoreType={setSelectedChoreType}
+                handleRemoveChoresByType={handleRemoveChoresByType}
+                CHORE_OPTIONS={CHORE_OPTIONS}
+            />
 
-            {/* Chore Modal */}
-            {showChoreModal && (
-                <div className="modal-overlay">
-                    <div className="modal modal-large">
-                        <div className="modal-header">
-                            <h3>Create Chores</h3>
-                            <button className="modal-close" onClick={() => setShowChoreModal(false)}>×</button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="form-group">
-                                <label>Chore Type</label>
-                                <select
-                                    className="form-input"
-                                    value={isCustomChore ? "Other" : choreData.choreName}
-                                    onChange={e => {
-                                        if (e.target.value === "Other") {
-                                            setIsCustomChore(true);
-                                            setChoreData({ ...choreData, choreName: "" });
-                                        } else {
-                                            setIsCustomChore(false);
-                                            setChoreData({ ...choreData, choreName: e.target.value });
-                                        }
-                                    }}
-                                >
-                                    <option value="">Select chore</option>
-                                    {CHORE_OPTIONS.map(opt => (<option key={opt} value={opt}>{opt}</option>))}
-                                </select>
-                            </div>
+            <ChoreModal
+                show={showChoreModal}
+                onClose={() => setShowChoreModal(false)}
+                isCustomChore={isCustomChore}
+                setIsCustomChore={setIsCustomChore}
+                choreData={choreData}
+                setChoreData={setChoreData}
+                CHORE_OPTIONS={CHORE_OPTIONS}
+                addChoreToList={addChoreToList}
+                pendingChores={pendingChores}
+                removeChoreFromList={removeChoreFromList}
+                handleSubmitChores={handleSubmitChores}
+                isValidDeadline={isValidDeadline}
+            />
 
-                            {isCustomChore && (
-                                <div className="form-group">
-                                    <label>Custom Chore Name</label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        placeholder="Custom chore name"
-                                        value={choreData.choreName}
-                                        onChange={e => setChoreData({ ...choreData, choreName: e.target.value })}
-                                    />
-                                </div>
-                            )}
+            <InviteModal
+                show={showInviteModal}
+                onClose={() => setShowInviteModal(false)}
+                inviteEmail={inviteEmail}
+                setInviteEmail={setInviteEmail}
+                inviteStatus={inviteStatus}
+                handleInviteUser={handleInviteUser}
+            />
 
-                            <div className="form-group">
-                                <label>Frequency</label>
-                                <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
-                                    <input
-                                        type="number"
-                                        className="form-input"
-                                        placeholder="Times"
-                                        value={choreData.frequency}
-                                        min={1}
-                                        onChange={e => setChoreData({ ...choreData, frequency: parseInt(e.target.value) })}
-                                        style={{ width: '100px' }}
-                                    />
-                                    <select
-                                        className="form-input"
-                                        value={choreData.frequencyUnit}
-                                        onChange={e => setChoreData({ ...choreData, frequencyUnit: e.target.value })}
-                                    >
-                                        <option value="WEEKLY">Weekly</option>
-                                        <option value="BIWEEKLY">Biweekly</option>
-                                        <option value="MONTHLY">Monthly</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Deadline</label>
-                                <input
-                                    type="date"
-                                    className="form-input"
-                                    value={choreData.deadline}
-                                    onChange={e => setChoreData({ ...choreData, deadline: e.target.value })}
-                                    min={new Date().toISOString().split('T')[0]}
-                                    max={(() => {
-                                        let d = new Date();
-                                        d.setFullYear(d.getFullYear() + 1);
-                                        return d.toISOString().split('T')[0];
-                                    })()}
-                                />
-                            </div>
-
-                            <button
-                                className="btn btn-secondary"
-                                onClick={addChoreToList}
-                                disabled={!choreData.choreName || !isValidDeadline(choreData.deadline)}
-                            >
-                                Add to List
-                            </button>
-
-                            <h4 style={{ marginTop: 'var(--spacing-4)' }}>Chores to be created:</h4>
-                            {pendingChores.length === 0 ? (
-                                <p className="empty-message">No chores added yet.</p>
-                            ) : (
-                                <ul>
-                                    {pendingChores.map((chore, idx) => (
-                                        <li key={idx}>
-                                            <div className="item-content">
-                                                <div className="item-title">
-                                                    {chore.choreName} - {chore.frequencyUnit} - {chore.frequency}x
-                                                </div>
-                                                <div className="item-meta">
-                                                    Until: {new Date(chore.deadline).toLocaleDateString()}
-                                                </div>
-                                            </div>
-                                            <button className="btn btn-danger" onClick={() => removeChoreFromList(idx)}>
-                                                Remove
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                        <div className="modal-actions">
-                            <button
-                                className="btn btn-primary"
-                                onClick={handleSubmitChores}
-                                disabled={pendingChores.length === 0}
-                            >
-                                Submit All Chores
-                            </button>
-                            <button className="btn btn-secondary" onClick={() => setShowChoreModal(false)}>Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Invite Modal */}
-            {showInviteModal && (
-                <div className="modal-overlay">
-                    <div className="modal">
-                        <div className="modal-header">
-                            <h3>Invite a Roommate</h3>
-                            <button className="modal-close" onClick={() => setShowInviteModal(false)}>×</button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="form-group">
-                                <label>Email Address</label>
-                                <input
-                                    type="email"
-                                    className="form-input"
-                                    placeholder="Enter email address"
-                                    value={inviteEmail}
-                                    onChange={e => setInviteEmail(e.target.value)}
-                                />
-                            </div>
-                            {inviteStatus && (
-                                <div className={`alert ${inviteStatus.includes('success') ? 'alert-success' : 'alert-error'}`}>
-                                    {inviteStatus}
-                                </div>
-                            )}
-                        </div>
-                        <div className="modal-actions">
-                            <button className="btn btn-primary" onClick={handleInviteUser}>Send Invite</button>
-                            <button className="btn btn-secondary" onClick={() => setShowInviteModal(false)}>Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Delete Room Confirmation Modal */}
-            {showDeleteConfirmModal && (
-                <div className="modal-overlay">
-                    <div className="modal">
-                        <div className="modal-header">
-                            <h3>Delete Room</h3>
-                            <button className="modal-close" onClick={() => setShowDeleteConfirmModal(false)}>×</button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="delete-warning">
-                                <div className="delete-warning-icon"></div>
-                                <p className="delete-warning-title">Are you sure you want to delete this room?</p>
-                                <p className="delete-warning-message">
-                                    This will permanently delete <strong>"{room.name}"</strong> and remove all members, 
-                                    chores, and utilities. This action cannot be undone.
-                                </p>
-                            </div>
-                        </div>
-                        <div className="modal-actions">
-                            <button 
-                                className="btn btn-danger" 
-                                onClick={() => {
-                                    setShowDeleteConfirmModal(false);
-                                    onDeleteRoom();
-                                }}
-                            >
-                                Yes, Delete Room
-                            </button>
-                            <button className="btn btn-secondary" onClick={() => setShowDeleteConfirmModal(false)}>
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <DeleteConfirmModal
+                show={showDeleteConfirmModal}
+                onClose={() => setShowDeleteConfirmModal(false)}
+                onConfirm={onDeleteRoom}
+                roomName={room.name}
+            />
         </div>
     );
 };
