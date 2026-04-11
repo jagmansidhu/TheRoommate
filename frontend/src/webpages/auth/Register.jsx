@@ -1,3 +1,4 @@
+import apiClient from '../../apiClient';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -43,7 +44,7 @@ const Register = () => {
         setError('');
 
         try {
-            await axios.post(`${process.env.REACT_APP_BASE_API_URL}/user/register`, {
+            await apiClient.post(`/user/register`, {
                 firstName,
                 lastName,
                 email,

@@ -1,3 +1,4 @@
+import apiClient from '../../apiClient';
 import React, { useState } from 'react';
 import axios from 'axios';
 
@@ -12,7 +13,7 @@ const JoinRoomModal = ({ show, onClose, onRoomJoined }) => {
         setError(null);
         try {
 
-            await axios.post(`${process.env.REACT_APP_BASE_API_URL}/api/rooms/${joinRoomCode}/join`, {}, {
+            await apiClient.post(`/api/rooms/${joinRoomCode}/join`, {}, {
                 withCredentials: true
             });
 

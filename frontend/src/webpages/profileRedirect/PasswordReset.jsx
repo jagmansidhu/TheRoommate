@@ -1,3 +1,4 @@
+import apiClient from '../../apiClient';
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -45,8 +46,7 @@ const PasswordReset = () => {
 
         setSaving(true);
         try {
-            const response = await axios.put(
-                `${process.env.REACT_APP_BASE_API_URL}/user/updateProfile`,
+            const response = await apiClient.put(`/user/updateProfile`,
                 {
                     email: data.email,
                     curPassword: curPassword,

@@ -1,3 +1,4 @@
+import apiClient from '../../apiClient';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ROLES, ROLE_RANK } from '../../constants/roles';
@@ -23,8 +24,7 @@ const RoleManagement = ({ show, room, onClose, onUpdate }) => {
         setLoading(true);
         setError(null);
         try {
-            await axios.put(
-                `${process.env.REACT_APP_BASE_API_URL}/api/rooms/${room.id}/members/${memberId}/role`,
+            await apiClient.put(`/api/rooms/${room.id}/members/${memberId}/role`,
                 { role: newRole },
                 { withCredentials: true }
             );
@@ -43,7 +43,7 @@ const RoleManagement = ({ show, room, onClose, onUpdate }) => {
         setLoading(true);
         setError(null);
         try {
-            await axios.delete(`${process.env.REACT_APP_BASE_API_URL}/api/rooms/${room.id}/members/${memberId}`, {
+            await apiClient.delete(`/api/rooms/${room.id}/members/${memberId}`, {
                 withCredentials: true,
             });
             setMembers(members.filter((m) => m.id !== memberId));

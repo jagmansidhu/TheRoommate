@@ -1,3 +1,4 @@
+import apiClient from '../../apiClient';
 import React, {useState} from 'react';
 import axios from 'axios';
 
@@ -13,7 +14,7 @@ const CreateRoomModal = ({show, onClose, onCreateRoom}) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.post(`${process.env.REACT_APP_BASE_API_URL}/api/rooms`, newRoom, {
+            const response = await apiClient.post(`/api/rooms`, newRoom, {
                 withCredentials: true,
             });
 

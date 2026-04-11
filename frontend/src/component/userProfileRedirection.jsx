@@ -1,3 +1,4 @@
+import apiClient from '../apiClient';
 import {useEffect, useRef} from 'react';
 import {useAuth0} from '@auth0/auth0-react';
 import {useNavigate} from 'react-router-dom';
@@ -17,7 +18,7 @@ const useProfileCompletionRedirect = () => {
             try {
                         const accessToken = await getAccessTokenSilently();
 
-                const response = await axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/profile-status`, {
+                const response = await apiClient.get(`/api/profile-status`, {
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
                     },

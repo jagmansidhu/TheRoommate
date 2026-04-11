@@ -1,3 +1,4 @@
+import apiClient from '../../apiClient';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -26,7 +27,7 @@ const RoomDetailsPageWrapper = () => {
 
             // Fallback: network fetch if hard refreshed and cache is empty
             try {
-                const response = await axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/rooms/${roomId}`, {
+                const response = await apiClient.get(`/api/rooms/${roomId}`, {
                     withCredentials: true,
                 });
                 setRoom(response.data);
@@ -47,7 +48,7 @@ const RoomDetailsPageWrapper = () => {
     const handleLeaveRoom = useCallback((memberId) => {
         const leaveRoom = async () => {
             try {
-                await axios.delete(`${process.env.REACT_APP_BASE_API_URL}/api/rooms/${memberId}/leave/${roomId}`, {
+                await apiClient.delete(`/api/rooms/${memberId}/leave/${roomId}`, {
                     withCredentials: true,
                 });
                 navigate('/rooms');
@@ -61,7 +62,7 @@ const RoomDetailsPageWrapper = () => {
     const handleDeleteRoom = useCallback(() => {
         const deleteRoom = async () => {
             try {
-                await axios.delete(`${process.env.REACT_APP_BASE_API_URL}/api/rooms/${roomId}/delete-room`, {
+                await apiClient.delete(`/api/rooms/${roomId}/delete-room`, {
                     withCredentials: true,
                 });
                 navigate('/rooms');

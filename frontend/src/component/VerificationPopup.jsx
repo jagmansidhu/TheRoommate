@@ -1,3 +1,4 @@
+import apiClient from '../apiClient';
 import React, { useEffect } from 'react';
 
 const VerificationPopup = ({ onPopupVisibilityChange }) => {
@@ -14,11 +15,8 @@ const VerificationPopup = ({ onPopupVisibilityChange }) => {
 
     const handleResend = async () => {
         try {
-            const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/user/resend-verification`, {
-                method: 'POST',
-                credentials: 'include'
-            });
-            if (res.ok) {
+            const res = await apiClient.post('/user/resend-verification');
+            if (res.status === 200) {
                 setResendMessage('Verification email has been resent! Check your inbox.');
             } else {
                 setResendMessage('Failed to resend verification email. Try again later.');

@@ -1,3 +1,4 @@
+import apiClient from '../../apiClient';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -18,8 +19,7 @@ const Login = () => {
         setError('');
         
         try {
-            const response = await axios.post(
-                `${process.env.REACT_APP_BASE_API_URL}/user/login`,
+            const response = await apiClient.post(`/user/login`,
                 { email, password },
                 { withCredentials: true }
             );

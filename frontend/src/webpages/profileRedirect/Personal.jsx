@@ -1,3 +1,4 @@
+import apiClient from '../../apiClient';
 import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 import axios from "axios";
@@ -21,7 +22,7 @@ const Personal = () => {
         setSuccess(false);
 
         try {
-            await axios.put(`${process.env.REACT_APP_BASE_API_URL}/api/profile/update_profile`, {
+            await apiClient.put(`/api/profile/update_profile`, {
                 firstName,
                 lastName,
                 phone

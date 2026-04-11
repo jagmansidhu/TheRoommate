@@ -1,3 +1,4 @@
+import apiClient from '../apiClient';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useUser, useAppData } from '../App';
@@ -66,8 +67,7 @@ const Calendar = () => {
                 endTime: endDateTime
             };
 
-            const response = await axios.post(
-                `${process.env.REACT_APP_BASE_API_URL}/api/events/room/${newEvent.roomId}`,
+            const response = await apiClient.post(`/api/events/room/${newEvent.roomId}`,
                 requestData,
                 { withCredentials: true, credentials: 'include' }
             );
@@ -103,7 +103,7 @@ const Calendar = () => {
         if (!window.confirm('Are you sure you want to delete this event?')) return;
 
         try {
-            await axios.delete(`${process.env.REACT_APP_BASE_API_URL}/api/events/${eventId}`, {
+            await apiClient.delete(`/api/events/${eventId}`, {
                 withCredentials: true,
                 credentials: 'include',
             });
