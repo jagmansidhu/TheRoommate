@@ -1,7 +1,7 @@
 import apiClient from '../../apiClient';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+
 import RoomDetailsPage from './RoomDetailsPage';
 import { useAppData } from '../../App';
 
@@ -78,7 +78,6 @@ const RoomDetailsPageWrapper = () => {
 
     return (
         <RoomDetailsPage
-            show={true}
             room={room}
             onClose={handleClose}
             onLeaveRoom={handleLeaveRoom}

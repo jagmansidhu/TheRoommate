@@ -1,6 +1,6 @@
 import apiClient from '../../apiClient';
 import React, { useState } from 'react';
-import axios from 'axios';
+
 
 const JoinRoomModal = ({ show, onClose, onRoomJoined }) => {
     const [joinRoomCode, setJoinRoomCode] = useState('');

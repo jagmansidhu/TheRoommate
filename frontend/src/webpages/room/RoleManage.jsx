@@ -1,6 +1,6 @@
 import apiClient from '../../apiClient';
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+
 import { ROLES, ROLE_RANK } from '../../constants/roles';
 import useCurrentUser from './useCurrentUser';
 import '../../styling/Rooms.css';
