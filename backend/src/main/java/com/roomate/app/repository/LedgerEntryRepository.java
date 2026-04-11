@@ -3,6 +3,7 @@ package com.roomate.app.repository;
 import com.roomate.app.entities.ledger.LedgerEntryEntity;
 import com.roomate.app.entities.ledger.LedgerEntryStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -38,4 +39,8 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntryEntity, 
      * Count entries by room and status
      */
     long countByRoomIdAndStatus(UUID roomId, LedgerEntryStatus status);
+
+    @Modifying
+    @Query("DELETE FROM LedgerEntryEntity e WHERE e.room.id = :roomId")
+    void deleteAllByRoomId(@Param("roomId") UUID roomId);
 }

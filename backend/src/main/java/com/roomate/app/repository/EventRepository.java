@@ -27,5 +27,5 @@ public interface EventRepository extends JpaRepository<EventEntity, UUID> {
 
     @Modifying
     @Query("DELETE FROM EventEntity e WHERE e.room.id = :roomid")
-    void deleteAllByEventId(@Param("roomid") UUID roomid);
+    void deleteAllByRoomId(@Param("roomid") UUID roomid);
 }

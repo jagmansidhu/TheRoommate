@@ -40,6 +40,10 @@ class RoomServiceUnitTest {
     private UtilityRepository utilityRepository;
     @Mock
     private ChoreRepository choreRepository;
+    @Mock
+    private GroceryListRepository groceryListRepository;
+    @Mock
+    private LedgerEntryRepository ledgerEntryRepository;
 
 
     @InjectMocks

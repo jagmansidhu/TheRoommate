@@ -36,6 +36,10 @@ public class RoomServiceImplt implements RoomService {
     private UtilityRepository utilityRepository;
     @Autowired
     private ChoreRepository choreRepository;
+    @Autowired
+    private GroceryListRepository groceryListRepository;
+    @Autowired
+    private LedgerEntryRepository ledgerEntryRepository;
 
     public RoomServiceImplt(UserRepository userRepository, RoomRepository roomRepository, RoomMemberRepository roomMemberRepository,
                             EventRepository eventRepository) {
@@ -206,7 +210,10 @@ public class RoomServiceImplt implements RoomService {
 
         choreRepository.deleteAllByRoomId(roomId);
 
-        eventRepository.deleteAllByEventId(roomId);
+        eventRepository.deleteAllByRoomId(roomId);
+
+        groceryListRepository.deleteAllByRoomId(roomId);
+        ledgerEntryRepository.deleteAllByRoomId(roomId);
 
         roomMemberRepository.deleteAllByRoomId(roomId);
 
