@@ -201,181 +201,229 @@ const RoomDetailsPage = ({
         return 'Resident';
     };
 
+    const memberCount = room.members?.length || 0;
+    const occupancy = Math.min(Math.round((memberCount / 6) * 100), 100);
+    const currentMember = room.members?.find(m => m.userId === user?.email);
+    const myRole = getRoleLabel(currentMember?.role);
+
     return (
         <div className="rd-container">
 
-            {/* ── Topbar ── */}
-            <div className="rd-topbar">
+            {/* ── Back nav ── */}
+            <nav className="rd-nav">
                 <button className="rd-back-btn" onClick={onClose}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="15 18 9 12 15 6" />
                     </svg>
                     Rooms
                 </button>
-            </div>
+            </nav>
 
-            {/* ── Room Header ── */}
-            <div className="rd-header">
-                <div className="rd-header-left">
-                    <div className="rd-monogram">{room.name?.[0]?.toUpperCase()}</div>
-                    <div>
+            {/* ── Header Band ── */}
+            <div className="rd-header-band">
+                <div className="rd-header-band-left">
+                    <div className="rd-monogram" aria-hidden="true">
+                        {room.name?.[0]?.toUpperCase()}
+                    </div>
+                    <div className="rd-header-text">
+                        <div className="rd-header-eyebrow">Shared Housing · {myRole}</div>
                         <h1 className="rd-room-name">{room.name}</h1>
-                        {room.address && <p className="rd-room-address">{room.address}</p>}
+                        {room.address && (
+                            <p className="rd-room-address">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                    <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                                {room.address}
+                            </p>
+                        )}
                     </div>
                 </div>
-                <div className="rd-header-right">
-                    <div className="rd-header-stat">
-                        <span className="rd-header-stat-value">
-                            {room.members?.length || 0}
-                            <span className="rd-header-stat-denom">/6</span>
-                        </span>
-                        <span className="rd-header-stat-label">Members</span>
-                    </div>
-                    <div className="rd-header-stat">
-                        <span className="rd-header-stat-value">{chores.length}</span>
-                        <span className="rd-header-stat-label">Chores</span>
-                    </div>
-                    <div className="rd-header-stat">
-                        <span className="rd-header-stat-value">{utilities.length}</span>
-                        <span className="rd-header-stat-label">Utilities</span>
-                    </div>
-                    <code className="rd-room-code">{room.roomCode}</code>
-                </div>
-            </div>
-
-            <div className="rd-divider" />
-
-            {/* ── Two columns: Members + Utilities ── */}
-            <div className="rd-grid-2">
-
-                <section className="rd-section">
-                    <h2 className="rd-section-title">Members</h2>
-                    <div className="rd-member-list">
-                        {room.members?.map((member) => {
-                            const isSelf = member.userId === user.email;
-                            return (
-                                <div key={member.id} className="rd-member-row">
-                                    <div className="rd-member-avatar">{getMemberInitial(member)}</div>
-                                    <div className="rd-member-info">
-                                        <span className="rd-member-name">
-                                            {member.name}
-                                            {isSelf && <span className="rd-you-tag">You</span>}
-                                        </span>
-                                        <span className={`rd-role-tag ${member.role}`}>{getRoleLabel(member.role)}</span>
-                                    </div>
-                                    {isSelf && member.role !== ROLES.HEAD_ROOMMATE && (
-                                        <button className="rd-leave-btn" onClick={() => onLeaveRoom(member.id)}>
-                                            Leave
-                                        </button>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </section>
-
-                <section className="rd-section">
-                    <h2 className="rd-section-title">Your Utilities</h2>
-                    {userUtilities.length === 0 ? (
-                        <p className="rd-empty">No utilities assigned to you.</p>
-                    ) : (
-                        <div className="rd-utility-list">
-                            {userUtilities.map(u => (
-                                <div key={u.id} className="rd-utility-row">
-                                    <div className="rd-utility-icon">
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <line x1="12" y1="1" x2="12" y2="23"/>
-                                            <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
-                                        </svg>
-                                    </div>
-                                    <span className="rd-utility-name">{u.utilityName}</span>
-                                    <span className="rd-utility-price">${u.utilityPrice.toFixed(2)}</span>
-                                </div>
-                            ))}
+                <div className="rd-header-band-right">
+                    <div className="rd-header-occ">
+                        <div className="rd-header-occ-text">
+                            <span className="rd-header-occ-count">{memberCount} <span className="rd-header-occ-max">of 6</span></span>
+                            <span className="rd-header-occ-label">Occupied</span>
                         </div>
-                    )}
-                </section>
-
+                        <div className="rd-header-occ-bar">
+                            <div className="rd-header-occ-fill" style={{ width: `${occupancy}%` }} />
+                        </div>
+                    </div>
+                    <code className="rd-room-code-badge">{room.roomCode}</code>
+                </div>
             </div>
 
-            {/* ── Upcoming Chores ── */}
-            <section className="rd-section rd-section-full">
-                <h2 className="rd-section-title">Upcoming Chores</h2>
-                {Object.keys(choresByDate).length === 0 ? (
-                    <p className="rd-empty">No chores in the next 30 days.</p>
-                ) : (
-                    <div className="rd-chore-timeline">
-                        {Object.entries(choresByDate).map(([date, choresForDate]) => (
-                            <div key={date} className="rd-chore-group">
-                                <div className="rd-chore-date">{date}</div>
-                                <div className="rd-chore-chips">
-                                    {choresForDate.map(chore => (
-                                        <span key={chore.id} className="rd-chore-chip">
-                                            {chore.choreName}
+            {/* ── Stat Strip ── */}
+            <div className="rd-stat-strip">
+                <div className="rd-stat-cell">
+                    <span className="rd-stat-num">{memberCount}<span className="rd-stat-denom">/6</span></span>
+                    <span className="rd-stat-lbl">Members</span>
+                </div>
+                <div className="rd-stat-sep" />
+                <div className="rd-stat-cell">
+                    <span className="rd-stat-num">{chores.length}</span>
+                    <span className="rd-stat-lbl">Total Chores</span>
+                </div>
+                <div className="rd-stat-sep" />
+                <div className="rd-stat-cell">
+                    <span className="rd-stat-num">{Object.keys(choresByDate).length}</span>
+                    <span className="rd-stat-lbl">Due This Month</span>
+                </div>
+                <div className="rd-stat-sep" />
+                <div className="rd-stat-cell">
+                    <span className="rd-stat-num">{utilities.length}</span>
+                    <span className="rd-stat-lbl">Utilities</span>
+                </div>
+                <div className="rd-stat-sep" />
+                <div className="rd-stat-cell">
+                    <span className="rd-stat-num">
+                        ${userUtilities.reduce((s, u) => s + (u.utilityPrice || 0), 0).toFixed(0)}
+                    </span>
+                    <span className="rd-stat-lbl">Your Monthly</span>
+                </div>
+            </div>
+
+            {/* ── Content Grid ── */}
+            <div className="rd-content-grid">
+
+                {/* Left column */}
+                <div className="rd-col-left">
+
+                    {/* Members */}
+                    <section className="rd-card">
+                        <h2 className="rd-card-title">Members</h2>
+                        <div className="rd-member-list">
+                            {room.members?.map((member) => {
+                                const isSelf = member.userId === user.email;
+                                return (
+                                    <div key={member.id} className="rd-member-row">
+                                        <div className="rd-member-avatar">{getMemberInitial(member)}</div>
+                                        <div className="rd-member-info">
+                                            <div className="rd-member-name">
+                                                {member.name}
+                                                {isSelf && <span className="rd-you-tag">You</span>}
+                                            </div>
+                                            <span className={`rd-role-tag ${member.role}`}>
+                                                {getRoleLabel(member.role)}
+                                            </span>
+                                        </div>
+                                        {isSelf && member.role !== ROLES.HEAD_ROOMMATE && (
+                                            <button className="rd-leave-btn" onClick={() => onLeaveRoom(member.id)}>
+                                                Leave
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+
+                    {/* Your Utilities */}
+                    <section className="rd-card">
+                        <h2 className="rd-card-title">Your Utilities</h2>
+                        {userUtilities.length === 0 ? (
+                            <p className="rd-empty-text">No utilities assigned to you.</p>
+                        ) : (
+                            <div className="rd-utility-list">
+                                {userUtilities.map(u => (
+                                    <div key={u.id} className="rd-utility-row">
+                                        <div className="rd-utility-dot" />
+                                        <span className="rd-utility-name">{u.utilityName}</span>
+                                        <span className="rd-utility-freq">
+                                            {u.choreFrequencyUnitEnum?.toLowerCase() || '—'}
                                         </span>
-                                    ))}
+                                        <span className="rd-utility-price">${Number(u.utilityPrice).toFixed(2)}</span>
+                                    </div>
+                                ))}
+                                <div className="rd-utility-total">
+                                    <span>Total</span>
+                                    <span>${userUtilities.reduce((s, u) => s + (u.utilityPrice || 0), 0).toFixed(2)}</span>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </section>
+                        )}
+                    </section>
+                </div>
+
+                {/* Right column — Chores */}
+                <div className="rd-col-right">
+                    <section className="rd-card rd-card-full">
+                        <h2 className="rd-card-title">Upcoming Chores</h2>
+                        {Object.keys(choresByDate).length === 0 ? (
+                            <div className="rd-empty-state">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                                    <path d="M9 11l3 3L22 4"/>
+                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                                </svg>
+                                <p>No chores in the next 30 days</p>
+                            </div>
+                        ) : (
+                            <div className="rd-timeline">
+                                {Object.entries(choresByDate).map(([date, dayChores]) => (
+                                    <div key={date} className="rd-timeline-row">
+                                        <div className="rd-timeline-date">
+                                            <span className="rd-timeline-day">{date.split(' ')[1]}</span>
+                                            <span className="rd-timeline-month">{date.split(' ')[0]}</span>
+                                        </div>
+                                        <div className="rd-timeline-line">
+                                            <div className="rd-timeline-dot" />
+                                        </div>
+                                        <div className="rd-timeline-content">
+                                            {dayChores.map(chore => (
+                                                <div key={chore.id} className="rd-timeline-item">
+                                                    {chore.choreName}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                </div>
+            </div>
 
             {/* ── Management ── */}
             {(isAssistantRoommate || isHeadRoommate) && (
-                <section className="rd-section rd-section-full">
-                    <h2 className="rd-section-title">Room Management</h2>
-                    <div className="rd-action-groups">
+                <section className="rd-card rd-manage-section">
+                    <h2 className="rd-card-title">Room Management</h2>
+                    <div className="rd-manage-grid">
 
                         <div className="rd-action-group">
                             <p className="rd-action-group-label">Add</p>
                             <div className="rd-action-list">
-                                <button className="rd-action-row" onClick={() => setShowInviteModal(true)}>
-                                    <div className="rd-action-icon rd-icon-invite" />
-                                    <div className="rd-action-text">
-                                        <span className="rd-action-title">Invite Roommate</span>
-                                        <span className="rd-action-desc">Send an invite by email</span>
-                                    </div>
-                                    <div className="rd-chevron" />
-                                </button>
-                                <button className="rd-action-row" onClick={() => setShowChoreModal(true)}>
-                                    <div className="rd-action-icon rd-icon-chore" />
-                                    <div className="rd-action-text">
-                                        <span className="rd-action-title">Create Chore</span>
-                                        <span className="rd-action-desc">Schedule recurring tasks</span>
-                                    </div>
-                                    <div className="rd-chevron" />
-                                </button>
-                                <button className="rd-action-row" onClick={() => setShowUtilityModal(true)}>
-                                    <div className="rd-action-icon rd-icon-utility" />
-                                    <div className="rd-action-text">
-                                        <span className="rd-action-title">Add Utility</span>
-                                        <span className="rd-action-desc">Track bills and split costs</span>
-                                    </div>
-                                    <div className="rd-chevron" />
-                                </button>
+                                {[
+                                    { icon: 'rd-icon-invite', label: 'Invite Roommate', desc: 'Send an invite by email', action: () => setShowInviteModal(true) },
+                                    { icon: 'rd-icon-chore', label: 'Create Chore', desc: 'Schedule recurring tasks', action: () => setShowChoreModal(true) },
+                                    { icon: 'rd-icon-utility', label: 'Add Utility', desc: 'Track bills and split costs', action: () => setShowUtilityModal(true) },
+                                ].map(item => (
+                                    <button key={item.label} className="rd-action-row" onClick={item.action}>
+                                        <div className={`rd-action-icon ${item.icon}`} />
+                                        <div className="rd-action-text">
+                                            <span className="rd-action-title">{item.label}</span>
+                                            <span className="rd-action-desc">{item.desc}</span>
+                                        </div>
+                                        <div className="rd-chevron" />
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
                         <div className="rd-action-group">
                             <p className="rd-action-group-label">Remove</p>
                             <div className="rd-action-list">
-                                <button className="rd-action-row" onClick={() => setShowRemoveChoreModal(true)}>
-                                    <div className="rd-action-icon rd-icon-remove-chore" />
-                                    <div className="rd-action-text">
-                                        <span className="rd-action-title">Remove Chore</span>
-                                        <span className="rd-action-desc">Delete a chore type</span>
-                                    </div>
-                                    <div className="rd-chevron" />
-                                </button>
-                                <button className="rd-action-row" onClick={() => setShowRemoveUtilityModal(true)}>
-                                    <div className="rd-action-icon rd-icon-remove-utility" />
-                                    <div className="rd-action-text">
-                                        <span className="rd-action-title">Remove Utility</span>
-                                        <span className="rd-action-desc">Delete a tracked utility</span>
-                                    </div>
-                                    <div className="rd-chevron" />
-                                </button>
+                                {[
+                                    { icon: 'rd-icon-remove-chore', label: 'Remove Chore', desc: 'Delete a chore type', action: () => setShowRemoveChoreModal(true) },
+                                    { icon: 'rd-icon-remove-utility', label: 'Remove Utility', desc: 'Delete a tracked utility', action: () => setShowRemoveUtilityModal(true) },
+                                ].map(item => (
+                                    <button key={item.label} className="rd-action-row" onClick={item.action}>
+                                        <div className={`rd-action-icon ${item.icon}`} />
+                                        <div className="rd-action-text">
+                                            <span className="rd-action-title">{item.label}</span>
+                                            <span className="rd-action-desc">{item.desc}</span>
+                                        </div>
+                                        <div className="rd-chevron" />
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
@@ -387,14 +435,13 @@ const RoomDetailsPage = ({
                                         <div className="rd-action-icon rd-icon-delete" />
                                         <div className="rd-action-text">
                                             <span className="rd-action-title rd-danger-title">Delete Room</span>
-                                            <span className="rd-action-desc">Permanently remove this room</span>
+                                            <span className="rd-action-desc">Permanently remove this room and all data</span>
                                         </div>
                                         <div className="rd-chevron" />
                                     </button>
                                 </div>
                             </div>
                         )}
-
                     </div>
                 </section>
             )}
