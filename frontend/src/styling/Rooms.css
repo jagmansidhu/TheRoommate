@@ -4,6 +4,38 @@
    ========================================== */
 
 /* ==========================================
+   Room Detail Back Link / Breadcrumb
+   ========================================== */
+.room-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-5);
+  padding: var(--spacing-2) var(--spacing-3);
+  background: none;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.room-back-link:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--primary-400);
+  transform: none;
+  box-shadow: none;
+}
+
+.room-back-arrow {
+  font-size: 1.1em;
+  line-height: 1;
+}
+
+/* ==========================================
    Room Details Header (Compact)
    ========================================== */
 .room-details-header {
