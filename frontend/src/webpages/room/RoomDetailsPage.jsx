@@ -1,5 +1,6 @@
 import apiClient from '../../apiClient';
 import { useState, useEffect } from 'react';
+import React from 'react';
 import axios from 'axios';
 import { ROLES } from "../../constants/roles";
 import { useUser, useAppData } from '../../App';
@@ -248,6 +249,11 @@ const RoomDetailsPage = ({
 
     return (
         <div className="dashboard-container">
+            {/* Back breadcrumb */}
+            <button className="room-back-link" onClick={onClose}>
+                <span className="room-back-arrow">&#8592;</span> Back to Rooms
+            </button>
+
             {/* Room Header - Compact with member count */}
             <div className="room-details-header">
                 <div className="room-details-title">
