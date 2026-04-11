@@ -43,8 +43,54 @@ const Dashboard = () => {
         return <OnboardingPage onComplete={handleOnboardingComplete} />;
     }
 
-    const upcomingChores = userChores.slice(0, 5);
-    const upcomingUtilities = userUtilities.slice(0, 5);
+    // --- Chores: only those due today ---
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const choresToday = userChores.filter(chore => {
+        if (!chore.dueAt) return false;
+        const due = new Date(chore.dueAt);
+        return due >= today && due < tomorrow;
+    });
+
+    // --- Utilities: bucket by frequency so user sees bills relevant to their period ---
+    const now = new Date();
+    const in7Days = new Date(now);
+    in7Days.setDate(now.getDate() + 7);
+    const in30Days = new Date(now);
+    in30Days.setDate(now.getDate() + 30);
+
+    const getFrequencyLabel = (freq) => {
+        if (freq === 'WEEKLY') return 'Weekly';
+        if (freq === 'BIWEEKLY') return 'Biweekly';
+        if (freq === 'MONTHLY') return 'Monthly';
+        return freq || '';
+    };
+
+    // Weekly & biweekly: show bills due within 7 days
+    const weeklyBills = userUtilities.filter(u => {
+        const freq = u.choreFrequencyUnitEnum;
+        if (freq !== 'WEEKLY' && freq !== 'BIWEEKLY') return false;
+        if (!u.dueAt) return true;
+        const due = new Date(u.dueAt);
+        return due >= now && due <= in7Days;
+    });
+
+    // Monthly: show bills due within 30 days
+    const monthlyBills = userUtilities.filter(u => {
+        const freq = u.choreFrequencyUnitEnum;
+        if (freq !== 'MONTHLY') return false;
+        if (!u.dueAt) return true;
+        const due = new Date(u.dueAt);
+        return due >= now && due <= in30Days;
+    });
+
+    // Utilities with no frequency set — always show them
+    const miscBills = userUtilities.filter(u => !u.choreFrequencyUnitEnum);
+
+    const relevantUtilities = [...weeklyBills, ...monthlyBills, ...miscBills];
 
     return (
         <div className="dashboard-container">
@@ -58,12 +104,12 @@ const Dashboard = () => {
             <div className="dashboard-stats">
                 <div className="stat-card">
                     <div className="stat-icon stat-icon-chores"></div>
-                    <div className="stat-value">{userChores.length}</div>
-                    <div className="stat-label">Pending Chores</div>
+                    <div className="stat-value">{choresToday.length}</div>
+                    <div className="stat-label">Chores Due Today</div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon stat-icon-bills"></div>
-                    <div className="stat-value">{userUtilities.length}</div>
+                    <div className="stat-value">{relevantUtilities.length}</div>
                     <div className="stat-label">Upcoming Bills</div>
                 </div>
                 <div className="stat-card">
@@ -73,55 +119,59 @@ const Dashboard = () => {
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon stat-icon-complete"></div>
-                    <div className="stat-value">-</div>
+                    <div className="stat-value">{userChores.filter(c => c.completed).length}</div>
                     <div className="stat-label">Completed This Week</div>
                 </div>
             </div>
 
             {/* Main Content Grid */}
             <div className="dashboard-content">
-                {/* Upcoming Chores */}
+                {/* Chores Due Today */}
                 <div className="dashboard-section">
-                    <h3>Upcoming Chores</h3>
-                    {upcomingChores.length > 0 ? (
+                    <h3>Chores Due Today</h3>
+                    {choresToday.length > 0 ? (
                         <ul>
-                            {upcomingChores.map((chore, index) => (
+                            {choresToday.map((chore, index) => (
                                 <li key={index}>
                                     <div className="item-icon item-icon-chore"></div>
                                     <div className="item-content">
                                         <div className="item-title">{chore.choreName || 'Untitled Chore'}</div>
                                         <div className="item-meta">
-                                            {chore.dueAt ? `Due: ${new Date(chore.dueAt).toLocaleDateString()}` : 'No due date'}
+                                            Due: {new Date(chore.dueAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {chore.choreFrequencyUnitEnum && ` · ${getFrequencyLabel(chore.choreFrequencyUnitEnum)}`}
                                         </div>
                                     </div>
                                 </li>
                             ))}
                         </ul>
                     ) : (
-                        <p className="empty-message">No upcoming chores. You're all caught up!</p>
+                        <p className="empty-message">No chores due today. Enjoy your day! 🎉</p>
                     )}
                 </div>
 
-                {/* Upcoming Utilities */}
+                {/* Relevant Bills bucketed by frequency */}
                 <div className="dashboard-section">
                     <h3>Upcoming Bills</h3>
-                    {upcomingUtilities.length > 0 ? (
+                    {relevantUtilities.length > 0 ? (
                         <ul>
-                            {upcomingUtilities.map((utility, index) => (
+                            {relevantUtilities.map((utility, index) => (
                                 <li key={index}>
                                     <div className="item-icon item-icon-bill"></div>
                                     <div className="item-content">
                                         <div className="item-title">{utility.utilityName || 'Untitled Bill'}</div>
                                         <div className="item-meta">
-                                            {utility.dueAt ? `Due: ${new Date(utility.dueAt).toLocaleDateString()}` : 'No due date'}
-                                            {utility.utilityPrice && ` - $${utility.utilityPrice}`}
+                                            {utility.choreFrequencyUnitEnum && (
+                                                <span className="badge-frequency">{getFrequencyLabel(utility.choreFrequencyUnitEnum)}</span>
+                                            )}
+                                            {utility.dueAt && ` Due: ${new Date(utility.dueAt).toLocaleDateString()}`}
+                                            {utility.utilityPrice != null && ` · $${Number(utility.utilityPrice).toFixed(2)}`}
                                         </div>
                                     </div>
                                 </li>
                             ))}
                         </ul>
                     ) : (
-                        <p className="empty-message">No upcoming bills. All caught up!</p>
+                        <p className="empty-message">No upcoming bills this period. All caught up!</p>
                     )}
                 </div>
             </div>
@@ -130,5 +180,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
