@@ -273,8 +273,7 @@ const LoggedOutNavbar = () => {
         <header className="App-header">
             <div className="header-content">
                 <Link to="/" className="logo">
-                    <div className="logo-icon">D</div>
-                    <span>TheRoomate</span>
+                    <span>TheRoommate</span>
                 </Link>
                 <nav className="nav">
                     <Link to="/login" className="btn btn-secondary">Sign In</Link>
@@ -292,8 +291,7 @@ const LoggedInNavbar = () => {
         <header className="App-header">
             <div className="header-content">
                 <Link to="/dashboard" className="logo">
-                    <div className="logo-icon">D</div>
-                    <span>TheRoomate</span>
+                    <span>TheRoommate</span>
                 </Link>
                 <nav className="nav">
                     <Link to="/dashboard" className="nav-link">Dashboard</Link>

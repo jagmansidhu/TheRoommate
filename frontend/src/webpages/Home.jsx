@@ -66,7 +66,7 @@ const Home = () => {
 
                     <p className="hero-sub">
                         Chores, bills, groceries — handled together.
-                        DaRoomate turns shared living from stressful to seamless.
+                        TheRoommate turns shared living from stressful to seamless.
                     </p>
 
                     <div className="hero-actions">
@@ -254,7 +254,7 @@ const Home = () => {
             <footer className="landing-footer">
                 <div className="footer-inner">
                     <div>
-                        <span className="footer-logo">DaRoomate</span>
+                        <span className="footer-logo">TheRoommate</span>
                         <p className="footer-tagline">Making shared living simple.</p>
                     </div>
                     <nav className="footer-nav">
@@ -263,7 +263,7 @@ const Home = () => {
                         <Link to="/register">Get Started</Link>
                         <Link to="/login">Sign In</Link>
                     </nav>
-                    <span className="footer-copy">© 2026 DaRoomate</span>
+                    <span className="footer-copy">© 2026 TheRoommate</span>
                 </div>
             </footer>
 

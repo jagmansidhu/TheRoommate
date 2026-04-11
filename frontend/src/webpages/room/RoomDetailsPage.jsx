@@ -4,6 +4,7 @@ import React from 'react';
 import { ROLES } from "../../constants/roles";
 import { useUser, useAppData } from '../../App';
 import '../../styling/Rooms.css';
+import '../../styling/RoomDetails.css';
 import RemoveUtilityModal from './modals/RemoveUtilityModal';
 import UtilityModal from './modals/UtilityModal';
 import RemoveChoreModal from './modals/RemoveChoreModal';
