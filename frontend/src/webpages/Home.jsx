@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import '../styling/Home.css';
 
-import featuresMockup from '../assets/features_social_mockup.png';
 
 const MARQUEE_ITEMS = [
     'Chore rotation', '·', 'Shared groceries', '·',
@@ -224,12 +223,6 @@ const Home = () => {
                         ))}
                     </div>
 
-                    <div className="hiw-showcase reveal">
-                        <img
-                            src={featuresMockup}
-                            alt="DaRoomate app — chores, expenses, and groceries screens"
-                        />
-                    </div>
 
                 </div>
             </section>
