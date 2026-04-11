@@ -53,6 +53,11 @@ const CreateRoomModal = ({show, onClose, onCreateRoom}) => {
                     </div>
                     <div className="form-group">
                         <label htmlFor="roomAddress">Address</label>
+                        {/* TODO: Replace with Google Places Autocomplete input.
+                             - Install @react-google-maps/api or load Places JS SDK manually
+                             - On selection, parse address_components for city, province, postalCode, country
+                             - Also update AddressEntity, RoomEntity, CreateRoomRequest, and RoomDto
+                               to store structured address fields (all nullable) */}
                         <input
                             type="text"
                             id="roomAddress"
