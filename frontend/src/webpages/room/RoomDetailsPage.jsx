@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ROLES } from "../../constants/roles";
-import { useUser } from '../../App';
+import { useUser, useAppData } from '../../App';
 import '../../styling/Rooms.css';
 import '../../styling/Dashboard.css';
 
@@ -12,6 +12,7 @@ const RoomDetailsPage = ({
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteStatus, setInviteStatus] = useState('');
     const { user } = useUser();
+    const { refreshUserChores, refreshUserUtilities } = useAppData();
     const [utilities, setUtilities] = useState([]);
     const [showRemoveUtilityModal, setShowRemoveUtilityModal] = useState(false);
     const [selectedUtilityId, setSelectedUtilityId] = useState("");
@@ -61,6 +62,7 @@ const RoomDetailsPage = ({
                     { withCredentials: true }
                 );
                 setChores(choresResponse.data);
+                refreshUserChores();
             }
         } catch (error) {
             console.error('Error creating chores:', error);
@@ -88,6 +90,7 @@ const RoomDetailsPage = ({
                 { withCredentials: true }
             );
             setChores(choresResponse.data);
+            refreshUserChores();
         } catch (error) {
             console.error('Error removing chores:', error);
         }
@@ -191,6 +194,7 @@ const RoomDetailsPage = ({
                         { withCredentials: true }
                     );
                     setUserUtilities(userUtilitiesResponse.data);
+                    refreshUserUtilities();
                 }
             }
         } catch (err) {
@@ -211,6 +215,7 @@ const RoomDetailsPage = ({
                     { withCredentials: true }
                 );
                 setUserUtilities(userUtilitiesResponse.data);
+                refreshUserUtilities();
             }
             setShowRemoveUtilityModal(false);
             setSelectedUtilityId("");
