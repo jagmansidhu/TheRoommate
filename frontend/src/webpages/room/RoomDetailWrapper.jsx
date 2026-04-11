@@ -2,16 +2,29 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import RoomDetailsPage from './RoomDetailsPage';
+import { useAppData } from '../../App';
 
 const RoomDetailsPageWrapper = () => {
     const { roomId } = useParams();
     const navigate = useNavigate();
+    const { rooms } = useAppData();
 
     const [room, setRoom] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchRoom = async () => {
+            // Check cache first for instant loading
+            if (rooms && rooms.length > 0) {
+                const cachedRoom = rooms.find(r => r.id === roomId);
+                if (cachedRoom) {
+                    setRoom(cachedRoom);
+                    setLoading(false);
+                    return;
+                }
+            }
+
+            // Fallback: network fetch if hard refreshed and cache is empty
             try {
                 const response = await axios.get(`${process.env.REACT_APP_BASE_API_URL}/api/rooms/${roomId}`, {
                     withCredentials: true,
@@ -25,10 +38,10 @@ const RoomDetailsPageWrapper = () => {
             }
         };
         fetchRoom();
-    }, [roomId, navigate]);
+    }, [roomId, navigate, rooms]);
 
     const handleClose = useCallback(() => {
-        navigate('/rooms');
+        navigate('/rooms?manage=true');
     }, [navigate]);
 
     const handleLeaveRoom = useCallback((memberId) => {

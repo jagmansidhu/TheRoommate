@@ -21,6 +21,13 @@ const Rooms = () => {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [showRoleManagement, setShowRoleManagement] = useState(false);
 
+    // Auto-redirect if only one room exists
+    React.useEffect(() => {
+        if (!roomsLoading && rooms?.length === 1 && !window.location.search.includes('manage=true')) {
+            navigate(`/rooms/${rooms[0].id}`, { replace: true });
+        }
+    }, [rooms, roomsLoading, navigate]);
+
     const handleCreateRoom = (newRoomData) => {
         appendRoom(newRoomData);
     };
