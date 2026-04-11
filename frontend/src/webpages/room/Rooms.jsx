@@ -9,16 +9,6 @@ import { ROLES } from '../../constants/roles';
 import useCurrentUser from './useCurrentUser';
 import { useAppData } from '../../App';
 
-// ── helper: deterministic gradient per room index ──────────────────────────
-const CARD_GRADIENTS = [
-    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-];
-
 const getRoleLabel = (role) => {
     if (role === ROLES.HEAD_ROOMMATE) return 'Owner';
     if (role === ROLES.ASSISTANT) return 'Manager';
@@ -27,7 +17,10 @@ const getRoleLabel = (role) => {
 
 const getMemberInitials = (member) => {
     if (member.name) {
-        return member.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        const parts = member.name.trim().split(' ');
+        return parts.length > 1
+            ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+            : parts[0][0].toUpperCase();
     }
     return (member.userId || '?')[0].toUpperCase();
 };
@@ -40,11 +33,9 @@ const Rooms = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
     const [error, setError] = useState(null);
-
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [showRoleManagement, setShowRoleManagement] = useState(false);
 
-    // Auto-redirect if only one room exists
     React.useEffect(() => {
         if (!roomsLoading && rooms?.length === 1 && !window.location.search.includes('manage=true')) {
             navigate(`/rooms/${rooms[0].id}`, { replace: true });
@@ -63,35 +54,30 @@ const Rooms = () => {
         return (
             <div className="pm-container">
                 <div className="pm-loading">
-                    <div className="pm-loading-spinner"></div>
-                    <span>Loading properties…</span>
+                    <div className="pm-loading-spinner" />
+                    <span>Loading…</span>
                 </div>
             </div>
         );
     }
 
     const totalMembers = rooms.reduce((sum, r) => sum + (r.members?.length || 0), 0);
-    const occupancyRate = rooms.length > 0
-        ? Math.round((totalMembers / (rooms.length * 6)) * 100)
-        : 0;
 
     return (
         <div className="pm-container">
 
-            {/* ── Page Header ─────────────────────────────────────── */}
+            {/* ── Page Header ── */}
             <div className="pm-header">
-                <div className="pm-header-text">
-                    <h1 className="pm-title">Properties</h1>
-                    <p className="pm-subtitle">Manage your shared living spaces</p>
+                <div>
+                    <p className="pm-eyebrow">Property Portfolio</p>
+                    <h1 className="pm-title">My Rooms</h1>
                 </div>
                 <div className="pm-header-actions">
-                    <button className="pm-btn pm-btn-secondary" onClick={() => setShowJoinModal(true)}>
-                        <span className="pm-btn-icon">+</span>
-                        Join Room
+                    <button className="pm-btn pm-btn-ghost" onClick={() => setShowJoinModal(true)}>
+                        Join with Code
                     </button>
                     <button className="pm-btn pm-btn-primary" onClick={() => setShowCreateModal(true)}>
-                        <span className="pm-btn-icon">+</span>
-                        New Property
+                        + New Room
                     </button>
                 </div>
             </div>
@@ -103,150 +89,135 @@ const Rooms = () => {
                 </div>
             )}
 
-            {/* ── Summary Strip ────────────────────────────────────── */}
+            {/* ── Stats Row ── */}
             {rooms.length > 0 && (
-                <div className="pm-summary-strip">
-                    <div className="pm-summary-stat">
-                        <span className="pm-summary-value">{rooms.length}</span>
-                        <span className="pm-summary-label">Properties</span>
+                <div className="pm-stats-row">
+                    <div className="pm-stat">
+                        <span className="pm-stat-value">{rooms.length}</span>
+                        <span className="pm-stat-label">Rooms</span>
                     </div>
-                    <div className="pm-summary-divider" />
-                    <div className="pm-summary-stat">
-                        <span className="pm-summary-value">{totalMembers}</span>
-                        <span className="pm-summary-label">Total Residents</span>
+                    <div className="pm-stat-sep" />
+                    <div className="pm-stat">
+                        <span className="pm-stat-value">{totalMembers}</span>
+                        <span className="pm-stat-label">Residents</span>
                     </div>
-                    <div className="pm-summary-divider" />
-                    <div className="pm-summary-stat">
-                        <span className="pm-summary-value">{occupancyRate}%</span>
-                        <span className="pm-summary-label">Occupancy</span>
-                    </div>
-                    <div className="pm-summary-divider" />
-                    <div className="pm-summary-stat">
-                        <span className="pm-summary-value">{3 - rooms.length}</span>
-                        <span className="pm-summary-label">Slots Available</span>
+                    <div className="pm-stat-sep" />
+                    <div className="pm-stat">
+                        <span className="pm-stat-value">{3 - rooms.length}</span>
+                        <span className="pm-stat-label">Available Slots</span>
                     </div>
                 </div>
             )}
 
-            {/* ── Property Grid ────────────────────────────────────── */}
+            {/* ── Room Cards ── */}
             {rooms.length === 0 ? (
                 <div className="pm-empty">
-                    <div className="pm-empty-icon">🏠</div>
-                    <h2 className="pm-empty-title">No properties yet</h2>
-                    <p className="pm-empty-body">Create your first property or join an existing room using a room code.</p>
+                    <div className="pm-empty-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/>
+                            <path d="M9 21V12h6v9"/>
+                        </svg>
+                    </div>
+                    <h2 className="pm-empty-title">No rooms yet</h2>
+                    <p className="pm-empty-body">Create a room or join an existing one with a room code.</p>
                     <div className="pm-empty-actions">
-                        <button className="pm-btn pm-btn-primary" onClick={() => setShowCreateModal(true)}>
-                            Create Property
-                        </button>
-                        <button className="pm-btn pm-btn-secondary" onClick={() => setShowJoinModal(true)}>
-                            Join with Code
-                        </button>
+                        <button className="pm-btn pm-btn-primary" onClick={() => setShowCreateModal(true)}>Create Room</button>
+                        <button className="pm-btn pm-btn-ghost" onClick={() => setShowJoinModal(true)}>Join with Code</button>
                     </div>
                 </div>
             ) : (
                 <div className="pm-grid">
-                    {rooms.map((room, idx) => {
+                    {rooms.map((room) => {
                         const currentMember = room.members?.find(m => m.userId === currentUser?.email);
                         const role = currentMember?.role;
                         const isHead = role === ROLES.HEAD_ROOMMATE;
                         const isAssistant = role === ROLES.ASSISTANT;
-                        const gradient = CARD_GRADIENTS[idx % CARD_GRADIENTS.length];
                         const memberCount = room.members?.length || 0;
-                        const occupancy = Math.round((memberCount / 6) * 100);
+                        const occupancy = Math.min(Math.round((memberCount / 6) * 100), 100);
 
                         return (
-                            <div key={room.id} className="pm-card" onClick={() => openRoomDetails(room)}>
-                                {/* Card banner */}
-                                <div className="pm-card-banner" style={{ background: gradient }}>
-                                    <div className="pm-card-banner-overlay" />
-                                    <div className="pm-card-banner-content">
-                                        <span className="pm-card-property-type">Shared Housing</span>
-                                        {isHead && <span className="pm-card-owner-badge">Owner</span>}
-                                        {!isHead && isAssistant && <span className="pm-card-manager-badge">Manager</span>}
+                            <div
+                                key={room.id}
+                                className="pm-card"
+                                onClick={() => openRoomDetails(room)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={e => e.key === 'Enter' && openRoomDetails(room)}
+                            >
+                                {/* Card Header */}
+                                <div className="pm-card-header">
+                                    <div className="pm-card-monogram">
+                                        {room.name?.[0]?.toUpperCase()}
                                     </div>
-                                    {/* Big initial */}
-                                    <div className="pm-card-initial">{room.name?.[0]?.toUpperCase()}</div>
+                                    <div className="pm-card-meta">
+                                        <h2 className="pm-card-name">{room.name}</h2>
+                                        {room.address && (
+                                            <p className="pm-card-address">{room.address}</p>
+                                        )}
+                                    </div>
+                                    <span className={`pm-role-tag ${isHead ? 'owner' : isAssistant ? 'manager' : 'resident'}`}>
+                                        {getRoleLabel(role)}
+                                    </span>
                                 </div>
 
-                                {/* Card body */}
+                                {/* Divider */}
+                                <div className="pm-card-divider" />
+
+                                {/* Card Body */}
                                 <div className="pm-card-body">
-                                    <div className="pm-card-title-row">
-                                        <h2 className="pm-card-name">{room.name}</h2>
-                                        <span className={`pm-card-role-pill ${isHead ? 'owner' : isAssistant ? 'manager' : 'resident'}`}>
-                                            {getRoleLabel(role)}
-                                        </span>
-                                    </div>
-
-                                    {room.address && (
-                                        <p className="pm-card-address">
-                                            <span className="pm-card-address-icon">📍</span>
-                                            {room.address}
-                                        </p>
-                                    )}
-
                                     {room.description && (
                                         <p className="pm-card-desc">{room.description}</p>
                                     )}
 
-                                    {/* Occupancy bar */}
+                                    {/* Occupancy */}
                                     <div className="pm-card-occupancy">
-                                        <div className="pm-card-occupancy-row">
-                                            <span className="pm-card-occupancy-label">Occupancy</span>
-                                            <span className="pm-card-occupancy-numbers">{memberCount} / 6</span>
+                                        <div className="pm-card-occupancy-header">
+                                            <span className="pm-card-occ-label">Occupancy</span>
+                                            <span className="pm-card-occ-count">{memberCount} of 6</span>
                                         </div>
-                                        <div className="pm-card-occupancy-bar">
-                                            <div
-                                                className="pm-card-occupancy-fill"
-                                                style={{ width: `${occupancy}%`, background: gradient }}
-                                            />
+                                        <div className="pm-card-occ-track">
+                                            <div className="pm-card-occ-fill" style={{ width: `${occupancy}%` }} />
                                         </div>
                                     </div>
 
-                                    {/* Member avatars */}
+                                    {/* Members */}
                                     <div className="pm-card-members">
-                                        <div className="pm-avatar-stack">
-                                            {room.members?.slice(0, 4).map((m, i) => (
+                                        <div className="pm-avatar-row">
+                                            {room.members?.slice(0, 5).map((m, i) => (
                                                 <div
                                                     key={m.id || i}
                                                     className="pm-avatar"
-                                                    style={{ zIndex: 4 - i }}
                                                     title={m.name || m.userId}
                                                 >
                                                     {getMemberInitials(m)}
                                                 </div>
                                             ))}
-                                            {memberCount > 4 && (
-                                                <div className="pm-avatar pm-avatar-more">+{memberCount - 4}</div>
+                                            {memberCount > 5 && (
+                                                <div className="pm-avatar pm-avatar-overflow">+{memberCount - 5}</div>
                                             )}
                                         </div>
-                                        <span className="pm-card-member-label">
-                                            {memberCount} {memberCount === 1 ? 'resident' : 'residents'}
-                                        </span>
                                     </div>
+                                </div>
 
-                                    {/* Actions */}
-                                    <div className="pm-card-actions" onClick={e => e.stopPropagation()}>
-                                        <button
-                                            className="pm-card-btn pm-card-btn-primary"
-                                            onClick={() => openRoomDetails(room)}
-                                        >
-                                            View Details
-                                        </button>
+                                {/* Card Footer */}
+                                <div className="pm-card-footer" onClick={e => e.stopPropagation()}>
+                                    <code className="pm-room-code">{room.roomCode}</code>
+                                    <div className="pm-card-footer-actions">
                                         {(isHead || isAssistant) && (
                                             <button
-                                                className="pm-card-btn pm-card-btn-ghost"
+                                                className="pm-card-action-btn"
                                                 onClick={() => openRoleManagement(room)}
                                             >
                                                 Manage Roles
                                             </button>
                                         )}
+                                        <button
+                                            className="pm-card-action-btn pm-card-action-primary"
+                                            onClick={() => openRoomDetails(room)}
+                                        >
+                                            Open →
+                                        </button>
                                     </div>
-                                </div>
-
-                                {/* Room code chip */}
-                                <div className="pm-card-code-chip">
-                                    <span className="pm-card-code-label">Code</span>
-                                    <code className="pm-card-code-value">{room.roomCode}</code>
                                 </div>
                             </div>
                         );
@@ -254,22 +225,9 @@ const Rooms = () => {
                 </div>
             )}
 
-            <CreateRoom
-                show={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-                onCreateRoom={handleCreateRoom}
-            />
-            <JoinRoom
-                show={showJoinModal}
-                onClose={() => setShowJoinModal(false)}
-                onRoomJoined={handleRoomJoined}
-            />
-            <RoleManagement
-                show={showRoleManagement}
-                room={selectedRoom}
-                onClose={() => setShowRoleManagement(false)}
-                onUpdate={refreshRooms}
-            />
+            <CreateRoom show={showCreateModal} onClose={() => setShowCreateModal(false)} onCreateRoom={handleCreateRoom} />
+            <JoinRoom show={showJoinModal} onClose={() => setShowJoinModal(false)} onRoomJoined={handleRoomJoined} />
+            <RoleManagement show={showRoleManagement} room={selectedRoom} onClose={() => setShowRoleManagement(false)} onUpdate={refreshRooms} />
         </div>
     );
 };
