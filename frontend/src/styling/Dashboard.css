@@ -1,126 +1,127 @@
 /* ==========================================
-   TheRoomate - Dashboard Page
-   Minimal/Clean Design
+   DaRoomate — Dashboard Page
+   Living-Paper Aesthetic
    ========================================== */
 
-/* ==========================================
-   Dashboard Container
-   ========================================== */
 .dashboard-container {
   max-width: 1200px;
   margin: 0 auto;
-  animation: fadeIn var(--transition-slow) ease-out;
+  animation: dashIn 0.6s cubic-bezier(.22,1,.36,1) both;
 }
 
-/* ==========================================
-   Dashboard Header
-   ========================================== */
+@keyframes dashIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Header */
 .dashboard-header {
-  margin-bottom: var(--spacing-8);
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--lp-rule);
 }
 
 .dashboard-header h1 {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-2);
+  font-family: var(--f-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.025em;
+  color: var(--lp-ink);
+  margin-bottom: 6px;
+  font-variation-settings: 'opsz' 48;
 }
 
 .dashboard-header p {
-  font-size: var(--font-size-lg);
-  color: var(--text-tertiary);
+  font-family: var(--f-body);
+  font-size: 0.82rem;
+  color: var(--lp-ink-muted);
   margin-bottom: 0;
 }
 
-/* ==========================================
-   Dashboard Stats Grid
-   ========================================== */
+/* Stats Grid */
 .dashboard-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--spacing-6);
-  margin-bottom: var(--spacing-8);
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
 .stat-card {
-  background-color: var(--bg-elevated);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-6);
-  transition: all var(--transition-normal);
+  background-color: var(--lp-card);
+  border: 1.5px solid var(--lp-border);
+  border-radius: 6px;
+  padding: 24px;
+  position: relative;
 }
 
-.stat-card:hover {
-  transform: none;
-  box-shadow: none;
-}
+/* Rotate each card slightly like pinboard */
+.stat-card:nth-child(1) { transform: rotate(-0.4deg); }
+.stat-card:nth-child(2) { transform: rotate(0.3deg); }
+.stat-card:nth-child(3) { transform: rotate(-0.2deg); }
+.stat-card:nth-child(4) { transform: rotate(0.5deg); }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--primary-50);
-  border-radius: var(--radius-lg);
-  font-size: 1.5rem;
-  margin-bottom: var(--spacing-4);
-}
-
-[data-theme="dark"] .stat-icon {
-  background-color: rgba(99, 102, 241, 0.1);
+  background-color: var(--lp-parchment);
+  border: 1px solid var(--lp-border);
+  border-radius: 6px;
+  font-size: 1.2rem;
+  margin-bottom: 16px;
 }
 
 .stat-value {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-1);
+  font-family: var(--f-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--lp-ink);
+  margin-bottom: 4px;
+  line-height: 1;
+  font-variation-settings: 'opsz' 48;
 }
 
 .stat-label {
-  font-size: var(--font-size-sm);
-  color: var(--text-tertiary);
+  font-family: var(--f-label);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lp-ink-muted);
 }
 
-/* ==========================================
-   Dashboard Content Grid
-   ========================================== */
+/* Main content grid */
 .dashboard-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-6);
+  gap: 16px;
 }
 
-.dashboard-content h2 {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-4);
-  padding-bottom: var(--spacing-3);
-  border-bottom: 1px solid var(--border-light);
-}
-
-/* ==========================================
-   Dashboard Cards/Sections
-   ========================================== */
 .dashboard-section {
-  background-color: var(--bg-elevated);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-6);
+  background-color: var(--lp-card);
+  border: 1.5px solid var(--lp-border);
+  border-radius: 6px;
+  padding: 28px;
 }
 
 .dashboard-section h3 {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-4);
+  font-family: var(--f-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: var(--lp-ink);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--lp-rule);
+  font-variation-settings: 'opsz' 20;
 }
 
-/* ==========================================
-   List Items (Chores, Utilities, etc.)
-   ========================================== */
+/* List items */
 .dashboard-content ul {
   list-style: none;
   padding: 0;
@@ -130,77 +131,73 @@
 .dashboard-content li {
   display: flex;
   align-items: center;
-  gap: var(--spacing-3);
-  padding: var(--spacing-4);
-  background-color: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--spacing-3);
-  transition: all var(--transition-fast);
+  gap: 12px;
+  padding: 10px 12px;
+  background-color: var(--lp-parchment);
+  border: 1px solid var(--lp-border);
+  border-radius: 4px;
+  margin-bottom: 8px;
 }
 
 .dashboard-content li:last-child {
   margin-bottom: 0;
 }
 
-.dashboard-content li:hover {
-  background-color: var(--bg-secondary);
-}
-
-/* Item icon container */
 .item-icon {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--primary-50);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-lg);
+  background-color: var(--lp-parchment);
+  border: 1px solid var(--lp-border);
+  border-radius: 4px;
+  font-size: 0.9rem;
   flex-shrink: 0;
 }
 
-[data-theme="dark"] .item-icon {
-  background-color: rgba(99, 102, 241, 0.1);
-}
-
-.item-content {
-  flex: 1;
-  min-width: 0;
-}
+.item-content { flex: 1; min-width: 0; }
 
 .item-title {
-  font-weight: var(--font-weight-medium);
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-1);
+  font-family: var(--f-body);
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--lp-ink);
+  margin-bottom: 2px;
 }
 
 .item-meta {
-  font-size: var(--font-size-sm);
-  color: var(--text-tertiary);
+  font-family: var(--f-body);
+  font-size: 0.72rem;
+  color: var(--lp-ink-muted);
 }
 
 .badge-frequency {
   display: inline-block;
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  background-color: rgba(99, 102, 241, 0.12);
-  color: var(--primary-500);
-  margin-right: var(--spacing-1);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: var(--f-label);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background-color: rgba(201,74,26,0.1);
+  color: var(--lp-orange);
+  margin-right: 4px;
   vertical-align: middle;
 }
 
-/* ==========================================
-   Empty State
-   ========================================== */
-.dashboard-content p {
-  color: var(--text-tertiary);
-  font-size: var(--font-size-sm);
+/* Empty state */
+.empty-message {
+  font-family: var(--f-body);
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--lp-ink-muted);
   text-align: center;
-  padding: var(--spacing-8);
-  background-color: var(--bg-secondary);
-  border-radius: var(--radius-lg);
+  padding: 32px 16px;
+  background-color: var(--lp-parchment);
+  border: 1.5px dashed var(--lp-border);
+  border-radius: 4px;
   margin: 0;
 }
 
@@ -470,24 +467,47 @@
 /* Password Rules */
 .password-rules {
     list-style: none;
-    padding: 0;
-    margin: 0 0 var(--spacing-4) 0;
-    background-color: var(--bg-secondary);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-3) var(--spacing-4);
+    padding: 12px 16px;
+    margin: 10px 0 0;
+    background-color: var(--lp-parchment);
+    border: 1.5px solid var(--lp-border);
+    border-radius: 4px;
 }
 
 .password-rules li {
-    font-size: var(--font-size-sm);
-    padding: var(--spacing-1) 0;
+    font-family: var(--f-body);
+    font-size: 0.78rem;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--lp-ink-muted);
+    transition: color 0.15s;
+}
+
+.rule-icon {
+    font-family: var(--f-label);
+    font-size: 0.9rem;
+    width: 16px;
+    text-align: center;
+    flex-shrink: 0;
 }
 
 .password-rules .rule-valid {
-    color: #16a34a;
+    color: var(--lp-green);
+}
+
+.password-rules .rule-valid .rule-icon {
+    color: var(--lp-green);
+    font-weight: 700;
 }
 
 .password-rules .rule-invalid {
-    color: #dc2626;
+    color: var(--lp-ink-muted);
+}
+
+.password-rules .rule-invalid .rule-icon {
+    color: var(--lp-border);
 }
 
 /* ==========================================
