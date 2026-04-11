@@ -89,9 +89,9 @@ const Dashboard = () => {
                                 <li key={index}>
                                     <div className="item-icon item-icon-chore"></div>
                                     <div className="item-content">
-                                        <div className="item-title">{chore.name || chore.title || 'Untitled Chore'}</div>
+                                        <div className="item-title">{chore.choreName || 'Untitled Chore'}</div>
                                         <div className="item-meta">
-                                            {chore.dueDate ? `Due: ${new Date(chore.dueDate).toLocaleDateString()}` : 'No due date'}
+                                            {chore.dueAt ? `Due: ${new Date(chore.dueAt).toLocaleDateString()}` : 'No due date'}
                                         </div>
                                     </div>
                                 </li>
@@ -111,10 +111,10 @@ const Dashboard = () => {
                                 <li key={index}>
                                     <div className="item-icon item-icon-bill"></div>
                                     <div className="item-content">
-                                        <div className="item-title">{utility.name || utility.title || 'Untitled Bill'}</div>
+                                        <div className="item-title">{utility.utilityName || 'Untitled Bill'}</div>
                                         <div className="item-meta">
-                                            {utility.dueDate ? `Due: ${new Date(utility.dueDate).toLocaleDateString()}` : 'No due date'}
-                                            {utility.amount && ` - $${utility.amount}`}
+                                            {utility.dueAt ? `Due: ${new Date(utility.dueAt).toLocaleDateString()}` : 'No due date'}
+                                            {utility.utilityPrice && ` - $${utility.utilityPrice}`}
                                         </div>
                                     </div>
                                 </li>

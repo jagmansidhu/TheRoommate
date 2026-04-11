@@ -1,3 +1,4 @@
+import apiClient from './apiClient';
 import React, {createContext, useCallback, useContext, useEffect, useRef, useState} from 'react';
 import {BrowserRouter as Router, Link, Route, Routes, useNavigate} from 'react-router-dom';
 import Login from './webpages/auth/Login';
@@ -51,23 +52,14 @@ const AuthProvider = ({children}) => {
     useEffect(() => {
         const checkAuthStatus = async () => {
             try {
-                const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/user/status`, {
-                    method: 'GET',
-                    credentials: 'include'
-                });
+                const res = await apiClient.get('/user/status');
 
-                if (res.ok) {
-                    const contentType = res.headers.get("content-type");
-                    if (contentType && contentType.indexOf("application/json") !== -1) {
-                        const data = await res.json();
-                        if (data && (data.username || data.email || data.authenticated === true)) {
-                           setIsAuthenticated(true);
-                        } else {
-                           setIsAuthenticated(true);
-                        }
+                if (res.status === 200) {
+                    const data = res.data;
+                    if (data && (data.username || data.email || data.authenticated === true)) {
+                       setIsAuthenticated(true);
                     } else {
-                         console.warn("Auth check returned non-JSON:", contentType);
-                         setIsAuthenticated(false);
+                       setIsAuthenticated(false);
                     }
                 } else {
                     setIsAuthenticated(false);
@@ -89,10 +81,7 @@ const AuthProvider = ({children}) => {
 
     const logout = async () => {
         try {
-            await fetch(`${process.env.REACT_APP_BASE_API_URL}/user/logout`, {
-                method: 'POST',
-                credentials: 'include'
-            });
+            await apiClient.post('/user/logout');
         } catch (err) {
             console.error('Logout failed', err);
         }
@@ -118,12 +107,9 @@ const UserProvider = ({children}) => {
     const fetchUser = useCallback(async () => {
         setUserLoading(true);
         try {
-            const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/api/get-user`, {
-                credentials: 'include',
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setUser(data);
+            const res = await apiClient.get('/api/get-user');
+            if (res.status === 200) {
+                setUser(res.data);
             } else {
                 setUser(null);
             }
@@ -172,8 +158,8 @@ const AppDataProvider = ({children}) => {
     const fetchRooms = useCallback(async () => {
         setRoomsLoading(true);
         try {
-            const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/api/rooms`, {credentials: 'include'});
-            if (res.ok) setRooms(await res.json());
+            const res = await apiClient.get('/api/rooms');
+            if (res.status === 200) setRooms(res.data);
         } catch (err) {
             console.error('AppData: failed to fetch rooms', err);
         } finally {
@@ -192,8 +178,8 @@ const AppDataProvider = ({children}) => {
     const fetchUserChores = useCallback(async () => {
         setUserChoresLoading(true);
         try {
-            const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/api/chores/user/me`, {credentials: 'include'});
-            if (res.ok) setUserChores(await res.json());
+            const res = await apiClient.get('/api/chores/user/me');
+            if (res.status === 200) setUserChores(res.data);
         } catch (err) {
             console.error('AppData: failed to fetch user chores', err);
         } finally {
@@ -211,8 +197,8 @@ const AppDataProvider = ({children}) => {
     const fetchUserUtilities = useCallback(async () => {
         setUserUtilitiesLoading(true);
         try {
-            const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/api/utility/user/me`, {credentials: 'include'});
-            if (res.ok) setUserUtilities(await res.json());
+            const res = await apiClient.get('/api/utility/user/me');
+            if (res.status === 200) setUserUtilities(res.data);
         } catch (err) {
             console.error('AppData: failed to fetch user utilities', err);
         } finally {
@@ -231,8 +217,8 @@ const AppDataProvider = ({children}) => {
     const fetchEvents = useCallback(async () => {
         setEventsLoading(true);
         try {
-            const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/api/events/user`, {credentials: 'include'});
-            if (res.ok) setEvents(await res.json());
+            const res = await apiClient.get('/api/events/user');
+            if (res.status === 200) setEvents(res.data);
         } catch (err) {
             console.error('AppData: failed to fetch events', err);
         } finally {
@@ -327,10 +313,7 @@ const CheckEmailPage = () => {
 
     const sendVerification = async () => {
         try {
-            await fetch(`${process.env.REACT_APP_BASE_API_URL}/user/resend-verification`, {
-                method: 'POST',
-                credentials: 'include'
-            });
+            await apiClient.post('/user/resend-verification');
             setHasSent(true);
         } catch (err) {
             console.error('Error sending verification email:', err);
@@ -373,13 +356,10 @@ const AppContent = () => {
         if (isAuthenticated && !isLoading) {
             const checkVerification = async () => {
                 try {
-                    const res = await fetch(`${process.env.REACT_APP_BASE_API_URL}/user/verify-status`, {
-                        method: 'GET',
-                        credentials: 'include'
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        setUserVerified(data.verified);
+                    const res = await apiClient.get('/user/verify-status');
+
+                    if (res.status === 200) {
+                        setUserVerified(res.data.verified);
                     } else {
                         setUserVerified(false);
                     }
