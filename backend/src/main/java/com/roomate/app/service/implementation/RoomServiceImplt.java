@@ -10,7 +10,6 @@ import com.roomate.app.entities.room.RoomMemberEnum;
 import com.roomate.app.exceptions.UserApiError;
 import com.roomate.app.repository.*;
 import com.roomate.app.service.RoomService;
-import com.roomate.app.service.UtilityService;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,8 +40,9 @@ public class RoomServiceImplt implements RoomService {
     @Autowired
     private LedgerEntryRepository ledgerEntryRepository;
 
-    public RoomServiceImplt(UserRepository userRepository, RoomRepository roomRepository, RoomMemberRepository roomMemberRepository,
-                            EventRepository eventRepository) {
+    public RoomServiceImplt(UserRepository userRepository, RoomRepository roomRepository,
+            RoomMemberRepository roomMemberRepository,
+            EventRepository eventRepository) {
         this.userRepository = userRepository;
         this.roomRepository = roomRepository;
         this.roomMemberRepository = roomMemberRepository;
@@ -76,7 +76,8 @@ public class RoomServiceImplt implements RoomService {
         }
         String roomCode = generateUniqueRoomCode();
 
-        RoomEntity room = new RoomEntity(request.getName(), request.getAddress(), request.getDescription(), roomCode, headRoomateEmail, new ArrayList<>());
+        RoomEntity room = new RoomEntity(request.getName(), request.getAddress(), request.getDescription(), roomCode,
+                headRoomateEmail, new ArrayList<>());
 
         RoomMemberEntity roomMemberEntity = new RoomMemberEntity(room, user, RoomMemberEnum.HEAD_ROOMMATE);
 
@@ -124,7 +125,7 @@ public class RoomServiceImplt implements RoomService {
 
         room.getMembers().add(member);
 
-//        utilityService.updateUtilitiesOnUserChange(room.getId());
+        // utilityService.updateUtilitiesOnUserChange(room.getId());
 
         return convertToRoomDto(roomRepository.save(room));
     }
@@ -184,7 +185,7 @@ public class RoomServiceImplt implements RoomService {
             utilityRepository.deleteAllByRoomMemberId(memberid);
         }
 
-//        utilityService.updateUtilitiesOnUserChange(roomid);
+        // utilityService.updateUtilitiesOnUserChange(roomid);
 
         roomMemberRepository.deleteByMemberIdAndUserId(memberid, user.getId());
 
@@ -200,7 +201,6 @@ public class RoomServiceImplt implements RoomService {
 
         RoomEntity room = roomRepository.getRoomEntityById(roomId)
                 .orElseThrow(() -> new UserApiError("Room not found with ID: " + roomId));
-
 
         if (!room.getHeadRoommateId().equals(requesterEmail)) {
             throw new UserApiError("Not authorized to delete room.");
@@ -222,9 +222,10 @@ public class RoomServiceImplt implements RoomService {
 
     @Override
     @Transactional
-    public void updateMemberRole(UUID roomId, UUID memberId, UpdateMemberRoleRequest request, String requestingUserEmail) throws UserApiError {
-        RoomEntity room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new UserApiError("Room not found with ID: " + roomId));
+    public void updateMemberRole(UUID roomId, UUID memberId, UpdateMemberRoleRequest request,
+            String requestingUserEmail) throws UserApiError {
+        // RoomEntity room = roomRepository.findById(roomId)
+        // .orElseThrow(() -> new UserApiError("Room not found with ID: " + roomId));
 
         UserEntity requestingUser = userRepository.getUserByEmail(requestingUserEmail);
         if (requestingUser == null) {
@@ -247,7 +248,8 @@ public class RoomServiceImplt implements RoomService {
         }
 
         if (member.getRole() == RoomMemberEnum.HEAD_ROOMMATE) {
-            throw new UserApiError("Cannot change the head roommate's role directly. Transfer head roommate status first.");
+            throw new UserApiError(
+                    "Cannot change the head roommate's role directly. Transfer head roommate status first.");
         }
 
         member.setRole(request.getRole());
@@ -255,7 +257,6 @@ public class RoomServiceImplt implements RoomService {
 
         roomMemberRepository.save(member);
     }
-
 
     @Override
     public boolean isRoomMember(UUID roomId, String email) {
@@ -276,7 +277,8 @@ public class RoomServiceImplt implements RoomService {
 
         if (!userRepository.existsByEmail(request.getEmail())) {
             mailSender.sendMail(request.email, "Room Invitation",
-                    "You have been invited to join the room! However, you have not created an account. Please create and account first and then join this room! : " + room.getRoomCode() +
+                    "You have been invited to join the room! However, you have not created an account. Please create and account first and then join this room! : "
+                            + room.getRoomCode() +
                             ". Please use this code to join the room in the app.");
         } else {
             mailSender.sendMail(request.email, "Room Invitation",
@@ -299,7 +301,8 @@ public class RoomServiceImplt implements RoomService {
         List<RoomMemberDto> memberDtos = new ArrayList<>();
         if (room.getMembers() != null) {
             for (RoomMemberEntity member : room.getMembers()) {
-                if (member == null || member.getUser() == null) continue;
+                if (member == null || member.getUser() == null)
+                    continue;
                 RoomMemberDto memberDto = new RoomMemberDto();
                 memberDto.setId(member.getId());
                 memberDto.setJoinedAt(member.getJoinedAt());

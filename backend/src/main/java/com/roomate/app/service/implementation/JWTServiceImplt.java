@@ -3,7 +3,6 @@ package com.roomate.app.service.implementation;
 import com.roomate.app.entities.UserEntity;
 import com.roomate.app.service.JWTService;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -65,7 +64,7 @@ public class JWTServiceImplt implements JWTService {
     @Override
     public boolean isTokenValid(String token) {
         try {
-            Jws<Claims> claims = Jwts.parser()
+            Jwts.parser()
                     .verifyWith(key)
                     .build()
                     .parseSignedClaims(token);

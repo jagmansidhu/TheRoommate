@@ -10,7 +10,6 @@ import com.roomate.app.service.JWTService;
 import com.roomate.app.service.UserService;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.SimpleMailMessage;
@@ -60,13 +59,12 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
         user.setEnabled(true); // TODO: Set back to false to re-enable email verification
         UserEntity savedUser = userRepository.save(user);
 
-        String token = createToken(savedUser);
-
         // TODO: Uncomment to re-enable email verification
+        // String token = createToken(savedUser);
+
         // sendVerificationEmail(user.getEmail(), token);
 
         return jwtService.generateToken(user);
-        // return "Successfully Logged in";
     }
 
     @Override

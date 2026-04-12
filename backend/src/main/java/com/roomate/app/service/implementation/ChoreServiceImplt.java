@@ -2,7 +2,6 @@ package com.roomate.app.service.implementation;
 
 import com.roomate.app.dto.ChoreCreateDto;
 import com.roomate.app.dto.ChoreDto;
-import com.roomate.app.dto.UtilityDto;
 import com.roomate.app.entities.ChoreEntity;
 import com.roomate.app.entities.UserEntity;
 import com.roomate.app.entities.room.RoomEntity;
@@ -34,7 +33,8 @@ public class ChoreServiceImplt implements ChoreService {
     @Override
     @Transactional
     public List<ChoreDto> distributeChores(UUID roomId, ChoreCreateDto choreDTO) {
-        RoomEntity room = roomRepository.findById(roomId).orElseThrow(() -> new EntityNotFoundException("Room not found"));
+        RoomEntity room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new EntityNotFoundException("Room not found"));
 
         List<RoomMemberEntity> roomMembers = roomMemberRepository.findByRoomID(roomId);
         if (roomMembers.isEmpty()) {
@@ -81,18 +81,22 @@ public class ChoreServiceImplt implements ChoreService {
     @Override
     @Transactional
     public List<ChoreDto> getChoresByRoomId(UUID roomId) {
-        RoomEntity room = roomRepository.findById(roomId).orElseThrow(() -> new EntityNotFoundException("Room not found"));
+        RoomEntity room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new EntityNotFoundException("Room not found"));
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime twoWeeksAhead = now.plusWeeks(2);
 
-        return choreRepository.findByRoom(room).stream().filter(chore -> chore.getDueAt() != null && chore.getDueAt().isAfter(now) && chore.getDueAt().isBefore(twoWeeksAhead)).map(this::toDto).collect(Collectors.toList());
+        return choreRepository.findByRoom(room).stream().filter(chore -> chore.getDueAt() != null
+                && chore.getDueAt().isAfter(now) && chore.getDueAt().isBefore(twoWeeksAhead)).map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public void redistributeChores(UUID roomId) {
-        RoomEntity room = roomRepository.findById(roomId).orElseThrow(() -> new EntityNotFoundException("Room not found"));
+        RoomEntity room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new EntityNotFoundException("Room not found"));
 
         List<RoomMemberEntity> roomMembers = roomMemberRepository.findByRoomID(roomId);
         List<ChoreEntity> chores = choreRepository.findByRoomWithMemberAndUser(room);
@@ -135,13 +139,16 @@ public class ChoreServiceImplt implements ChoreService {
                         chore.getId(),
                         chore.getChoreName(),
                         chore.getDueAt(),
-                        chore.getRoom().getName()
-                ))
+                        chore.getRoom().getName()))
                 .collect(Collectors.toList());
     }
 
     private ChoreDto toDto(ChoreEntity entity) {
-        String assignedTo = (entity.getAssignedToMember() != null && entity.getAssignedToMember().getUser() != null) ? entity.getAssignedToMember().getUser().getEmail() : null;
-        return new ChoreDto(entity.getId(), entity.getChoreName(), entity.getFrequency(), entity.getChoreFrequencyUnitEnum().name(), entity.getDueAt(), entity.isCompleted(), assignedTo, entity.getRoom() != null ? entity.getRoom().getId() : null);
+        String assignedTo = (entity.getAssignedToMember() != null && entity.getAssignedToMember().getUser() != null)
+                ? entity.getAssignedToMember().getUser().getEmail()
+                : null;
+        return new ChoreDto(entity.getId(), entity.getChoreName(), entity.getFrequency(),
+                entity.getChoreFrequencyUnitEnum().name(), entity.getDueAt(), entity.isCompleted(), assignedTo,
+                entity.getRoom() != null ? entity.getRoom().getId() : null);
     }
 }

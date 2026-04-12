@@ -16,7 +16,6 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -36,7 +35,8 @@ public class UtilityServiceImplt implements UtilityService {
     @Override
     @Transactional
     public List<UtilityEntity> createUtility(UtilityCreateDto dto) {
-        RoomEntity room = roomRepository.findById(dto.getRoomId()).orElseThrow(() -> new EntityNotFoundException("Room not found"));
+        RoomEntity room = roomRepository.findById(dto.getRoomId())
+                .orElseThrow(() -> new EntityNotFoundException("Room not found"));
         Hibernate.initialize(room.getMembers());
 
         List<UtilityEntity> createdUtilities = new ArrayList<>();
@@ -57,7 +57,8 @@ public class UtilityServiceImplt implements UtilityService {
             }
         } else if (dto.getUtilDistributionEnum() == UtilDistributionEnum.CUSTOMSPLIT) {
             dto.getCustomSplit().forEach((memberId, percentage) -> {
-                RoomMemberEntity member = roomMemberRepository.findById(memberId).orElseThrow(() -> new EntityNotFoundException("Member not found"));
+                RoomMemberEntity member = roomMemberRepository.findById(memberId)
+                        .orElseThrow(() -> new EntityNotFoundException("Member not found"));
                 double shareAmount = (percentage / 100.0) * dto.getUtilityPrice();
 
                 UtilityEntity utility = new UtilityEntity();
@@ -79,15 +80,20 @@ public class UtilityServiceImplt implements UtilityService {
     public List<UtilityDto> getUtilitiesByRoom(UUID roomId) {
         roomRepository.findById(roomId).orElseThrow(() -> new EntityNotFoundException("Room not found"));
 
-        return utilityRepository.findByRoomId(roomId).stream().map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(), utility.getUtilityPrice(), utility.getRoom() != null ? utility.getRoom().getId() : null)).collect(Collectors.toList());
+        return utilityRepository
+                .findByRoomId(roomId).stream().map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(),
+                        utility.getUtilityPrice(), utility.getRoom() != null ? utility.getRoom().getId() : null))
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<UtilityDto> getUtilitiesByRoomandMemberId(UUID roomId, UUID memberId) {
         roomRepository.findById(roomId).orElseThrow(() -> new EntityNotFoundException("Room not found"));
 
-
-        return utilityRepository.findByRoomIdAndMemberId(roomId, memberId).stream().map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(), utility.getUtilityPrice(), utility.getRoom() != null ? utility.getRoom().getId() : null)).collect(Collectors.toList());
+        return utilityRepository.findByRoomIdAndMemberId(roomId, memberId).stream()
+                .map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(), utility.getUtilityPrice(),
+                        utility.getRoom() != null ? utility.getRoom().getId() : null))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -108,8 +114,7 @@ public class UtilityServiceImplt implements UtilityService {
                         utility.getUtilityName(),
                         utility.getUtilityPrice(),
                         utility.getRoom() != null ? utility.getRoom().getName() : null,
-                        utility.getDueAt()
-                ))
+                        utility.getDueAt()))
                 .collect(Collectors.toList());
     }
 
@@ -121,7 +126,8 @@ public class UtilityServiceImplt implements UtilityService {
         utilityRepository.deleteById(utilityId);
     }
 
-    // TODO handle OVerall Logic for updating utilities when users are added or removed from a room
+    // TODO handle OVerall Logic for updating utilities when users are added or
+    // removed from a room
     @Override
     @Transactional
     public void updateUtilitiesOnUserChange(UUID roomId) {
@@ -145,12 +151,9 @@ public class UtilityServiceImplt implements UtilityService {
                     utilityRepository.save(utility);
                 }
             } else if (utility.getUtilDistributionEnum() == UtilDistributionEnum.CUSTOMSPLIT) {
-                // Handle CUSTOMSPLIT logic if needed
                 throw new UnsupportedOperationException("Custom split logic needs to be implemented.");
             }
         }
     }
-
-
 
 }

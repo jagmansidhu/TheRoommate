@@ -8,18 +8,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface UtilityRepository extends JpaRepository<UtilityEntity , Long> {
+public interface UtilityRepository extends JpaRepository<UtilityEntity, Long> {
     List<UtilityEntity> findByRoomId(UUID roomId);
 
     Boolean existsById(UUID utilityId);
 
     @Query("SELECT u FROM UtilityEntity u WHERE u.room.id = :roomId AND u.assignedToMember.id = :roomMemberId")
-    List<UtilityEntity> findByRoomIdAndMemberId(@Param("roomId") UUID roomId, @Param("roomMemberId")UUID memberId);
+    List<UtilityEntity> findByRoomIdAndMemberId(@Param("roomId") UUID roomId, @Param("roomMemberId") UUID memberId);
 
     @Query("SELECT u FROM UtilityEntity u WHERE u.assignedToMember = :userId")
     List<UtilityEntity> findAllByUserId(@Param("userId") Long id);
