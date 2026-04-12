@@ -39,5 +39,6 @@ target/
 
 .env
 .env.local
+/src/main/resources/local.env
 
 .test
