@@ -90,26 +90,25 @@
    HERO
 ══════════════════════════════════════════════ */
 .hero-section {
-  position: relative;
-  min-height: 100svh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background-color: var(--lp-cream);
-  /* Subtle dot-grid texture fills full hero */
-  background-image: radial-gradient(circle, var(--lp-border) 1px, transparent 1px);
-  background-size: 28px 28px;
+    position: relative;
+    min-height: 80svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: var(--lp-cream);
+    background-image: radial-gradient(circle, var(--lp-border) 1px, transparent 1px);
+    background-size: 28px 28px;
 }
 
-/* Single centered text column */
 .hero-text-col {
-  position: relative;
-  z-index: 1;
-  max-width: 760px;
-  width: 100%;
-  padding: 160px 48px 100px;
-  text-align: center;
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    width: 100%;
+    /* Normalize the padding so Flexbox can do its job */
+    padding: 60px 48px;
+    text-align: center;
 }
 
 /* Eyebrow label */
@@ -262,7 +261,7 @@
 
 @keyframes marqueeScroll {
   from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  to   { transform: translateX(-20%); }
 }
 
 /* ══════════════════════════════════════════════
