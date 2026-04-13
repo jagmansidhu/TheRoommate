@@ -81,6 +81,7 @@
   letter-spacing: -0.02em;
   margin: 0 0 6px;
   line-height: 1.1;
+    width: 100%;
 }
 
 .rd-room-address {
@@ -336,7 +337,6 @@
   text-transform: uppercase;
   padding: 5px 12px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--error-200);
   background: transparent;
   color: var(--error-600);
   cursor: pointer;

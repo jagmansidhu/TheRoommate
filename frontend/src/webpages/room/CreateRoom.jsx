@@ -39,7 +39,7 @@ const CreateRoomModal = ({show, onClose, onCreateRoom}) => {
                     </button>
                 </div>
                 {error && <div className="alert alert-error">{error}</div>}
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} className="form-container">
                     <div className="form-group">
                         <label htmlFor="roomName">Room Name</label>
                         <input
