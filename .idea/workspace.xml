@@ -6,7 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="a8a1bfc5-0837-44f8-95cb-f6b4ba5ce695" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/webpages/room/JoinRoom.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/webpages/room/JoinRoom.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/styling/RoomDetails.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/styling/RoomDetails.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -315,7 +315,7 @@
       <workItem from="1757040137255" duration="2551000" />
       <workItem from="1775844704463" duration="3124000" />
       <workItem from="1776019798891" duration="136000" />
-      <workItem from="1776055005440" duration="2942000" />
+      <workItem from="1776055005440" duration="3403000" />
     </task>
     <servers />
   </component>
