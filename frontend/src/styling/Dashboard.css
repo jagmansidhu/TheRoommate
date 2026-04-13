@@ -403,6 +403,10 @@
     margin-bottom: var(--spacing-4);
 }
 
+.form-container {
+    padding: var(--spacing-6);
+}
+
 .form-group label {
     display: block;
     font-size: var(--font-size-sm);

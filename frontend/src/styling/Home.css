@@ -82,7 +82,7 @@
 /* The app already has a global nav — this scopes colour for landing */
 .landing-page .navbar,
 .landing-page nav {
-  background: var(--lp-cream) !important;
+  /*background: var(--lp-cream) !important;*/
   border-bottom: 1px solid var(--lp-rule) !important;
 }
 

@@ -268,6 +268,7 @@
 /* ==========================================
    Modal/Dialog Base
    ========================================== */
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -281,8 +282,8 @@
 }
 
 .modal {
-  background-color: var(--bg-elevated);
-  border-radius: var(--radius-xl);
+    background-color: var(--lp-card);
+    border: 1.5px solid var(--lp-border);
   width: 100%;
   max-width: 500px;
   max-height: 90vh;
@@ -366,17 +367,14 @@
 
 /* form-input — used by all room modals (ChoreModal, UtilityModal, etc.) */
 .form-input {
-  display: block;
-  width: 100%;
-  padding: var(--spacing-3) var(--spacing-4);
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  color: var(--text-primary);
-  font-family: inherit;
-  font-size: var(--font-size-base);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  box-sizing: border-box;
+    background-color: var(--lp-parchment);
+    border: 1.5px solid var(--lp-border);
+    border-radius: 4px;
+    color: var(--lp-ink);
+    font-family: var(--f-body);
+    font-size: 0.88rem;
+    padding: 9px 12px;
+    width: 100%;
 }
 
 .form-input::placeholder {
@@ -390,9 +388,10 @@
 }
 
 .form-input:disabled {
-  background-color: var(--bg-tertiary);
-  color: var(--text-muted);
-  cursor: not-allowed;
+    outline: none;
+    border-color: var(--lp-orange);
+    box-shadow: 3px 3px 0 var(--lp-orange);
+    background-color: var(--lp-cream);
 }
 
 /* heading reset inside modal body */

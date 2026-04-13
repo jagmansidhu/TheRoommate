@@ -199,7 +199,7 @@ html {
 }
 
 body {
-  font-family: var(--font-family);
+  font-family: var(--f-body);
   font-size: var(--font-size-base);
   line-height: var(--line-height-normal);
   color: var(--text-primary);
@@ -218,6 +218,7 @@ h3,
 h4,
 h5,
 h6 {
+    font-family: var(--f-label);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
   color: var(--text-primary);

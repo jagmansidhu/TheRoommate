@@ -40,7 +40,7 @@ const JoinRoomModal = ({ show, onClose, onRoomJoined }) => {
                     </button>
                 </div>
                 {error && <div className="alert alert-error">{error}</div>}
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} className="form-container">
                     <div className="form-group">
                         <label htmlFor="roomCode">Room Code</label>
                         <input
