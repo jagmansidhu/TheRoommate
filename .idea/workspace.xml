@@ -6,10 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="a8a1bfc5-0837-44f8-95cb-f6b4ba5ce695" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/roomate/app/config/security/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/roomate/app/config/security/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/roomate/app/controller/ChoreController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/roomate/app/controller/ChoreController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/roomate/app/controller/UtilityControler.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/roomate/app/controller/UtilityControler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/component/VerificationPopup.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/component/VerificationPopup.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/webpages/room/RoomDetailsPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/webpages/room/RoomDetailsPage.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -105,7 +101,7 @@
     &quot;Spring Boot.StartOneApplication.executor&quot;: &quot;Run&quot;,
     &quot;Spring Boot.StartOneApplication2.executor&quot;: &quot;Run&quot;,
     &quot;database.data.extractors.current.export.id&quot;: &quot;SQL Inserts&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;theme-consistency-fixes&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;create-chore-util-fixes&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;/Users/jagman/IdeaProjects/DaRoomate&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
@@ -321,7 +317,9 @@
       <workItem from="1776019798891" duration="136000" />
       <workItem from="1776055005440" duration="3966000" />
       <workItem from="1776121883874" duration="1395000" />
-      <workItem from="1776133997722" duration="3791000" />
+      <workItem from="1776133997722" duration="3915000" />
+      <workItem from="1776138615940" duration="41000" />
+      <workItem from="1776144182690" duration="425000" />
     </task>
     <servers />
   </component>
