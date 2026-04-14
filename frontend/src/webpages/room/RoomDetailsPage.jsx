@@ -76,7 +76,7 @@ const RoomDetailsPage = ({
 
                 const [choresRes, utilitiesRes, userUtilitiesRes] = await Promise.all([
                     apiClient.get(`/api/chores/${room.id}`, { withCredentials: true }),
-                    apiClient.get(`/api/utility/room/${room.id}`, { withCredentials: true }), // Added missing /room/
+                    apiClient.get(`/api/utility/${room.id}`, { withCredentials: true }), // Added missing /room/
                     apiClient.get(`/api/utility/${mId}/room/${room.id}`, { withCredentials: true }),
                 ]);
                 setChores(choresRes.data);
@@ -174,7 +174,7 @@ const RoomDetailsPage = ({
                 setShowChoreModal(false);
                 setPendingChores([]);
 
-                const choresResponse = await apiClient.get(`/api/chores/room/${room.id}`,
+                const choresResponse = await apiClient.get(`/api/chores/${room.id}`,
                     { withCredentials: true }
                 );
 
