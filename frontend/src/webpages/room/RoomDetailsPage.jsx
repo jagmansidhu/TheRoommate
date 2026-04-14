@@ -13,8 +13,8 @@ import InviteModal from './modals/InviteModal';
 import DeleteConfirmModal from './modals/DeleteConfirmModal';
 
 const RoomDetailsPage = ({
-    onClose, room, onLeaveRoom, onDeleteRoom,
-}) => {
+                             onClose, room, onLeaveRoom, onDeleteRoom,
+                         }) => {
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteStatus, setInviteStatus] = useState('');
@@ -45,7 +45,9 @@ const RoomDetailsPage = ({
 
     const addChoreToList = () => {
         if (!choreData.choreName || choreData.frequency < 1 || !isValidDeadline(choreData.deadline)) return;
-        setPendingChores([...pendingChores, { ...choreData, deadline: new Date(choreData.deadline).toISOString() }]);
+
+        setPendingChores([...pendingChores, { ...choreData }]);
+
         resetChoreData();
     };
 
@@ -66,13 +68,15 @@ const RoomDetailsPage = ({
         if (!room?.id || !user?.email) return;
         const fetchAll = async () => {
             try {
-                const memberRes = await apiClient.get(`/api/rooms/${room.id}/member-id/${user.email}`, { withCredentials: true });
-                const mId = memberRes.data;
+                const currentMember = room.members?.find(m => m.userId === user.email);
+                const mId = currentMember?.id;
                 setMemberId(mId);
+
+                if (!mId) return;
 
                 const [choresRes, utilitiesRes, userUtilitiesRes] = await Promise.all([
                     apiClient.get(`/api/chores/${room.id}`, { withCredentials: true }),
-                    apiClient.get(`/api/utility/${room.id}`, { withCredentials: true }),
+                    apiClient.get(`/api/utility/room/${room.id}`, { withCredentials: true }), // Added missing /room/
                     apiClient.get(`/api/utility/${mId}/room/${room.id}`, { withCredentials: true }),
                 ]);
                 setChores(choresRes.data);
@@ -146,26 +150,47 @@ const RoomDetailsPage = ({
     const CHORE_OPTIONS = ["Broom", "Sweep", "Trash", "Mop", "Vacuum", "Kitchen", "Other"];
 
     const handleSubmitChores = async () => {
+        if (pendingChores.length === 0) return;
+
         try {
-            await Promise.all(
-                pendingChores.map(chore =>
-                    apiClient.post(`/api/chores/${room.id}`, chore, { withCredentials: true })
-                )
+            const payload = pendingChores.map(chore => {
+                const dateObj = new Date(chore.deadline);
+                const strictLocalDateTime = dateObj.toISOString().split('.')[0];
+
+                return {
+                    choreName: chore.choreName,
+                    frequency: parseInt(chore.frequency, 10),
+                    frequencyUnit: (chore.frequencyUnit || 'WEEKLY').toUpperCase(),
+                    deadline: strictLocalDateTime
+                };
+            });
+
+            const response = await apiClient.post(`/api/chores/room/${room.id}`,
+                payload,
+                { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
             );
-            const r = await apiClient.get(`/api/chores/${room.id}`, { withCredentials: true });
-            setChores(r.data);
-            setPendingChores([]);
-            setShowChoreModal(false);
-            refreshUserChores();
-        } catch (err) {
-            console.error("Error submitting chores:", err);
+
+            if (response.status === 200) {
+                setShowChoreModal(false);
+                setPendingChores([]);
+
+                const choresResponse = await apiClient.get(`/api/chores/room/${room.id}`,
+                    { withCredentials: true }
+                );
+
+                setChores(choresResponse.data);
+                refreshUserChores();
+            }
+        } catch (error) {
+            console.error('Error creating chores:', error);
         }
     };
 
     const handleRemoveChoresByType = async () => {
         if (!selectedChoreType) return;
         try {
-            await apiClient.delete(`/api/chores/${room.id}/type/${selectedChoreType}`, { withCredentials: true });
+            await apiClient.delete(`/api/chores/room/${room.id}/type/${selectedChoreType}`, { withCredentials: true });
+
             const r = await apiClient.get(`/api/chores/${room.id}`, { withCredentials: true });
             setChores(r.data);
             setSelectedChoreType('');

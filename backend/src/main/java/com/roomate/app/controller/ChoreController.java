@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public class ChoreController {
     private final ChoreService choreService;
 
-    @PostMapping("/room/createChores/{roomId}")
+    @PostMapping("/room/{roomId}")
     public ResponseEntity<List<ChoreDto>> createChores(@PathVariable UUID roomId,
             @RequestBody List<ChoreCreateDto> choreDTOs) {
 
@@ -34,7 +34,7 @@ public class ChoreController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/room/{roomId}")
+    @GetMapping("/{roomId}")
     public ResponseEntity<List<ChoreDto>> getRoomChores(@PathVariable UUID roomId) {
         return ResponseEntity.ok(choreService.getChoresByRoomId(roomId));
     }
@@ -46,8 +46,6 @@ public class ChoreController {
         return ResponseEntity.ok(chores);
     }
 
-    // Returns chores assigned to the currently authenticated user.
-    // Email is resolved from the JWT via the Spring Security context — no query param needed.
     @GetMapping("/user/me")
     public ResponseEntity<List<ChoreDto>> getMyChores() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();

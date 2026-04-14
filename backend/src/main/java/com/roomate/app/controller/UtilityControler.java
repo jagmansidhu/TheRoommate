@@ -24,7 +24,7 @@ public class UtilityControler {
         return ResponseEntity.ok(utility);
     }
 
-    @GetMapping("/room/{roomId}")
+    @GetMapping("/{roomId}")
     public ResponseEntity<List<UtilityDto>> getUtilitiesByRoom(@PathVariable UUID roomId) {
         return ResponseEntity.ok(utilityService.getUtilitiesByRoom(roomId));
     }
