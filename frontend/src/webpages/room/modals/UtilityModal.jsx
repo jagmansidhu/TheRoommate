@@ -1,13 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const UtilityModal = ({ 
     show, 
     onClose, 
     utilityData, 
     setUtilityData, 
-    handleSubmitUtility 
+    handleSubmitUtility,
+    members = []
 }) => {
+    const [error, setError] = useState("");
+
     if (!show) return null;
+
+    const handleCustomSplitChange = (memberId, value) => {
+        const numValue = parseFloat(value);
+        setUtilityData(prev => ({
+            ...prev,
+            customSplit: {
+                ...prev.customSplit,
+                [memberId]: value === "" ? "" : numValue
+            }
+        }));
+    };
+
+    const validateAndSubmit = () => {
+        if (utilityData.utilDistributionEnum === "CUSTOMSPLIT") {
+            const sum = Object.values(utilityData.customSplit || {}).reduce((a, b) => a + (parseFloat(b) || 0), 0);
+            
+            if (utilityData.splitType === "PERCENT") {
+                if (Math.abs(sum - 100) > 0.01) {
+                    setError(`Custom split percentages sum to ${sum.toFixed(2)}%, but must equal exactly 100%`);
+                    return;
+                }
+            } else {
+                const total = parseFloat(utilityData.utilityPrice) || 0;
+                if (Math.abs(sum - total) > 0.01) {
+                    setError(`Custom split total ($${sum.toFixed(2)}) must equal total price ($${total.toFixed(2)})`);
+                    return;
+                }
+            }
+        }
+        setError("");
+        handleSubmitUtility();
+    };
 
     return (
         <div className="modal-overlay">
@@ -61,11 +96,59 @@ const UtilityModal = ({
                             onChange={e => setUtilityData({ ...utilityData, utilDistributionEnum: e.target.value })}
                         >
                             <option value="EQUALSPLIT">Equal Split</option>
+                            <option value="CUSTOMSPLIT">Custom Split</option>
                         </select>
                     </div>
+                    
+                    {utilityData.utilDistributionEnum === "CUSTOMSPLIT" && (
+                        <>
+                            <div className="form-group" style={{marginTop: '1rem'}}>
+                                <label>Split Method</label>
+                                <div style={{display: 'flex', gap: '1rem'}}>
+                                    <label style={{display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal'}}>
+                                        <input 
+                                            type="radio" 
+                                            name="splitType" 
+                                            checked={utilityData.splitType === "AMOUNT"}
+                                            onChange={() => setUtilityData({...utilityData, splitType: "AMOUNT"})}
+                                        /> Exact Amount ($)
+                                    </label>
+                                    <label style={{display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal'}}>
+                                        <input 
+                                            type="radio" 
+                                            name="splitType" 
+                                            checked={utilityData.splitType === "PERCENT"}
+                                            onChange={() => setUtilityData({...utilityData, splitType: "PERCENT"})}
+                                        /> Percentage (%)
+                                    </label>
+                                </div>
+                            </div>
+                            <div className="form-group" style={{marginTop: '1rem'}}>
+                                <label>Assign {utilityData.splitType === "PERCENT" ? "Percentages" : "Amounts"}</label>
+                                {members.map(member => (
+                                    <div key={member.id} style={{display: 'flex', alignItems: 'center', marginBottom: '0.5rem'}}>
+                                        <span style={{flex: 1}}>{member.name}</span>
+                                        <div style={{position: 'relative', display: 'flex', alignItems: 'center'}}>
+                                            {utilityData.splitType === "AMOUNT" && <span style={{position: 'absolute', left: '10px', color: '#666'}}>$</span>}
+                                            <input
+                                                type="number"
+                                                className="form-input"
+                                                style={{width: '100px', paddingLeft: utilityData.splitType === "AMOUNT" ? '22px' : '10px', paddingRight: utilityData.splitType === "PERCENT" ? '25px' : '10px'}}
+                                                placeholder={utilityData.splitType === "PERCENT" ? "0-100" : "Amount"}
+                                                value={utilityData.customSplit?.[member.id] !== undefined ? utilityData.customSplit[member.id] : ""}
+                                                onChange={e => handleCustomSplitChange(member.id, e.target.value)}
+                                            />
+                                            {utilityData.splitType === "PERCENT" && <span style={{position: 'absolute', right: '10px', color: '#666'}}>%</span>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                    {error && <div className="error-text" style={{color: 'red', marginTop: '10px'}}>{error}</div>}
                 </div>
                 <div className="modal-actions">
-                    <button className="btn btn-primary" onClick={handleSubmitUtility}>Create Utility</button>
+                    <button className="btn btn-primary" onClick={validateAndSubmit}>Create Utility</button>
                     <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
                 </div>
             </div>

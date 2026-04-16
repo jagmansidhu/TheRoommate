@@ -25,7 +25,7 @@ const RoomDetailsPage = ({
     const [selectedUtilityId, setSelectedUtilityId] = useState("");
     const [showUtilityModal, setShowUtilityModal] = useState(false);
     const [utilityData, setUtilityData] = useState({
-        utilityName: "", description: "", utilityPrice: 0, utilDistributionEnum: "EQUALSPLIT", customSplit: {}
+        utilityName: "", description: "", utilityPrice: 0, utilDistributionEnum: "EQUALSPLIT", customSplit: {}, splitType: "AMOUNT"
     });
     const [showChoreModal, setShowChoreModal] = useState(false);
     const [showRemoveChoreModal, setShowRemoveChoreModal] = useState(false);
@@ -113,13 +113,20 @@ const RoomDetailsPage = ({
 
     const handleSubmitUtility = async () => {
         try {
-            const payload = { ...utilityData, roomId: room.id };
+            let processedSplit = { ...utilityData.customSplit };
+            if (utilityData.utilDistributionEnum === "CUSTOMSPLIT" && utilityData.splitType === "PERCENT") {
+                const total = parseFloat(utilityData.utilityPrice) || 0;
+                for (let key in processedSplit) {
+                    processedSplit[key] = (parseFloat(processedSplit[key]) / 100.0) * total;
+                }
+            }
+            const payload = { ...utilityData, roomId: room.id, customSplit: processedSplit };
             const response = await apiClient.post(`/api/utility/create`, payload,
                 { withCredentials: true, headers: { "Content-Type": "application/json" } }
             );
             if (response.status === 200) {
                 setShowUtilityModal(false);
-                setUtilityData({ utilityName: "", description: "", utilityPrice: 0, utilDistributionEnum: "EQUALSPLIT", customSplit: {} });
+                setUtilityData({ utilityName: "", description: "", utilityPrice: 0, utilDistributionEnum: "EQUALSPLIT", customSplit: {}, splitType: "AMOUNT" });
                 if (memberId) {
                     const r = await apiClient.get(`/api/utility/${memberId}/room/${room.id}`, { withCredentials: true });
                     setUserUtilities(r.data);
@@ -473,7 +480,7 @@ const RoomDetailsPage = ({
 
             {/* ── Modals ── */}
             <RemoveUtilityModal show={showRemoveUtilityModal} onClose={() => setShowRemoveUtilityModal(false)} utilities={utilities} selectedUtilityId={selectedUtilityId} setSelectedUtilityId={setSelectedUtilityId} handleRemoveUtility={handleRemoveUtility} />
-            <UtilityModal show={showUtilityModal} onClose={() => setShowUtilityModal(false)} utilityData={utilityData} setUtilityData={setUtilityData} handleSubmitUtility={handleSubmitUtility} />
+            <UtilityModal show={showUtilityModal} onClose={() => setShowUtilityModal(false)} utilityData={utilityData} setUtilityData={setUtilityData} handleSubmitUtility={handleSubmitUtility} members={room.members} />
             <RemoveChoreModal show={showRemoveChoreModal} onClose={() => setShowRemoveChoreModal(false)} selectedChoreType={selectedChoreType} setSelectedChoreType={setSelectedChoreType} handleRemoveChoresByType={handleRemoveChoresByType} CHORE_OPTIONS={CHORE_OPTIONS} />
             <ChoreModal show={showChoreModal} onClose={() => setShowChoreModal(false)} isCustomChore={isCustomChore} setIsCustomChore={setIsCustomChore} choreData={choreData} setChoreData={setChoreData} CHORE_OPTIONS={CHORE_OPTIONS} addChoreToList={addChoreToList} pendingChores={pendingChores} removeChoreFromList={removeChoreFromList} handleSubmitChores={handleSubmitChores} isValidDeadline={isValidDeadline} />
             <InviteModal show={showInviteModal} onClose={() => setShowInviteModal(false)} inviteEmail={inviteEmail} setInviteEmail={setInviteEmail} inviteStatus={inviteStatus} handleInviteUser={handleInviteUser} />

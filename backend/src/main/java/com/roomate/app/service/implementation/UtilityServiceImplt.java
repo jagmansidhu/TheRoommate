@@ -56,15 +56,14 @@ public class UtilityServiceImplt implements UtilityService {
                 createdUtilities.add(utilityRepository.save(utility));
             }
         } else if (dto.getUtilDistributionEnum() == UtilDistributionEnum.CUSTOMSPLIT) {
-            dto.getCustomSplit().forEach((memberId, percentage) -> {
+            dto.getCustomSplit().forEach((memberId, splitAmount) -> {
                 RoomMemberEntity member = roomMemberRepository.findById(memberId)
                         .orElseThrow(() -> new EntityNotFoundException("Member not found"));
-                double shareAmount = (percentage / 100.0) * dto.getUtilityPrice();
 
                 UtilityEntity utility = new UtilityEntity();
                 utility.setUtilityName(dto.getUtilityName());
                 utility.setDescription(dto.getDescription());
-                utility.setUtilityPrice(shareAmount);
+                utility.setUtilityPrice(splitAmount);
                 utility.setUtilDistributionEnum(dto.getUtilDistributionEnum());
                 utility.setRoom(room);
                 utility.setAssignedToMember(member);
@@ -126,34 +125,6 @@ public class UtilityServiceImplt implements UtilityService {
         utilityRepository.deleteById(utilityId);
     }
 
-    // TODO handle OVerall Logic for updating utilities when users are added or
-    // removed from a room
-    @Override
-    @Transactional
-    public void updateUtilitiesOnUserChange(UUID roomId) {
-        RoomEntity room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new EntityNotFoundException("Room not found"));
-        Hibernate.initialize(room.getMembers());
 
-        List<RoomMemberEntity> members = room.getMembers();
-        if (members.isEmpty()) {
-            throw new IllegalStateException("Room has no members.");
-        }
-
-        List<UtilityEntity> utilities = utilityRepository.findByRoomId(roomId);
-
-        for (UtilityEntity utility : utilities) {
-            if (utility.getUtilDistributionEnum() == UtilDistributionEnum.EQUALSPLIT) {
-                double share = utility.getUtilityPrice() / members.size();
-                for (RoomMemberEntity member : members) {
-                    utility.setAssignedToMember(member);
-                    utility.setUtilityPrice(share);
-                    utilityRepository.save(utility);
-                }
-            } else if (utility.getUtilDistributionEnum() == UtilDistributionEnum.CUSTOMSPLIT) {
-                throw new UnsupportedOperationException("Custom split logic needs to be implemented.");
-            }
-        }
-    }
 
 }

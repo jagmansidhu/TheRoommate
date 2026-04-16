@@ -12,8 +12,6 @@ public interface UtilityService {
 
     List<UtilityDto> getUtilitiesByRoom(UUID roomId);
 
-    void updateUtilitiesOnUserChange(UUID roomId);
-
     List<UtilityDto> getUtilitiesByRoomandMemberId(UUID roomId, UUID memberId);
 
     List<UtilityDto> getUpcomingUtilities(String id);

@@ -125,8 +125,6 @@ public class RoomServiceImplt implements RoomService {
 
         room.getMembers().add(member);
 
-        // utilityService.updateUtilitiesOnUserChange(room.getId());
-
         return convertToRoomDto(roomRepository.save(room));
     }
 
@@ -184,8 +182,6 @@ public class RoomServiceImplt implements RoomService {
         if (!utilityRepository.findByRoomId(memberid).isEmpty()) {
             utilityRepository.deleteAllByRoomMemberId(memberid);
         }
-
-        // utilityService.updateUtilitiesOnUserChange(roomid);
 
         roomMemberRepository.deleteByMemberIdAndUserId(memberid, user.getId());
 
