@@ -8,14 +8,13 @@ import { useAppData } from '../../App';
 const RoomDetailsPageWrapper = () => {
     const { roomId } = useParams();
     const navigate = useNavigate();
-    const { rooms } = useAppData();
+    const { rooms, removeRoom } = useAppData();
 
     const [room, setRoom] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchRoom = async () => {
-            // Check cache first for instant loading
             if (rooms && rooms.length > 0) {
                 const cachedRoom = rooms.find(r => r.id === roomId);
                 if (cachedRoom) {
@@ -25,7 +24,6 @@ const RoomDetailsPageWrapper = () => {
                 }
             }
 
-            // Fallback: network fetch if hard refreshed and cache is empty
             try {
                 const response = await apiClient.get(`/api/rooms/${roomId}`, {
                     withCredentials: true,
@@ -51,13 +49,14 @@ const RoomDetailsPageWrapper = () => {
                 await apiClient.delete(`/api/rooms/${memberId}/leave/${roomId}`, {
                     withCredentials: true,
                 });
+                removeRoom(roomId);
                 navigate('/rooms');
             } catch (error) {
                 console.error('Failed to leave room:', error);
             }
         };
         leaveRoom();
-    }, [navigate]);
+    }, [navigate, roomId, removeRoom]);
 
     const handleDeleteRoom = useCallback(() => {
         const deleteRoom = async () => {
@@ -65,6 +64,7 @@ const RoomDetailsPageWrapper = () => {
                 await apiClient.delete(`/api/rooms/${roomId}/delete-room`, {
                     withCredentials: true,
                 });
+                removeRoom(roomId);
                 navigate('/rooms');
             } catch (error) {
                 console.error('Failed to Delete room:', error);
@@ -72,7 +72,7 @@ const RoomDetailsPageWrapper = () => {
         };
         deleteRoom();
 
-    }, [navigate, roomId]);
+    }, [navigate, roomId, removeRoom]);
 
     if (loading) return <div>Loading room details...</div>;
 
