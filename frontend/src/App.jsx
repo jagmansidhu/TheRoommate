@@ -74,7 +74,10 @@ const AuthProvider = ({children}) => {
         checkAuthStatus();
     }, []);
 
-    const login = () => {
+    const login = (token) => {
+        if (token) {
+            localStorage.setItem('token', token);
+        }
         setIsAuthenticated(true);
     };
 
@@ -84,7 +87,8 @@ const AuthProvider = ({children}) => {
         } catch (err) {
             console.error('Logout failed', err);
         }
-
+        
+        localStorage.removeItem('token');
         setIsAuthenticated(false);
         window.location.href = '/';
     };

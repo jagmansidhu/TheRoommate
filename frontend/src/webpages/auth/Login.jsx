@@ -25,7 +25,7 @@ const Login = () => {
             );
 
             if (response.status === 200) {
-                login();
+                login(response.data.token);
                 navigate('/dashboard');
             } else {
                 setError('Invalid login credentials');
