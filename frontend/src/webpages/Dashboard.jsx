@@ -10,15 +10,12 @@ const Dashboard = () => {
     const email = user?.email || user?.username || null;
     const { rooms, roomsLoading, userChores, userUtilities, updateUserChore, updateUserUtility } = useAppData();
     const [showOnboarding, setShowOnboarding] = useState(false);
-    const [pendingChoreIds, setPendingChoreIds] = useState([]);
-    const [pendingUtilityIds, setPendingUtilityIds] = useState([]);
     const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => {
         return localStorage.getItem('hasSeenOnboarding') === 'true';
     });
 
     const isUtilityCompleted = (utility) => Boolean(utility?.isCompleted ?? utility?.completed);
 
-    // Show onboarding once rooms have loaded and the user has none
     useEffect(() => {
         if (!roomsLoading && rooms.length === 0 && !hasSeenOnboarding) {
             setShowOnboarding(true);
@@ -48,7 +45,6 @@ const Dashboard = () => {
         return <OnboardingPage onComplete={handleOnboardingComplete} />;
     }
 
-    // --- Chores: only those due today ---
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -60,7 +56,6 @@ const Dashboard = () => {
         return due >= today && due < tomorrow;
     });
 
-    // --- Utilities: bucket by frequency so user sees bills relevant to their period ---
     const now = new Date();
     const in7Days = new Date(now);
     in7Days.setDate(now.getDate() + 7);
@@ -74,7 +69,6 @@ const Dashboard = () => {
         return freq || '';
     };
 
-    // Weekly & biweekly: show bills due within 7 days
     const weeklyBills = userUtilities.filter(u => {
         const freq = u.choreFrequencyUnitEnum;
         if (freq !== 'WEEKLY' && freq !== 'BIWEEKLY') return false;
@@ -83,7 +77,6 @@ const Dashboard = () => {
         return due >= now && due <= in7Days;
     });
 
-    // Monthly: show bills due within 30 days
     const monthlyBills = userUtilities.filter(u => {
         const freq = u.choreFrequencyUnitEnum;
         if (freq !== 'MONTHLY') return false;
@@ -92,34 +85,31 @@ const Dashboard = () => {
         return due >= now && due <= in30Days;
     });
 
-    // Utilities with no frequency set — always show them
     const miscBills = userUtilities.filter(u => !u.choreFrequencyUnitEnum);
 
     const relevantUtilities = [...weeklyBills, ...monthlyBills, ...miscBills];
 
     const toggleChoreCompletion = async (chore) => {
         const nextCompleted = !Boolean(chore.isCompleted);
-        setPendingChoreIds(prev => [...prev, chore.id]);
+        updateUserChore(chore.id, { isCompleted: nextCompleted });
+        
         try {
             await apiClient.patch(`/api/chores/${chore.id}/completion`, { completed: nextCompleted });
-            updateUserChore(chore.id, { isCompleted: nextCompleted });
         } catch (error) {
             console.error('Failed to update chore completion', error);
-        } finally {
-            setPendingChoreIds(prev => prev.filter(id => id !== chore.id));
+            updateUserChore(chore.id, { isCompleted: !nextCompleted });
         }
     };
 
     const toggleUtilityCompletion = async (utility) => {
         const nextCompleted = !isUtilityCompleted(utility);
-        setPendingUtilityIds(prev => [...prev, utility.id]);
+        updateUserUtility(utility.id, { isCompleted: nextCompleted });
+
         try {
             await apiClient.patch(`/api/utility/${utility.id}/completion`, { completed: nextCompleted });
-            updateUserUtility(utility.id, { isCompleted: nextCompleted });
         } catch (error) {
             console.error('Failed to update utility completion', error);
-        } finally {
-            setPendingUtilityIds(prev => prev.filter(id => id !== utility.id));
+            updateUserUtility(utility.id, { isCompleted: !nextCompleted });
         }
     };
 
@@ -167,7 +157,6 @@ const Dashboard = () => {
                                     <input
                                         type="checkbox"
                                         checked={Boolean(chore.isCompleted)}
-                                        disabled={pendingChoreIds.includes(chore.id)}
                                         onChange={() => toggleChoreCompletion(chore)}
                                         title={chore.isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
                                     />
@@ -197,7 +186,6 @@ const Dashboard = () => {
                                     <input
                                         type="checkbox"
                                         checked={isUtilityCompleted(utility)}
-                                        disabled={pendingUtilityIds.includes(utility.id)}
                                         onChange={() => toggleUtilityCompletion(utility)}
                                         title={isUtilityCompleted(utility) ? 'Mark as incomplete' : 'Mark as complete'}
                                     />

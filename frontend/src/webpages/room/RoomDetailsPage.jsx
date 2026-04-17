@@ -47,8 +47,6 @@ const RoomDetailsPage = ({
     const [memberId, setMemberId] = useState(null);
     const [isCustomChore, setIsCustomChore] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
-    const [pendingChoreIds, setPendingChoreIds] = useState([]);
-    const [pendingUtilityIds, setPendingUtilityIds] = useState([]);
 
     const resetChoreData = () => setChoreData({ choreName: '', frequency: 1, frequencyUnit: 'WEEKLY' });
 
@@ -85,7 +83,7 @@ const RoomDetailsPage = ({
 
                 const [choresRes, utilitiesRes, userUtilitiesRes] = await Promise.all([
                     apiClient.get(`/api/chores/${room.id}`, { withCredentials: true }),
-                    apiClient.get(`/api/utility/${room.id}`, { withCredentials: true }), // Added missing /room/
+                    apiClient.get(`/api/utility/${room.id}`, { withCredentials: true }),
                     apiClient.get(`/api/utility/${mId}/room/${room.id}`, { withCredentials: true }),
                 ]);
                 setChores(choresRes.data);
@@ -170,7 +168,6 @@ const RoomDetailsPage = ({
 
         try {
             const payload = pendingChores.map(chore => {
-                // Keep deadline in local time to avoid UTC date shifts (which can hide near-term chores).
                 const strictLocalDateTime = `${chore.deadline}T23:59:59`;
 
                 return {
@@ -220,35 +217,35 @@ const RoomDetailsPage = ({
         if (!user?.email || chore.assignedToMemberName !== user.email) return;
 
         const nextCompleted = !Boolean(chore.isCompleted);
-        setPendingChoreIds(prev => [...prev, chore.id]);
+        
+        setChores(prev => prev.map(item => item.id === chore.id ? { ...item, isCompleted: nextCompleted } : item));
+        updateUserChore(chore.id, { isCompleted: nextCompleted });
+
         try {
-            const response = await apiClient.patch(`/api/chores/${chore.id}/completion`, { completed: nextCompleted },
+            await apiClient.patch(`/api/chores/${chore.id}/completion`, { completed: nextCompleted },
                 { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
             );
-            const updated = response.data;
-            setChores(prev => prev.map(item => item.id === updated.id ? { ...item, isCompleted: updated.isCompleted } : item));
-            updateUserChore(updated.id, { isCompleted: updated.isCompleted });
         } catch (error) {
             console.error('Error updating chore completion:', error);
-        } finally {
-            setPendingChoreIds(prev => prev.filter(id => id !== chore.id));
+            setChores(prev => prev.map(item => item.id === chore.id ? { ...item, isCompleted: !nextCompleted } : item));
+            updateUserChore(chore.id, { isCompleted: !nextCompleted });
         }
     };
 
     const toggleUtilityCompletion = async (utility) => {
         const nextCompleted = !isUtilityCompleted(utility);
-        setPendingUtilityIds(prev => [...prev, utility.id]);
+        
+        setUserUtilities(prev => prev.map(item => item.id === utility.id ? { ...item, isCompleted: nextCompleted, completed: nextCompleted } : item));
+        updateUserUtility(utility.id, { isCompleted: nextCompleted });
+
         try {
-            const response = await apiClient.patch(`/api/utility/${utility.id}/completion`, { completed: nextCompleted },
+            await apiClient.patch(`/api/utility/${utility.id}/completion`, { completed: nextCompleted },
                 { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
             );
-            const updated = normalizeUtility(response.data);
-            setUserUtilities(prev => prev.map(item => item.id === updated.id ? { ...item, isCompleted: updated.isCompleted, completed: updated.isCompleted } : item));
-            updateUserUtility(updated.id, { isCompleted: updated.isCompleted });
         } catch (error) {
             console.error('Error updating utility completion:', error);
-        } finally {
-            setPendingUtilityIds(prev => prev.filter(id => id !== utility.id));
+            setUserUtilities(prev => prev.map(item => item.id === utility.id ? { ...item, isCompleted: !nextCompleted, completed: !nextCompleted } : item));
+            updateUserUtility(utility.id, { isCompleted: !nextCompleted });
         }
     };
 
@@ -405,11 +402,10 @@ const RoomDetailsPage = ({
                             <div className="rd-utility-list">
                                 {userUtilities.map(u => (
                                     <div key={u.id} className={`rd-utility-row ${isUtilityCompleted(u) ? 'is-completed' : ''}`}>
-                                        <label className={`rd-checkbox ${isUtilityCompleted(u) ? 'is-checked' : ''} ${pendingUtilityIds.includes(u.id) ? 'is-disabled' : ''}`}>
+                                        <label className={`rd-checkbox ${isUtilityCompleted(u) ? 'is-checked' : ''}`}>
                                             <input
                                                 type="checkbox"
                                                 checked={isUtilityCompleted(u)}
-                                                disabled={pendingUtilityIds.includes(u.id)}
                                                 onChange={() => toggleUtilityCompletion(u)}
                                                 aria-label={`${isUtilityCompleted(u) ? 'Mark utility as incomplete' : 'Mark utility as complete'}: ${u.utilityName}`}
                                             />
@@ -455,11 +451,10 @@ const RoomDetailsPage = ({
                                             {dayChores.map(chore => (
                                                 <div key={chore.id} className={`rd-timeline-item ${chore.isCompleted ? 'is-completed' : ''}`}>
                                                     {chore.assignedToMemberName === user?.email && (
-                                                        <label className={`rd-checkbox ${chore.isCompleted ? 'is-checked' : ''} ${pendingChoreIds.includes(chore.id) ? 'is-disabled' : ''}`}>
+                                                        <label className={`rd-checkbox ${chore.isCompleted ? 'is-checked' : ''}`}>
                                                             <input
                                                                 type="checkbox"
                                                                 checked={Boolean(chore.isCompleted)}
-                                                                disabled={pendingChoreIds.includes(chore.id)}
                                                                 onChange={() => toggleChoreCompletion(chore)}
                                                                 aria-label={`${chore.isCompleted ? 'Mark chore as incomplete' : 'Mark chore as complete'}: ${chore.choreName}`}
                                                             />
