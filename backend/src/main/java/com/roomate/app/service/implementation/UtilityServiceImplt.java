@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -81,7 +82,8 @@ public class UtilityServiceImplt implements UtilityService {
 
         return utilityRepository
                 .findByRoomId(roomId).stream().map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(),
-                        utility.getUtilityPrice(), utility.getRoom() != null ? utility.getRoom().getId() : null))
+                        utility.getUtilityPrice(), utility.getRoom() != null ? utility.getRoom().getId() : null,
+                        utility.isCompleted()))
                 .collect(Collectors.toList());
     }
 
@@ -91,7 +93,7 @@ public class UtilityServiceImplt implements UtilityService {
 
         return utilityRepository.findByRoomIdAndMemberId(roomId, memberId).stream()
                 .map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(), utility.getUtilityPrice(),
-                        utility.getRoom() != null ? utility.getRoom().getId() : null))
+                        utility.getRoom() != null ? utility.getRoom().getId() : null, utility.isCompleted()))
                 .collect(Collectors.toList());
     }
 
@@ -113,7 +115,8 @@ public class UtilityServiceImplt implements UtilityService {
                         utility.getUtilityName(),
                         utility.getUtilityPrice(),
                         utility.getRoom() != null ? utility.getRoom().getName() : null,
-                        utility.getDueAt()))
+                        utility.getDueAt(),
+                        utility.isCompleted()))
                 .collect(Collectors.toList());
     }
 
@@ -123,6 +126,28 @@ public class UtilityServiceImplt implements UtilityService {
             throw new EntityNotFoundException("Utility with id " + utilityId + " not found");
         }
         utilityRepository.deleteById(utilityId);
+    }
+
+    @Override
+    @Transactional
+    public UtilityDto updateCompletion(UUID utilityId, String userEmail, boolean completed) {
+        UtilityEntity utility = utilityRepository.findByUtilityId(utilityId)
+                .orElseThrow(() -> new EntityNotFoundException("Utility not found"));
+
+        if (utility.getAssignedToMember() == null || utility.getAssignedToMember().getUser() == null) {
+            throw new IllegalStateException("Utility is not assigned to a member");
+        }
+
+        String assigneeEmail = utility.getAssignedToMember().getUser().getEmail();
+        if (!assigneeEmail.equalsIgnoreCase(userEmail)) {
+            throw new SecurityException("Only the assigned roommate can update completion");
+        }
+
+        utility.setCompleted(completed);
+        utility.setLastCompletedAt(completed ? LocalDateTime.now() : null);
+
+        UtilityEntity updated = utilityRepository.save(utility);
+        return new UtilityDto(updated);
     }
 
 

@@ -17,4 +17,6 @@ public interface UtilityService {
     List<UtilityDto> getUpcomingUtilities(String id);
 
     void deleteUtility(UUID utilityId);
+
+    UtilityDto updateCompletion(UUID utilityId, String userEmail, boolean completed);
 }

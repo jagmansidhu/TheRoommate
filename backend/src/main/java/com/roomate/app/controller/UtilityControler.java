@@ -2,6 +2,7 @@ package com.roomate.app.controller;
 
 import com.roomate.app.dto.UtilityCreateDto;
 import com.roomate.app.dto.UtilityDto;
+import com.roomate.app.dto.CompletionUpdateDto;
 import com.roomate.app.entities.UtilityEntity;
 import com.roomate.app.service.UtilityService;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +60,19 @@ public class UtilityControler {
     public ResponseEntity<Boolean> deleteUtility(@PathVariable UUID utilityId) {
         utilityService.deleteUtility(utilityId);
         return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{utilityId}/completion")
+    public ResponseEntity<UtilityDto> updateCompletion(@PathVariable UUID utilityId,
+            @RequestBody CompletionUpdateDto request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            return ResponseEntity.ok(utilityService.updateCompletion(utilityId, email, request.isCompleted()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
 }
