@@ -18,4 +18,6 @@ public interface ChoreService {
     void deleteChoresByType(UUID roomId, String choreName);
 
     List<ChoreDto> getChoresByUserId(String id);
+
+    ChoreDto updateCompletion(UUID choreId, String userEmail, boolean completed);
 }

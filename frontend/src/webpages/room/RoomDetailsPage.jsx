@@ -15,11 +15,18 @@ import DeleteConfirmModal from './modals/DeleteConfirmModal';
 const RoomDetailsPage = ({
                              onClose, room, onLeaveRoom, onDeleteRoom,
                          }) => {
+    const normalizeUtility = (utility) => ({
+        ...utility,
+        isCompleted: utility?.isCompleted ?? utility?.completed ?? false,
+    });
+
+    const isUtilityCompleted = (utility) => Boolean(utility?.isCompleted ?? utility?.completed);
+
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteStatus, setInviteStatus] = useState('');
     const { user } = useUser();
-    const { refreshUserChores, refreshUserUtilities } = useAppData();
+    const { refreshUserChores, refreshUserUtilities, updateUserChore, updateUserUtility } = useAppData();
     const [utilities, setUtilities] = useState([]);
     const [showRemoveUtilityModal, setShowRemoveUtilityModal] = useState(false);
     const [selectedUtilityId, setSelectedUtilityId] = useState("");
@@ -40,6 +47,8 @@ const RoomDetailsPage = ({
     const [memberId, setMemberId] = useState(null);
     const [isCustomChore, setIsCustomChore] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+    const [pendingChoreIds, setPendingChoreIds] = useState([]);
+    const [pendingUtilityIds, setPendingUtilityIds] = useState([]);
 
     const resetChoreData = () => setChoreData({ choreName: '', frequency: 1, frequencyUnit: 'WEEKLY' });
 
@@ -80,14 +89,14 @@ const RoomDetailsPage = ({
                     apiClient.get(`/api/utility/${mId}/room/${room.id}`, { withCredentials: true }),
                 ]);
                 setChores(choresRes.data);
-                setUtilities(utilitiesRes.data);
-                setUserUtilities(userUtilitiesRes.data);
+                setUtilities((utilitiesRes.data || []).map(normalizeUtility));
+                setUserUtilities((userUtilitiesRes.data || []).map(normalizeUtility));
             } catch (err) {
                 console.error("Error loading room data:", err);
             }
         };
         fetchAll();
-    }, [room?.id, user?.email]);
+    }, [room?.id, room?.members, user?.email]);
 
     const memberRole = room?.members?.find(m => m.userId === user?.email)?.role;
     const isHeadRoommate = memberRole === ROLES.HEAD_ROOMMATE;
@@ -129,7 +138,7 @@ const RoomDetailsPage = ({
                 setUtilityData({ utilityName: "", description: "", utilityPrice: 0, utilDistributionEnum: "EQUALSPLIT", customSplit: {}, splitType: "AMOUNT" });
                 if (memberId) {
                     const r = await apiClient.get(`/api/utility/${memberId}/room/${room.id}`, { withCredentials: true });
-                    setUserUtilities(r.data);
+                    setUserUtilities((r.data || []).map(normalizeUtility));
                     refreshUserUtilities();
                 }
             }
@@ -144,7 +153,7 @@ const RoomDetailsPage = ({
             await apiClient.delete(`/api/utility/${selectedUtilityId}`, { withCredentials: true });
             if (memberId) {
                 const r = await apiClient.get(`/api/utility/${memberId}/room/${room.id}`, { withCredentials: true });
-                setUserUtilities(r.data);
+                setUserUtilities((r.data || []).map(normalizeUtility));
                 refreshUserUtilities();
             }
             setShowRemoveUtilityModal(false);
@@ -161,8 +170,8 @@ const RoomDetailsPage = ({
 
         try {
             const payload = pendingChores.map(chore => {
-                const dateObj = new Date(chore.deadline);
-                const strictLocalDateTime = dateObj.toISOString().split('.')[0];
+                // Keep deadline in local time to avoid UTC date shifts (which can hide near-term chores).
+                const strictLocalDateTime = `${chore.deadline}T23:59:59`;
 
                 return {
                     choreName: chore.choreName,
@@ -207,13 +216,50 @@ const RoomDetailsPage = ({
         }
     };
 
+    const toggleChoreCompletion = async (chore) => {
+        if (!user?.email || chore.assignedToMemberName !== user.email) return;
+
+        const nextCompleted = !Boolean(chore.isCompleted);
+        setPendingChoreIds(prev => [...prev, chore.id]);
+        try {
+            const response = await apiClient.patch(`/api/chores/${chore.id}/completion`, { completed: nextCompleted },
+                { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
+            );
+            const updated = response.data;
+            setChores(prev => prev.map(item => item.id === updated.id ? { ...item, isCompleted: updated.isCompleted } : item));
+            updateUserChore(updated.id, { isCompleted: updated.isCompleted });
+        } catch (error) {
+            console.error('Error updating chore completion:', error);
+        } finally {
+            setPendingChoreIds(prev => prev.filter(id => id !== chore.id));
+        }
+    };
+
+    const toggleUtilityCompletion = async (utility) => {
+        const nextCompleted = !isUtilityCompleted(utility);
+        setPendingUtilityIds(prev => [...prev, utility.id]);
+        try {
+            const response = await apiClient.patch(`/api/utility/${utility.id}/completion`, { completed: nextCompleted },
+                { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
+            );
+            const updated = normalizeUtility(response.data);
+            setUserUtilities(prev => prev.map(item => item.id === updated.id ? { ...item, isCompleted: updated.isCompleted, completed: updated.isCompleted } : item));
+            updateUserUtility(updated.id, { isCompleted: updated.isCompleted });
+        } catch (error) {
+            console.error('Error updating utility completion:', error);
+        } finally {
+            setPendingUtilityIds(prev => prev.filter(id => id !== utility.id));
+        }
+    };
+
     const getChoresByDate = () => {
-        const now = new Date();
-        const oneMonthAhead = new Date();
-        oneMonthAhead.setMonth(now.getMonth() + 1);
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const oneMonthAhead = new Date(startOfToday);
+        oneMonthAhead.setMonth(startOfToday.getMonth() + 1);
         const map = {};
         chores
-            .filter(c => { const d = new Date(c.dueAt); return d >= now && d <= oneMonthAhead; })
+            .filter(c => { const d = new Date(c.dueAt); return d >= startOfToday && d <= oneMonthAhead; })
             .sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt))
             .forEach(c => {
                 const d = new Date(c.dueAt);
@@ -326,7 +372,7 @@ const RoomDetailsPage = ({
                         <h2 className="rd-card-title">Members</h2>
                         <div className="rd-member-list">
                             {room.members?.map((member) => {
-                                const isSelf = member.userId === user.email;
+                                const isSelf = member.userId === user?.email;
                                 return (
                                     <div key={member.id} className="rd-member-row">
                                         <div className="rd-member-avatar">{getMemberInitial(member)}</div>
@@ -358,8 +404,17 @@ const RoomDetailsPage = ({
                         ) : (
                             <div className="rd-utility-list">
                                 {userUtilities.map(u => (
-                                    <div key={u.id} className="rd-utility-row">
-                                        <div className="rd-utility-dot" />
+                                    <div key={u.id} className={`rd-utility-row ${isUtilityCompleted(u) ? 'is-completed' : ''}`}>
+                                        <label className={`rd-checkbox ${isUtilityCompleted(u) ? 'is-checked' : ''} ${pendingUtilityIds.includes(u.id) ? 'is-disabled' : ''}`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={isUtilityCompleted(u)}
+                                                disabled={pendingUtilityIds.includes(u.id)}
+                                                onChange={() => toggleUtilityCompletion(u)}
+                                                aria-label={`${isUtilityCompleted(u) ? 'Mark utility as incomplete' : 'Mark utility as complete'}: ${u.utilityName}`}
+                                            />
+                                            <span className="rd-checkbox-ui" aria-hidden="true" />
+                                        </label>
                                         <span className="rd-utility-name">{u.utilityName}</span>
                                         <span className="rd-utility-freq">
                                             {u.choreFrequencyUnitEnum?.toLowerCase() || '—'}
@@ -396,12 +451,21 @@ const RoomDetailsPage = ({
                                             <span className="rd-timeline-day">{date.split(' ')[1]}</span>
                                             <span className="rd-timeline-month">{date.split(' ')[0]}</span>
                                         </div>
-                                        <div className="rd-timeline-line">
-                                            <div className="rd-timeline-dot" />
-                                        </div>
                                         <div className="rd-timeline-content">
                                             {dayChores.map(chore => (
-                                                <div key={chore.id} className="rd-timeline-item">
+                                                <div key={chore.id} className={`rd-timeline-item ${chore.isCompleted ? 'is-completed' : ''}`}>
+                                                    {chore.assignedToMemberName === user?.email && (
+                                                        <label className={`rd-checkbox ${chore.isCompleted ? 'is-checked' : ''} ${pendingChoreIds.includes(chore.id) ? 'is-disabled' : ''}`}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={Boolean(chore.isCompleted)}
+                                                                disabled={pendingChoreIds.includes(chore.id)}
+                                                                onChange={() => toggleChoreCompletion(chore)}
+                                                                aria-label={`${chore.isCompleted ? 'Mark chore as incomplete' : 'Mark chore as complete'}: ${chore.choreName}`}
+                                                            />
+                                                            <span className="rd-checkbox-ui" aria-hidden="true" />
+                                                        </label>
+                                                    )}
                                                     {chore.choreName}
                                                 </div>
                                             ))}

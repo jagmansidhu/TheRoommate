@@ -327,7 +327,7 @@ const Calendar = () => {
 
                                         {/* Utilities */}
                                         {getUtilitiesForDate(day).map(utility => (
-                                            <div key={utility.id} className="utility-bar">
+                                            <div key={utility.id} className={`utility-bar ${(utility.isCompleted ?? utility.completed) ? 'completed' : ''}`}>
                                                 <span className="utility-title">💰 {utility.utilityName}</span>
                                             </div>
                                         ))}

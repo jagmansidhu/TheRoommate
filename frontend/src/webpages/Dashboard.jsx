@@ -2,16 +2,21 @@ import React, { useEffect, useState } from 'react';
 import '../styling/Dashboard.css';
 import OnboardingPage from './OnboardingPage';
 import { useOnboarding, useUser, useAppData } from '../App';
+import apiClient from '../apiClient';
 
 const Dashboard = () => {
     const { setIsOnboarding } = useOnboarding();
     const { user } = useUser();
     const email = user?.email || user?.username || null;
-    const { rooms, roomsLoading, userChores, userUtilities } = useAppData();
+    const { rooms, roomsLoading, userChores, userUtilities, updateUserChore, updateUserUtility } = useAppData();
     const [showOnboarding, setShowOnboarding] = useState(false);
+    const [pendingChoreIds, setPendingChoreIds] = useState([]);
+    const [pendingUtilityIds, setPendingUtilityIds] = useState([]);
     const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => {
         return localStorage.getItem('hasSeenOnboarding') === 'true';
     });
+
+    const isUtilityCompleted = (utility) => Boolean(utility?.isCompleted ?? utility?.completed);
 
     // Show onboarding once rooms have loaded and the user has none
     useEffect(() => {
@@ -92,6 +97,32 @@ const Dashboard = () => {
 
     const relevantUtilities = [...weeklyBills, ...monthlyBills, ...miscBills];
 
+    const toggleChoreCompletion = async (chore) => {
+        const nextCompleted = !Boolean(chore.isCompleted);
+        setPendingChoreIds(prev => [...prev, chore.id]);
+        try {
+            await apiClient.patch(`/api/chores/${chore.id}/completion`, { completed: nextCompleted });
+            updateUserChore(chore.id, { isCompleted: nextCompleted });
+        } catch (error) {
+            console.error('Failed to update chore completion', error);
+        } finally {
+            setPendingChoreIds(prev => prev.filter(id => id !== chore.id));
+        }
+    };
+
+    const toggleUtilityCompletion = async (utility) => {
+        const nextCompleted = !isUtilityCompleted(utility);
+        setPendingUtilityIds(prev => [...prev, utility.id]);
+        try {
+            await apiClient.patch(`/api/utility/${utility.id}/completion`, { completed: nextCompleted });
+            updateUserUtility(utility.id, { isCompleted: nextCompleted });
+        } catch (error) {
+            console.error('Failed to update utility completion', error);
+        } finally {
+            setPendingUtilityIds(prev => prev.filter(id => id !== utility.id));
+        }
+    };
+
     return (
         <div className="dashboard-container">
             {/* Dashboard Header */}
@@ -119,7 +150,7 @@ const Dashboard = () => {
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon stat-icon-complete"></div>
-                    <div className="stat-value">{userChores.filter(c => c.completed).length}</div>
+                    <div className="stat-value">{userChores.filter(c => c.isCompleted).length}</div>
                     <div className="stat-label">Completed This Week</div>
                 </div>
             </div>
@@ -132,7 +163,14 @@ const Dashboard = () => {
                     {choresToday.length > 0 ? (
                         <ul>
                             {choresToday.map((chore, index) => (
-                                <li key={index}>
+                                <li key={index} className={chore.isCompleted ? 'dashboard-item-completed' : ''}>
+                                    <input
+                                        type="checkbox"
+                                        checked={Boolean(chore.isCompleted)}
+                                        disabled={pendingChoreIds.includes(chore.id)}
+                                        onChange={() => toggleChoreCompletion(chore)}
+                                        title={chore.isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
+                                    />
                                     <div className="item-icon item-icon-chore"></div>
                                     <div className="item-content">
                                         <div className="item-title">{chore.choreName || 'Untitled Chore'}</div>
@@ -155,7 +193,14 @@ const Dashboard = () => {
                     {relevantUtilities.length > 0 ? (
                         <ul>
                             {relevantUtilities.map((utility, index) => (
-                                <li key={index}>
+                                <li key={index} className={isUtilityCompleted(utility) ? 'dashboard-item-completed' : ''}>
+                                    <input
+                                        type="checkbox"
+                                        checked={isUtilityCompleted(utility)}
+                                        disabled={pendingUtilityIds.includes(utility.id)}
+                                        onChange={() => toggleUtilityCompletion(utility)}
+                                        title={isUtilityCompleted(utility) ? 'Mark as incomplete' : 'Mark as complete'}
+                                    />
                                     <div className="item-icon item-icon-bill"></div>
                                     <div className="item-content">
                                         <div className="item-title">{utility.utilityName || 'Untitled Bill'}</div>

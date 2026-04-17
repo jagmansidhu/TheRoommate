@@ -2,6 +2,7 @@ package com.roomate.app.controller;
 
 import com.roomate.app.dto.ChoreCreateDto;
 import com.roomate.app.dto.ChoreDto;
+import com.roomate.app.dto.CompletionUpdateDto;
 import com.roomate.app.service.ChoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +57,19 @@ public class ChoreController {
     public ResponseEntity<Void> deleteChore(@PathVariable UUID choreId) {
         choreService.deleteChore(choreId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{choreId}/completion")
+    public ResponseEntity<ChoreDto> updateCompletion(@PathVariable UUID choreId,
+            @RequestBody CompletionUpdateDto request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            return ResponseEntity.ok(choreService.updateCompletion(choreId, email, request.isCompleted()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @DeleteMapping("/room/{roomId}/type/{choreName}")

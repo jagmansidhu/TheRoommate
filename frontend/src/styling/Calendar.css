@@ -217,6 +217,11 @@
   text-overflow: ellipsis;
 }
 
+.utility-bar.completed {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
 .more-events-bar {
   font-family: var(--f-body);
   font-size: 0.65rem;

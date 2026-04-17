@@ -32,6 +32,9 @@ public interface ChoreRepository extends JpaRepository<ChoreEntity, Long> {
     @Query("SELECT u FROM ChoreEntity u WHERE u.assignedToMember.id IN :roomMemberIds")
     List<ChoreEntity> findAllByRoomMemberIds(List<UUID> roomMemberIds);
 
+    @Query("SELECT c FROM ChoreEntity c LEFT JOIN FETCH c.assignedToMember m LEFT JOIN FETCH m.user WHERE c.id = :choreId")
+    java.util.Optional<ChoreEntity> findByChoreId(@Param("choreId") UUID choreId);
+
     @Modifying
     @Transactional
     @Query("DELETE FROM ChoreEntity m WHERE m.room.id = :roomId")

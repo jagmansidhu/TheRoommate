@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -84,11 +85,11 @@ public class ChoreServiceImplt implements ChoreService {
         RoomEntity room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new EntityNotFoundException("Room not found"));
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime twoWeeksAhead = now.plusWeeks(2);
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        LocalDateTime twoWeeksAhead = startOfToday.plusWeeks(2);
 
         return choreRepository.findByRoom(room).stream().filter(chore -> chore.getDueAt() != null
-                && chore.getDueAt().isAfter(now) && chore.getDueAt().isBefore(twoWeeksAhead)).map(this::toDto)
+                && !chore.getDueAt().isBefore(startOfToday) && chore.getDueAt().isBefore(twoWeeksAhead)).map(this::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -139,8 +140,31 @@ public class ChoreServiceImplt implements ChoreService {
                         chore.getId(),
                         chore.getChoreName(),
                         chore.getDueAt(),
-                        chore.getRoom().getName()))
+                        chore.getRoom().getName(),
+                        chore.isCompleted()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public ChoreDto updateCompletion(UUID choreId, String userEmail, boolean completed) {
+        ChoreEntity chore = choreRepository.findByChoreId(choreId)
+                .orElseThrow(() -> new EntityNotFoundException("Chore not found"));
+
+        if (chore.getAssignedToMember() == null || chore.getAssignedToMember().getUser() == null) {
+            throw new IllegalStateException("Chore is not assigned to a member");
+        }
+
+        String assigneeEmail = chore.getAssignedToMember().getUser().getEmail();
+        if (!assigneeEmail.equalsIgnoreCase(userEmail)) {
+            throw new SecurityException("Only the assigned roommate can update completion");
+        }
+
+        chore.setCompleted(completed);
+        chore.setLastCompletedAt(completed ? LocalDateTime.now() : null);
+
+        ChoreEntity updated = choreRepository.save(chore);
+        return toDto(updated);
     }
 
     private ChoreDto toDto(ChoreEntity entity) {

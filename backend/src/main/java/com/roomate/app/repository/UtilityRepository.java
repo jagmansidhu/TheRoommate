@@ -39,4 +39,7 @@ public interface UtilityRepository extends JpaRepository<UtilityEntity, Long> {
 
     @Query("SELECT u FROM UtilityEntity u WHERE u.assignedToMember.id IN :roomMemberIds")
     List<UtilityEntity> findAllByRoomMemberIds(@Param("roomMemberIds") List<UUID> roomMemberIds);
+
+    @Query("SELECT u FROM UtilityEntity u LEFT JOIN FETCH u.assignedToMember m LEFT JOIN FETCH m.user WHERE u.id = :utilityId")
+    java.util.Optional<UtilityEntity> findByUtilityId(@Param("utilityId") UUID utilityId);
 }

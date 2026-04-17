@@ -35,11 +35,12 @@ public class ChoreDto {
         this.roomid = roomid;
     }
 
-    public ChoreDto(UUID id, String choreName, LocalDateTime dueAt, String roomName) {
+    public ChoreDto(UUID id, String choreName, LocalDateTime dueAt, String roomName, boolean isCompleted) {
         this.id = id;
         this.choreName = choreName;
         this.dueAt = dueAt;
         this.roomName = roomName;
+        this.isCompleted = isCompleted;
 
     }
 }
