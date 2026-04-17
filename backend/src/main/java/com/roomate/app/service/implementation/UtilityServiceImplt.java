@@ -48,7 +48,7 @@ public class UtilityServiceImplt implements UtilityService {
         LocalDateTime deadline = dto.getDeadline();
         boolean recurring = dto.getFrequencyUnit() != null;
 
-        if (startingDate.toLocalDate().isBefore(now.toLocalDate())) {
+        if (startingDate.toLocalDate().isBefore(now.toLocalDate().minusDays(1))) {
             throw new IllegalArgumentException("Starting date cannot be in the past");
         }
 
@@ -56,10 +56,10 @@ public class UtilityServiceImplt implements UtilityService {
             if (deadline == null) {
                 throw new IllegalArgumentException("Deadline is required for recurring utilities");
             }
-            if (deadline.isBefore(now)) {
+            if (deadline.isBefore(now.minusDays(1))) {
                 throw new IllegalArgumentException("Deadline must be in the future");
             }
-            if (deadline.isAfter(now.plusYears(1))) {
+            if (deadline.isAfter(now.plusYears(1).plusDays(1))) {
                 throw new IllegalArgumentException("Deadline cannot be more than one year from now");
             }
             if (startingDate.isAfter(deadline)) {
