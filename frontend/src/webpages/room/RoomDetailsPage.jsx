@@ -12,6 +12,8 @@ import ChoreModal from './modals/ChoreModal';
 import InviteModal from './modals/InviteModal';
 import DeleteConfirmModal from './modals/DeleteConfirmModal';
 
+const roomCache = {};
+
 const RoomDetailsPage = ({
                              onClose, room, onLeaveRoom, onDeleteRoom,
                          }) => {
@@ -27,7 +29,7 @@ const RoomDetailsPage = ({
     const [inviteStatus, setInviteStatus] = useState('');
     const { user } = useUser();
     const { refreshUserChores, refreshUserUtilities, updateUserChore, updateUserUtility } = useAppData();
-    const [utilities, setUtilities] = useState([]);
+    const [utilities, setUtilities] = useState(() => roomCache[room?.id]?.utilities || []);
     const [showRemoveUtilityModal, setShowRemoveUtilityModal] = useState(false);
     const [selectedUtilityId, setSelectedUtilityId] = useState("");
     const [showUtilityModal, setShowUtilityModal] = useState(false);
@@ -41,9 +43,9 @@ const RoomDetailsPage = ({
         choreName: '', frequency: 1, frequencyUnit: 'WEEKLY', deadline: ''
     });
     const [selectedChoreType, setSelectedChoreType] = useState('');
-    const [chores, setChores] = useState([]);
+    const [chores, setChores] = useState(() => roomCache[room?.id]?.chores || []);
 
-    const [userUtilities, setUserUtilities] = useState([]);
+    const [userUtilities, setUserUtilities] = useState(() => roomCache[room?.id]?.userUtilities || []);
     const [memberId, setMemberId] = useState(null);
     const [isCustomChore, setIsCustomChore] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
@@ -70,6 +72,12 @@ const RoomDetailsPage = ({
         oneYearAhead.setFullYear(now.getFullYear() + 1);
         return d > now && d <= oneYearAhead;
     };
+
+    useEffect(() => {
+        if (room?.id) {
+            roomCache[room.id] = { chores, utilities, userUtilities };
+        }
+    }, [chores, utilities, userUtilities, room?.id]);
 
     useEffect(() => {
         if (!room?.id || !user?.email) return;
