@@ -122,15 +122,20 @@ public class AuthController {
     @GetMapping("/status")
     public ResponseEntity<?> authStatus(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
+        String token = null;
 
-        if (cookies == null) {
-            return ResponseEntity.status(401).body("Cookie Null");
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("jwt".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                }
+            }
         }
 
-        String token = null;
-        for (Cookie cookie : cookies) {
-            if ("jwt".equals(cookie.getName())) {
-                token = cookie.getValue();
+        if (token == null || token.isEmpty()) {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
             }
         }
 
