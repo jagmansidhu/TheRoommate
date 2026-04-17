@@ -37,7 +37,6 @@ const Calendar = () => {
         }
     }, [eventsLoading]);
 
-    // Lazy-load events once on first Calendar visit — no-op on subsequent visits.
     useEffect(() => {
         loadEvents();
     }, [loadEvents]);
@@ -249,7 +248,9 @@ const Calendar = () => {
 
     const getUtilitiesForDate = (date) => {
         return utilities.filter(utility => {
-            return date.getDate() === 1;
+            if (!utility.dueAt) return date.getDate() === 1;
+            const utilityDate = new Date(utility.dueAt);
+            return utilityDate.toDateString() === date.toDateString();
         });
     };
 

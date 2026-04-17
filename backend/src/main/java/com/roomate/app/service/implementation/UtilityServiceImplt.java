@@ -42,35 +42,60 @@ public class UtilityServiceImplt implements UtilityService {
 
         List<UtilityEntity> createdUtilities = new ArrayList<>();
 
-        if (dto.getUtilDistributionEnum() == UtilDistributionEnum.EQUALSPLIT) {
-            List<RoomMemberEntity> members = room.getMembers();
-            double share = dto.getUtilityPrice() / members.size();
+        LocalDateTime startingDate = dto.getStartingDate() != null ? dto.getStartingDate() : LocalDateTime.now();
+        LocalDateTime deadline = dto.getDeadline();
+        boolean recurring = (dto.getFrequencyUnit() != null) && (deadline != null) && !startingDate.isAfter(deadline);
 
-            for (RoomMemberEntity member : members) {
-                UtilityEntity utility = new UtilityEntity();
-                utility.setUtilityName(dto.getUtilityName());
-                utility.setDescription(dto.getDescription());
-                utility.setUtilityPrice(share);
-                utility.setUtilDistributionEnum(dto.getUtilDistributionEnum());
-                utility.setRoom(room);
-                utility.setAssignedToMember(member);
-                createdUtilities.add(utilityRepository.save(utility));
+        LocalDateTime dueDate = startingDate;
+
+        do {
+            if (dto.getUtilDistributionEnum() == UtilDistributionEnum.EQUALSPLIT) {
+                List<RoomMemberEntity> members = room.getMembers();
+                double share = dto.getUtilityPrice() / members.size();
+
+                for (RoomMemberEntity member : members) {
+                    UtilityEntity utility = new UtilityEntity();
+                    utility.setUtilityName(dto.getUtilityName());
+                    utility.setDescription(dto.getDescription());
+                    utility.setUtilityPrice(share);
+                    utility.setUtilDistributionEnum(dto.getUtilDistributionEnum());
+                    utility.setRoom(room);
+                    utility.setAssignedToMember(member);
+                    utility.setDueAt(dueDate);
+                    utility.setChoreFrequencyUnitEnum(dto.getFrequencyUnit());
+                    createdUtilities.add(utilityRepository.save(utility));
+                }
+            } else if (dto.getUtilDistributionEnum() == UtilDistributionEnum.CUSTOMSPLIT) {
+                dto.getCustomSplit().forEach((memberId, splitAmount) -> {
+                    RoomMemberEntity member = roomMemberRepository.findById(memberId)
+                            .orElseThrow(() -> new EntityNotFoundException("Member not found"));
+
+                    UtilityEntity utility = new UtilityEntity();
+                    utility.setUtilityName(dto.getUtilityName());
+                    utility.setDescription(dto.getDescription());
+                    utility.setUtilityPrice(splitAmount);
+                    utility.setUtilDistributionEnum(dto.getUtilDistributionEnum());
+                    utility.setRoom(room);
+                    utility.setAssignedToMember(member);
+                    utility.setDueAt(dueDate);
+                    utility.setChoreFrequencyUnitEnum(dto.getFrequencyUnit());
+                    createdUtilities.add(utilityRepository.save(utility));
+                });
             }
-        } else if (dto.getUtilDistributionEnum() == UtilDistributionEnum.CUSTOMSPLIT) {
-            dto.getCustomSplit().forEach((memberId, splitAmount) -> {
-                RoomMemberEntity member = roomMemberRepository.findById(memberId)
-                        .orElseThrow(() -> new EntityNotFoundException("Member not found"));
 
-                UtilityEntity utility = new UtilityEntity();
-                utility.setUtilityName(dto.getUtilityName());
-                utility.setDescription(dto.getDescription());
-                utility.setUtilityPrice(splitAmount);
-                utility.setUtilDistributionEnum(dto.getUtilDistributionEnum());
-                utility.setRoom(room);
-                utility.setAssignedToMember(member);
-                createdUtilities.add(utilityRepository.save(utility));
-            });
-        }
+            if (!recurring) break;
+
+            if (dto.getFrequencyUnit() != null) {
+                switch (dto.getFrequencyUnit()) {
+                    case WEEKLY -> dueDate = dueDate.plusWeeks(1);
+                    case BIWEEKLY -> dueDate = dueDate.plusWeeks(2);
+                    case MONTHLY -> dueDate = dueDate.plusMonths(1);
+                    default -> dueDate = dueDate.plusMonths(1);
+                }
+            } else {
+                break;
+            }
+        } while (!dueDate.isAfter(deadline));
 
         return createdUtilities;
     }

@@ -24,6 +24,18 @@ const UtilityModal = ({
     };
 
     const validateAndSubmit = () => {
+        if (!utilityData.startingDate) {
+            setError("Starting date is required");
+            return;
+        }
+        if (!utilityData.deadline) {
+            setError("End date is required");
+            return;
+        }
+        if (new Date(utilityData.deadline) < new Date(utilityData.startingDate)) {
+            setError("End date must be after starting date");
+            return;
+        }
         if (utilityData.utilDistributionEnum === "CUSTOMSPLIT") {
             const sum = Object.values(utilityData.customSplit || {}).reduce((a, b) => a + (parseFloat(b) || 0), 0);
             
@@ -98,6 +110,48 @@ const UtilityModal = ({
                             <option value="EQUALSPLIT">Equal Split</option>
                             <option value="CUSTOMSPLIT">Custom Split</option>
                         </select>
+                    </div>
+                    
+                    <div className="form-group" style={{marginTop: '1rem'}}>
+                        <label>Frequency</label>
+                        <select
+                            className="form-input"
+                            value={utilityData.frequencyUnit || "MONTHLY"}
+                            onChange={e => setUtilityData({ ...utilityData, frequencyUnit: e.target.value })}
+                        >
+                            <option value="MONTHLY">Monthly</option>
+                            <option value="BIWEEKLY">Biweekly</option>
+                            <option value="WEEKLY">Weekly</option>
+                        </select>
+                    </div>
+
+                    <div style={{display: 'flex', gap: '1rem', marginTop: '1rem'}}>
+                        <div className="form-group" style={{flex: 1}}>
+                            <label>Starting Date</label>
+                            <input
+                                type="date"
+                                className="form-input"
+                                value={utilityData.startingDate || ""}
+                                onChange={e => setUtilityData({ ...utilityData, startingDate: e.target.value })}
+                                min={new Date().toISOString().split('T')[0]}
+                            />
+                        </div>
+
+                        <div className="form-group" style={{flex: 1}}>
+                            <label>End Date</label>
+                            <input
+                                type="date"
+                                className="form-input"
+                                value={utilityData.deadline || ""}
+                                onChange={e => setUtilityData({ ...utilityData, deadline: e.target.value })}
+                                min={utilityData.startingDate || new Date().toISOString().split('T')[0]}
+                                max={(() => {
+                                    let d = new Date(utilityData.startingDate || new Date());
+                                    d.setFullYear(d.getFullYear() + 1);
+                                    return d.toISOString().split('T')[0];
+                                })()}
+                            />
+                        </div>
                     </div>
                     
                     {utilityData.utilDistributionEnum === "CUSTOMSPLIT" && (
