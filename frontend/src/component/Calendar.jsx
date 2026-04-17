@@ -11,8 +11,8 @@ const Calendar = () => {
         rooms,
         userChores: chores,
         userUtilities: utilities,
-        events, eventsLoading, loadEvents,
-        appendEvent, removeEvent,
+        events, eventsLoading, loadEvents, refreshEvents,
+        removeEvent,
     } = useAppData();
 
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -72,10 +72,7 @@ const Calendar = () => {
                 { withCredentials: true, credentials: 'include' }
             );
 
-            // Append the server-returned event directly into the cache
-            if (response.data) {
-                appendEvent(response.data);
-            }
+            refreshEvents();
 
             setShowEventModal(false);
             setNewEvent({ title: '', description: '', startTime: '', endTime: '', roomId: '' });
@@ -100,8 +97,6 @@ const Calendar = () => {
     };
 
     const deleteEvent = async (eventId) => {
-        if (!window.confirm('Are you sure you want to delete this event?')) return;
-
         try {
             await apiClient.delete(`/api/events/${eventId}`, {
                 withCredentials: true,
