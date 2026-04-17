@@ -22,7 +22,8 @@ public interface RoomRepository extends JpaRepository<RoomEntity, UUID> {
 
     RoomEntity getRoomEntityByRoomCode(String roomCode);
 
-    Optional<RoomEntity> getRoomEntityById(UUID id);
+    @Query("SELECT r FROM RoomEntity r LEFT JOIN FETCH r.members m LEFT JOIN FETCH m.user WHERE r.id = :id")
+    Optional<RoomEntity> getRoomEntityById(@Param("id") UUID id);
 
 
     @Query("SELECT COUNT(r) FROM RoomEntity r JOIN r.members m WHERE m.user.id = :id")

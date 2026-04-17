@@ -17,7 +17,8 @@ import java.util.UUID;
 public interface ChoreRepository extends JpaRepository<ChoreEntity, Long> {
     List<ChoreEntity> findByRoomAndDueAtAfter(RoomEntity room, LocalDateTime date);
 
-    List<ChoreEntity> findByRoom(RoomEntity room);
+    @Query("SELECT c FROM ChoreEntity c LEFT JOIN FETCH c.assignedToMember m LEFT JOIN FETCH m.user WHERE c.room = :room")
+    List<ChoreEntity> findByRoom(@Param("room") RoomEntity room);
 
     void deleteById(UUID choreId);
 
@@ -29,8 +30,8 @@ public interface ChoreRepository extends JpaRepository<ChoreEntity, Long> {
 
     void deleteAllByRoomIdAndChoreName(UUID roomId, String choreName);
 
-    @Query("SELECT u FROM ChoreEntity u WHERE u.assignedToMember.id IN :roomMemberIds")
-    List<ChoreEntity> findAllByRoomMemberIds(List<UUID> roomMemberIds);
+    @Query("SELECT c FROM ChoreEntity c JOIN FETCH c.room r LEFT JOIN FETCH c.assignedToMember m LEFT JOIN FETCH m.user WHERE c.assignedToMember.id IN :roomMemberIds")
+    List<ChoreEntity> findAllByRoomMemberIds(@Param("roomMemberIds") List<UUID> roomMemberIds);
 
     @Query("SELECT c FROM ChoreEntity c LEFT JOIN FETCH c.assignedToMember m LEFT JOIN FETCH m.user WHERE c.id = :choreId")
     java.util.Optional<ChoreEntity> findByChoreId(@Param("choreId") UUID choreId);

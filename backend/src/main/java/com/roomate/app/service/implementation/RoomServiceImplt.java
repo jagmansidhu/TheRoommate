@@ -131,7 +131,7 @@ public class RoomServiceImplt implements RoomService {
     @Override
     @Transactional
     public RoomDto getRoomById(UUID roomId, String email) throws UserApiError {
-        RoomEntity room = roomRepository.findById(roomId)
+        RoomEntity room = roomRepository.getRoomEntityById(roomId)
                 .orElseThrow(() -> new UserApiError("Room not found with ID: " + roomId));
 
         UserEntity requestingUser = userRepository.getUserByEmail(email);
