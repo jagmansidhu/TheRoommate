@@ -104,11 +104,13 @@ public class AuthController {
 
         String token = jwtService.generateToken(user);
 
+        boolean isSecure = request.isSecure() || "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
+
         ResponseCookie cookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true)
-                .secure(true)
+                .secure(isSecure)
                 .path("/")
-                .sameSite("None")
+                .sameSite(isSecure ? "None" : "Lax")
                 .maxAge(7 * 24 * 60 * 60)
                 .build();
 
@@ -150,12 +152,14 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletResponse response) {
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        boolean isSecure = request.isSecure() || "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
+
         ResponseCookie cookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(isSecure)
                 .path("/")
-                .sameSite("None")
+                .sameSite(isSecure ? "None" : "Lax")
                 .maxAge(0)
                 .build();
         response.setHeader("Set-Cookie", cookie.toString());
