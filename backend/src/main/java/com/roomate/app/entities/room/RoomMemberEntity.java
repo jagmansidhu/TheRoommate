@@ -13,7 +13,10 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString(exclude = {"room", "user"})
-@Table(name = "room_member")
+@Table(name = "room_member", indexes = {
+        @Index(name = "idx_room_member_room_id", columnList = "room_id"),
+        @Index(name = "idx_room_member_user_id", columnList = "user_id")
+})
 public class RoomMemberEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

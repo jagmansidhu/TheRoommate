@@ -14,6 +14,10 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_chore_room_id", columnList = "room_id"),
+        @Index(name = "idx_chore_room_member_id", columnList = "room_member_id")
+})
 public class ChoreEntity {
     @Id
     @GeneratedValue(strategy= GenerationType.UUID)

@@ -11,6 +11,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_utility_room_id", columnList = "room_id"),
+        @Index(name = "idx_utility_room_member_id", columnList = "room_member_id")
+})
 @Data
 public class UtilityEntity {
     @Id

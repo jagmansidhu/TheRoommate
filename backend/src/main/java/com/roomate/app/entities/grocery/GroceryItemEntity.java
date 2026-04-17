@@ -16,7 +16,9 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "grocery_item")
+@Table(name = "grocery_item", indexes = {
+        @Index(name = "idx_grocery_item_list_id", columnList = "grocery_list_id")
+})
 public class GroceryItemEntity {
 
     @Id
