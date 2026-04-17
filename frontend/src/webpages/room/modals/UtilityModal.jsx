@@ -9,6 +9,24 @@ const UtilityModal = ({
     members = []
 }) => {
     const [error, setError] = useState("");
+    const formatLocalDate = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+    const parseLocalDate = (value) => {
+        if (!value) return null;
+        const [year, month, day] = value.split("-").map(Number);
+        return new Date(year, month - 1, day);
+    };
+    const todayLocal = formatLocalDate(new Date());
+    const deadlineMaxLocal = (() => {
+        const baseDate = parseLocalDate(utilityData.startingDate) || new Date();
+        const oneYearOut = new Date(baseDate);
+        oneYearOut.setFullYear(oneYearOut.getFullYear() + 1);
+        return formatLocalDate(oneYearOut);
+    })();
 
     if (!show) return null;
 
@@ -133,7 +151,7 @@ const UtilityModal = ({
                                 className="form-input"
                                 value={utilityData.startingDate || ""}
                                 onChange={e => setUtilityData({ ...utilityData, startingDate: e.target.value })}
-                                min={new Date().toISOString().split('T')[0]}
+                                min={todayLocal}
                             />
                         </div>
 
@@ -144,12 +162,8 @@ const UtilityModal = ({
                                 className="form-input"
                                 value={utilityData.deadline || ""}
                                 onChange={e => setUtilityData({ ...utilityData, deadline: e.target.value })}
-                                min={utilityData.startingDate || new Date().toISOString().split('T')[0]}
-                                max={(() => {
-                                    let d = new Date(utilityData.startingDate || new Date());
-                                    d.setFullYear(d.getFullYear() + 1);
-                                    return d.toISOString().split('T')[0];
-                                })()}
+                                min={utilityData.startingDate || todayLocal}
+                                max={deadlineMaxLocal}
                             />
                         </div>
                     </div>

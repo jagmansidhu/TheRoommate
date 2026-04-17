@@ -295,8 +295,9 @@ const RoomDetailsPage = ({
         nextMonth.setMonth(startOfMonth.getMonth() + 1);
 
         return userUtilities.filter(u => {
-            if (!u.dueAt) return true;
+            if (!u.dueAt) return false;
             const d = new Date(u.dueAt);
+            if (Number.isNaN(d.getTime())) return false;
             return d >= startOfMonth && d < nextMonth;
         });
     };

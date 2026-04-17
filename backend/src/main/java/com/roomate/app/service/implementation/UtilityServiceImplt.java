@@ -19,7 +19,9 @@ import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
@@ -42,9 +44,44 @@ public class UtilityServiceImplt implements UtilityService {
 
         List<UtilityEntity> createdUtilities = new ArrayList<>();
 
-        LocalDateTime startingDate = dto.getStartingDate() != null ? dto.getStartingDate() : LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startingDate = dto.getStartingDate() != null ? dto.getStartingDate() : now;
         LocalDateTime deadline = dto.getDeadline();
-        boolean recurring = (dto.getFrequencyUnit() != null) && (deadline != null) && !startingDate.isAfter(deadline);
+        boolean recurring = dto.getFrequencyUnit() != null;
+
+        if (startingDate.toLocalDate().isBefore(now.toLocalDate())) {
+            throw new IllegalArgumentException("Starting date cannot be in the past");
+        }
+
+        if (recurring) {
+            if (deadline == null) {
+                throw new IllegalArgumentException("Deadline is required for recurring utilities");
+            }
+            if (deadline.isBefore(now)) {
+                throw new IllegalArgumentException("Deadline must be in the future");
+            }
+            if (deadline.isAfter(now.plusYears(1))) {
+                throw new IllegalArgumentException("Deadline cannot be more than one year from now");
+            }
+            if (startingDate.isAfter(deadline)) {
+                throw new IllegalArgumentException("Deadline must be after starting date");
+            }
+        }
+
+        Map<UUID, RoomMemberEntity> customSplitMemberMap = new HashMap<>();
+        if (dto.getUtilDistributionEnum() == UtilDistributionEnum.CUSTOMSPLIT) {
+            if (dto.getCustomSplit() == null || dto.getCustomSplit().isEmpty()) {
+                throw new IllegalArgumentException("Custom split is required when distribution is CUSTOMSPLIT");
+            }
+
+            List<RoomMemberEntity> members = roomMemberRepository.findAllById(dto.getCustomSplit().keySet());
+            customSplitMemberMap = members.stream()
+                    .collect(Collectors.toMap(RoomMemberEntity::getId, member -> member));
+
+            if (customSplitMemberMap.size() != dto.getCustomSplit().size()) {
+                throw new EntityNotFoundException("One or more room members were not found");
+            }
+        }
 
         LocalDateTime dueDate = startingDate;
 
@@ -68,9 +105,12 @@ public class UtilityServiceImplt implements UtilityService {
                     createdUtilities.add(utilityRepository.save(utility));
                 }
             } else if (dto.getUtilDistributionEnum() == UtilDistributionEnum.CUSTOMSPLIT) {
-                dto.getCustomSplit().forEach((memberId, splitAmount) -> {
-                    RoomMemberEntity member = roomMemberRepository.findById(memberId)
-                            .orElseThrow(() -> new EntityNotFoundException("Member not found"));
+                for (Map.Entry<UUID, Double> entry : dto.getCustomSplit().entrySet()) {
+                    RoomMemberEntity member = customSplitMemberMap.get(entry.getKey());
+                    Double splitAmount = entry.getValue();
+                    if (member == null) {
+                        throw new EntityNotFoundException("Member not found");
+                    }
 
                     UtilityEntity utility = new UtilityEntity();
                     utility.setUtilityName(dto.getUtilityName());
@@ -82,7 +122,7 @@ public class UtilityServiceImplt implements UtilityService {
                     utility.setDueAt(currentDueDate);
                     utility.setChoreFrequencyUnitEnum(dto.getFrequencyUnit());
                     createdUtilities.add(utilityRepository.save(utility));
-                });
+                }
             }
 
             if (!recurring) break;
@@ -109,7 +149,10 @@ public class UtilityServiceImplt implements UtilityService {
 
         return utilityRepository
                 .findByRoomId(roomId).stream().map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(),
-                        utility.getUtilityPrice(), utility.getRoom() != null ? utility.getRoom().getId() : null,
+                        utility.getUtilityPrice(),
+                        utility.getRoom() != null ? utility.getRoom().getId() : null,
+                        utility.getDueAt(),
+                        utility.getChoreFrequencyUnitEnum(),
                         utility.isCompleted()))
                 .collect(Collectors.toList());
     }
@@ -120,7 +163,10 @@ public class UtilityServiceImplt implements UtilityService {
 
         return utilityRepository.findByRoomIdAndMemberId(roomId, memberId).stream()
                 .map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(), utility.getUtilityPrice(),
-                        utility.getRoom() != null ? utility.getRoom().getId() : null, utility.isCompleted()))
+                        utility.getRoom() != null ? utility.getRoom().getId() : null,
+                        utility.getDueAt(),
+                        utility.getChoreFrequencyUnitEnum(),
+                        utility.isCompleted()))
                 .collect(Collectors.toList());
     }
 
