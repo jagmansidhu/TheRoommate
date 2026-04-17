@@ -29,6 +29,13 @@ const Calendar = () => {
     });
 
     const [dateError, setDateError] = useState('');
+    const [hasInitialLoaded, setHasInitialLoaded] = useState(false);
+
+    useEffect(() => {
+        if (!eventsLoading) {
+            setHasInitialLoaded(true);
+        }
+    }, [eventsLoading]);
 
     // Lazy-load events once on first Calendar visit — no-op on subsequent visits.
     useEffect(() => {
@@ -246,7 +253,7 @@ const Calendar = () => {
         });
     };
 
-    if (eventsLoading) {
+    if (eventsLoading && !hasInitialLoaded) {
         return (
             <div className="calendar-container">
                 <div className="loading">
