@@ -5,10 +5,7 @@ import com.roomate.app.dto.InviteUserRequest;
 import com.roomate.app.dto.RoomDto;
 import com.roomate.app.dto.UserDTOS.UpdateMemberRoleRequest;
 import com.roomate.app.exceptions.UserApiError;
-import com.roomate.app.repository.ChoreRepository;
-import com.roomate.app.repository.UtilityRepository;
 import com.roomate.app.service.RoomService;
-import com.roomate.app.service.UtilityService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,15 +19,9 @@ import java.util.UUID;
 public class RoomController {
 
     private final RoomService roomService;
-    private final UtilityService utilityService;
-    private final UtilityRepository utilityRepository;
-    private final ChoreRepository choreRepository;
 
-    public RoomController(RoomService roomService, UtilityService utilityService, UtilityRepository utilityRepository, ChoreRepository choreRepository) {
+    public RoomController(RoomService roomService) {
         this.roomService = roomService;
-        this.utilityService = utilityService;
-        this.utilityRepository = utilityRepository;
-        this.choreRepository = choreRepository;
     }
 
     @GetMapping
@@ -48,7 +39,8 @@ public class RoomController {
     }
 
     @PostMapping
-    public ResponseEntity<RoomDto> createRoom(@RequestBody CreateRoomRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<RoomDto> createRoom(@RequestBody CreateRoomRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String email = userDetails.getUsername();
 
@@ -64,7 +56,8 @@ public class RoomController {
     }
 
     @PostMapping("/invite")
-    public ResponseEntity<Void> inviteUserToRoom(@RequestBody InviteUserRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Void> inviteUserToRoom(@RequestBody InviteUserRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String email = userDetails.getUsername();
             roomService.inviteUserToRoom(request, email);
@@ -79,10 +72,11 @@ public class RoomController {
     }
 
     @PostMapping("/{roomCode}/join")
-    public ResponseEntity<RoomDto> joinRoom(@PathVariable String roomCode, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<RoomDto> joinRoom(@PathVariable String roomCode,
+            @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String email = userDetails.getUsername();
-            
+
             RoomDto joinedRoom = roomService.joinRoom(roomCode, email);
             return ResponseEntity.ok(joinedRoom);
         } catch (UserApiError e) {
@@ -95,7 +89,8 @@ public class RoomController {
     }
 
     @GetMapping("/{roomId}")
-    public ResponseEntity<RoomDto> getRoomById(@PathVariable UUID roomId, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<RoomDto> getRoomById(@PathVariable UUID roomId,
+            @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String email = userDetails.getUsername();
             RoomDto room = roomService.getRoomById(roomId, email);
@@ -110,8 +105,8 @@ public class RoomController {
     }
 
     @PutMapping("/{roomId}/members/{memberId}/role")
-    public ResponseEntity<Void> updateMemberRole(@PathVariable UUID roomId, @PathVariable UUID memberId, 
-                                                @RequestBody UpdateMemberRoleRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Void> updateMemberRole(@PathVariable UUID roomId, @PathVariable UUID memberId,
+            @RequestBody UpdateMemberRoleRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String email = userDetails.getUsername();
             roomService.updateMemberRole(roomId, memberId, request, email);
@@ -124,7 +119,8 @@ public class RoomController {
     }
 
     @DeleteMapping("/{memberid}/leave/{roomid}")
-    public ResponseEntity<Void> leaveRoom(@PathVariable UUID memberid, @PathVariable UUID roomid, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Void> leaveRoom(@PathVariable UUID memberid, @PathVariable UUID roomid,
+            @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String email = userDetails.getUsername();
             roomService.leaveRoom(memberid, email, roomid);
@@ -139,7 +135,8 @@ public class RoomController {
     }
 
     @DeleteMapping("/{roomId}/members/{memberId}")
-    public ResponseEntity<Void> removeMemberFromRoom(@PathVariable UUID roomId, @PathVariable UUID memberId, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Void> removeMemberFromRoom(@PathVariable UUID roomId, @PathVariable UUID memberId,
+            @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String email = userDetails.getUsername();
             roomService.removeMemberFromRoom(roomId, memberId, email);
@@ -154,7 +151,8 @@ public class RoomController {
     }
 
     @DeleteMapping("/{roomId}/delete-room")
-    public ResponseEntity<Void> deleteRoom(@PathVariable UUID roomId, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Void> deleteRoom(@PathVariable UUID roomId,
+            @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String email = userDetails.getUsername();
             roomService.removeRoom(roomId, email);

@@ -1,6 +1,5 @@
 package com.roomate.app.entities;
 
-import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

@@ -10,6 +10,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.GrantedAuthority;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -35,6 +36,17 @@ public class JWTServiceImplt implements JWTService {
     }
 
     @Override
+    public java.util.List<String> extractRoles(String token) {
+        return extractClaim(token, claims -> {
+            Object rolesObj = claims.get("roles");
+            if (rolesObj instanceof java.util.List) {
+                return (java.util.List<String>) rolesObj;
+            }
+            return null;
+        });
+    }
+
+    @Override
     public String generateToken(UserDetails userDetails) {
         Instant now = Instant.now();
         UserEntity user = (UserEntity) userDetails;
@@ -48,6 +60,7 @@ public class JWTServiceImplt implements JWTService {
                 .claims()
                 .subject(userDetails.getUsername())
                 .add("id", user.getId().toString())
+                .add("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
                 .and()

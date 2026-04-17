@@ -2,7 +2,6 @@ package com.roomate.app.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -22,7 +21,8 @@ public class VerificationTokenEntity {
 
     private LocalDateTime expiryDate;
 
-    public VerificationTokenEntity() {}
+    public VerificationTokenEntity() {
+    }
 
     public VerificationTokenEntity(UserEntity user, String token) {
         this.user = user;
@@ -34,4 +34,3 @@ public class VerificationTokenEntity {
         return LocalDateTime.now().isAfter(expiryDate);
     }
 }
-

@@ -11,4 +11,5 @@ public interface JWTService {
 
     boolean isTokenValid(String token);
 
+    java.util.List<String> extractRoles(String token);
 }
