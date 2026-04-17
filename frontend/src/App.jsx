@@ -45,8 +45,8 @@ const ThemeProvider = ({children}) => {
 };
 
 const AuthProvider = ({children}) => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('appAuth') === 'true');
+    const [isLoading, setIsLoading] = useState(!localStorage.getItem('appAuth'));
 
     useEffect(() => {
         const checkAuthStatus = async () => {
@@ -57,15 +57,19 @@ const AuthProvider = ({children}) => {
                     const data = res.data;
                     if (data && (data.username || data.email || data.authenticated === true)) {
                        setIsAuthenticated(true);
+                       localStorage.setItem('appAuth', 'true');
                     } else {
                        setIsAuthenticated(false);
+                       localStorage.removeItem('appAuth');
                     }
                 } else {
                     setIsAuthenticated(false);
+                    localStorage.removeItem('appAuth');
                 }
             } catch (err) {
                 console.error('Error checking auth status:', err);
                 setIsAuthenticated(false);
+                localStorage.removeItem('appAuth');
             } finally {
                 setIsLoading(false);
             }
@@ -78,6 +82,7 @@ const AuthProvider = ({children}) => {
         if (token) {
             localStorage.setItem('token', token);
         }
+        localStorage.setItem('appAuth', 'true');
         setIsAuthenticated(true);
     };
 
@@ -88,7 +93,7 @@ const AuthProvider = ({children}) => {
             console.error('Logout failed', err);
         }
         
-        localStorage.removeItem('token');
+        ['token', 'appAuth', 'appUser', 'appRooms', 'appChores', 'appUtilities', 'appEvents'].forEach(k => localStorage.removeItem(k));
         setIsAuthenticated(false);
         window.location.href = '/';
     };
@@ -104,8 +109,19 @@ const AuthProvider = ({children}) => {
 // Call refreshUser() explicitly after any mutation that changes user data.
 const UserProvider = ({children}) => {
     const {isAuthenticated, isLoading} = useAuth();
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        const cached = localStorage.getItem('appUser');
+        return cached ? JSON.parse(cached) : null;
+    });
     const [userLoading, setUserLoading] = useState(false);
+
+    useEffect(() => {
+        if (user !== null) {
+            localStorage.setItem('appUser', JSON.stringify(user));
+        } else {
+            localStorage.removeItem('appUser');
+        }
+    }, [user]);
 
     const fetchUser = useCallback(async () => {
         setUserLoading(true);
@@ -126,7 +142,7 @@ const UserProvider = ({children}) => {
 
     useEffect(() => {
         if (isAuthenticated && !isLoading) {
-            fetchUser();
+            if (!localStorage.getItem('appUser')) fetchUser();
         } else if (!isAuthenticated && !isLoading) {
             setUser(null);
         }
@@ -155,8 +171,15 @@ const AppDataProvider = ({children}) => {
     const {isAuthenticated, isLoading} = useAuth();
 
     // --- rooms ---
-    const [rooms, setRooms] = useState([]);
+    const [rooms, setRooms] = useState(() => {
+        const cached = localStorage.getItem('appRooms');
+        return cached ? JSON.parse(cached) : [];
+    });
     const [roomsLoading, setRoomsLoading] = useState(false);
+
+    useEffect(() => {
+        localStorage.setItem('appRooms', JSON.stringify(rooms));
+    }, [rooms]);
 
     const fetchRooms = useCallback(async () => {
         setRoomsLoading(true);
@@ -175,8 +198,15 @@ const AppDataProvider = ({children}) => {
     const updateRoom       = useCallback(r  => setRooms(prev => prev.map(x => x.id === r.id ? r : x)), []);
 
     // --- user chores ---
-    const [userChores, setUserChores] = useState([]);
+    const [userChores, setUserChores] = useState(() => {
+        const cached = localStorage.getItem('appChores');
+        return cached ? JSON.parse(cached) : [];
+    });
     const [userChoresLoading, setUserChoresLoading] = useState(false);
+
+    useEffect(() => {
+        localStorage.setItem('appChores', JSON.stringify(userChores));
+    }, [userChores]);
 
     const fetchUserChores = useCallback(async () => {
         setUserChoresLoading(true);
@@ -197,8 +227,15 @@ const AppDataProvider = ({children}) => {
     }, []);
 
     // --- user utilities ---
-    const [userUtilities, setUserUtilities] = useState([]);
+    const [userUtilities, setUserUtilities] = useState(() => {
+        const cached = localStorage.getItem('appUtilities');
+        return cached ? JSON.parse(cached) : [];
+    });
     const [userUtilitiesLoading, setUserUtilitiesLoading] = useState(false);
+
+    useEffect(() => {
+        localStorage.setItem('appUtilities', JSON.stringify(userUtilities));
+    }, [userUtilities]);
 
     const normalizeUtility = useCallback((utility) => ({
         ...utility,
@@ -231,9 +268,16 @@ const AppDataProvider = ({children}) => {
     }, []);
 
     // --- calendar events (lazy) ---
-    const [events, setEvents] = useState([]);
+    const [events, setEvents] = useState(() => {
+        const cached = localStorage.getItem('appEvents');
+        return cached ? JSON.parse(cached) : [];
+    });
     const [eventsLoading, setEventsLoading] = useState(false);
-    const eventsLoadedRef = useRef(false);
+    const eventsLoadedRef = useRef(!!localStorage.getItem('appEvents'));
+
+    useEffect(() => {
+        localStorage.setItem('appEvents', JSON.stringify(events));
+    }, [events]);
 
     const fetchEvents = useCallback(async () => {
         setEventsLoading(true);
@@ -261,9 +305,9 @@ const AppDataProvider = ({children}) => {
     // --- eager load on login, reset on logout ---
     useEffect(() => {
         if (isAuthenticated && !isLoading) {
-            fetchRooms();
-            fetchUserChores();
-            fetchUserUtilities();
+            if (!localStorage.getItem('appRooms')) fetchRooms();
+            if (!localStorage.getItem('appChores')) fetchUserChores();
+            if (!localStorage.getItem('appUtilities')) fetchUserUtilities();
         } else if (!isAuthenticated && !isLoading) {
             setRooms([]);
             setUserChores([]);

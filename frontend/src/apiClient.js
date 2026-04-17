@@ -12,6 +12,13 @@ apiClient.interceptors.request.use((config) => {
     }
     return config;
 }, (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        localStorage.removeItem('token');
+        ['appUser', 'appRooms', 'appChores', 'appUtilities', 'appEvents', 'appAuth'].forEach(k => localStorage.removeItem(k));
+        if (!['/', '/login', '/register', '/verify'].includes(window.location.pathname)) {
+            window.location.href = '/login';
+        }
+    }
     return Promise.reject(error);
 });
 
