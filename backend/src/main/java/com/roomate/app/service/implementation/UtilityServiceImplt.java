@@ -49,6 +49,8 @@ public class UtilityServiceImplt implements UtilityService {
         LocalDateTime dueDate = startingDate;
 
         do {
+            final LocalDateTime currentDueDate = dueDate;
+
             if (dto.getUtilDistributionEnum() == UtilDistributionEnum.EQUALSPLIT) {
                 List<RoomMemberEntity> members = room.getMembers();
                 double share = dto.getUtilityPrice() / members.size();
@@ -61,7 +63,7 @@ public class UtilityServiceImplt implements UtilityService {
                     utility.setUtilDistributionEnum(dto.getUtilDistributionEnum());
                     utility.setRoom(room);
                     utility.setAssignedToMember(member);
-                    utility.setDueAt(dueDate);
+                    utility.setDueAt(currentDueDate);
                     utility.setChoreFrequencyUnitEnum(dto.getFrequencyUnit());
                     createdUtilities.add(utilityRepository.save(utility));
                 }
@@ -77,7 +79,7 @@ public class UtilityServiceImplt implements UtilityService {
                     utility.setUtilDistributionEnum(dto.getUtilDistributionEnum());
                     utility.setRoom(room);
                     utility.setAssignedToMember(member);
-                    utility.setDueAt(dueDate);
+                    utility.setDueAt(currentDueDate);
                     utility.setChoreFrequencyUnitEnum(dto.getFrequencyUnit());
                     createdUtilities.add(utilityRepository.save(utility));
                 });
