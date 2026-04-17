@@ -3,6 +3,7 @@ package com.roomate.app.repository;
 import com.roomate.app.entities.grocery.GroceryListEntity;
 import com.roomate.app.entities.grocery.GroceryListStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,16 +18,19 @@ public interface GroceryListRepository extends JpaRepository<GroceryListEntity, 
     /**
      * Find all grocery lists for a room, ordered by creation date (newest first)
      */
+    @EntityGraph(attributePaths = {"items"})
     List<GroceryListEntity> findByRoomIdOrderByCreatedAtDesc(UUID roomId);
 
     /**
      * Find active grocery lists for a room
      */
+    @EntityGraph(attributePaths = {"items"})
     List<GroceryListEntity> findByRoomIdAndStatus(UUID roomId, GroceryListStatus status);
 
     /**
      * Find all non-archived lists for a room
      */
+    @EntityGraph(attributePaths = {"items"})
     @Query("SELECT g FROM GroceryListEntity g WHERE g.room.id = :roomId AND g.status != 'ARCHIVED' ORDER BY g.createdAt DESC")
     List<GroceryListEntity> findActiveByRoomId(@Param("roomId") UUID roomId);
 

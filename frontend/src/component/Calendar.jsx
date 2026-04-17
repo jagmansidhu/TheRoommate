@@ -12,7 +12,7 @@ const Calendar = () => {
         userChores: chores,
         userUtilities: utilities,
         events, eventsLoading, loadEvents, refreshEvents,
-        removeEvent,
+        appendEvent, removeEvent,
     } = useAppData();
 
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -56,29 +56,41 @@ const Calendar = () => {
             }
         }
 
-        try {
-            const startDateTime = new Date(newEvent.startTime).toISOString();
-            const endDateTime = new Date(newEvent.endTime).toISOString();
+        const startDateTime = new Date(newEvent.startTime).toISOString();
+        const endDateTime = new Date(newEvent.endTime).toISOString();
 
+        const optimisticEvent = {
+            id: `temp-${Date.now()}`,
+            title: newEvent.title,
+            description: newEvent.description,
+            startTime: startDateTime,
+            endTime: endDateTime,
+            rooms: rooms.find(r => r.id === newEvent.roomId),
+            user: userData
+        };
+        
+        appendEvent(optimisticEvent);
+        setShowEventModal(false);
+        setNewEvent({ title: '', description: '', startTime: '', endTime: '', roomId: '' });
+        setDateError('');
+
+        try {
             const requestData = {
-                title: newEvent.title,
-                description: newEvent.description,
-                startTime: startDateTime,
-                endTime: endDateTime
+                title: optimisticEvent.title,
+                description: optimisticEvent.description,
+                startTime: optimisticEvent.startTime,
+                endTime: optimisticEvent.endTime
             };
 
-            const response = await apiClient.post(`/api/events/room/${newEvent.roomId}`,
+            await apiClient.post(`/api/events/room/${newEvent.roomId}`,
                 requestData,
                 { withCredentials: true, credentials: 'include' }
             );
 
             refreshEvents();
-
-            setShowEventModal(false);
-            setNewEvent({ title: '', description: '', startTime: '', endTime: '', roomId: '' });
-            setDateError('');
         } catch (error) {
             console.error('Error creating event:', error);
+            removeEvent(optimisticEvent.id);
             if (error.response && error.response.data) {
                 if (typeof error.response.data === 'object') {
                     if (error.response.status === 409) {
@@ -97,16 +109,19 @@ const Calendar = () => {
     };
 
     const deleteEvent = async (eventId) => {
+        const eventToDelete = events.find(e => e.id === eventId);
+        removeEvent(eventId);
+        setSelectedEvent(null);
+
         try {
             await apiClient.delete(`/api/events/${eventId}`, {
                 withCredentials: true,
                 credentials: 'include',
             });
-            removeEvent(eventId);
-            setSelectedEvent(null);
         } catch (error) {
             console.error('Error deleting event:', error);
             setError('Failed to delete event');
+            if (eventToDelete) appendEvent(eventToDelete);
         }
     };
 
