@@ -19,7 +19,6 @@ import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -68,7 +67,7 @@ public class UtilityServiceImplt implements UtilityService {
             }
         }
 
-        Map<UUID, RoomMemberEntity> customSplitMemberMap = new HashMap<>();
+        Map<UUID, RoomMemberEntity> customSplitMemberMap = Map.of();
         if (dto.getUtilDistributionEnum() == UtilDistributionEnum.CUSTOMSPLIT) {
             if (dto.getCustomSplit() == null || dto.getCustomSplit().isEmpty()) {
                 throw new IllegalArgumentException("Custom split is required when distribution is CUSTOMSPLIT");
