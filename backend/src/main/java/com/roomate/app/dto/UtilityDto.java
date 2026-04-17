@@ -1,6 +1,7 @@
 package com.roomate.app.dto;
 
 import com.roomate.app.entities.UtilityEntity;
+import com.roomate.app.entities.ChoreFrequencyUnitEnum;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ public class UtilityDto {
     private String roomName;
     private LocalDateTime dueDate;
     private LocalDateTime dueAt;
+    private ChoreFrequencyUnitEnum choreFrequencyUnitEnum;
     private boolean isCompleted;
 
     public UtilityDto(UtilityEntity entity) {
@@ -26,12 +28,26 @@ public class UtilityDto {
         this.isCompleted = entity.isCompleted();
         this.dueAt = entity.getDueAt();
         this.dueDate = entity.getDueAt();
+        this.choreFrequencyUnitEnum = entity.getChoreFrequencyUnitEnum();
     }
+
     public UtilityDto(UUID id, String utilityName, Double utilityPrice, UUID roomId, boolean isCompleted) {
         this.id = id;
         this.utilityName = utilityName;
         this.utilityPrice = utilityPrice;
         this.roomId = roomId;
+        this.isCompleted = isCompleted;
+    }
+
+    public UtilityDto(UUID id, String utilityName, Double utilityPrice, UUID roomId, LocalDateTime dueAt,
+            ChoreFrequencyUnitEnum choreFrequencyUnitEnum, boolean isCompleted) {
+        this.id = id;
+        this.utilityName = utilityName;
+        this.utilityPrice = utilityPrice;
+        this.roomId = roomId;
+        this.dueAt = dueAt;
+        this.dueDate = dueAt;
+        this.choreFrequencyUnitEnum = choreFrequencyUnitEnum;
         this.isCompleted = isCompleted;
     }
 

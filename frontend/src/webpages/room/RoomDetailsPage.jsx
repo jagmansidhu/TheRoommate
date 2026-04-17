@@ -34,7 +34,8 @@ const RoomDetailsPage = ({
     const [selectedUtilityId, setSelectedUtilityId] = useState("");
     const [showUtilityModal, setShowUtilityModal] = useState(false);
     const [utilityData, setUtilityData] = useState({
-        utilityName: "", description: "", utilityPrice: 0, utilDistributionEnum: "EQUALSPLIT", customSplit: {}, splitType: "AMOUNT"
+        utilityName: "", description: "", utilityPrice: 0, utilDistributionEnum: "EQUALSPLIT", customSplit: {}, splitType: "AMOUNT",
+        frequencyUnit: "MONTHLY", startingDate: "", deadline: ""
     });
     const [showChoreModal, setShowChoreModal] = useState(false);
     const [showRemoveChoreModal, setShowRemoveChoreModal] = useState(false);
@@ -135,13 +136,22 @@ const RoomDetailsPage = ({
                     processedSplit[key] = (parseFloat(processedSplit[key]) / 100.0) * total;
                 }
             }
-            const payload = { ...utilityData, roomId: room.id, customSplit: processedSplit };
+            const payload = { 
+                ...utilityData, 
+                roomId: room.id, 
+                customSplit: processedSplit,
+                startingDate: utilityData.startingDate ? `${utilityData.startingDate}T00:00:00` : null,
+                deadline: utilityData.deadline ? `${utilityData.deadline}T23:59:59` : null
+            };
             const response = await apiClient.post(`/api/utility/create`, payload,
                 { withCredentials: true, headers: { "Content-Type": "application/json" } }
             );
             if (response.status === 200) {
                 setShowUtilityModal(false);
-                setUtilityData({ utilityName: "", description: "", utilityPrice: 0, utilDistributionEnum: "EQUALSPLIT", customSplit: {}, splitType: "AMOUNT" });
+                setUtilityData({ 
+                    utilityName: "", description: "", utilityPrice: 0, utilDistributionEnum: "EQUALSPLIT", customSplit: {}, splitType: "AMOUNT",
+                    frequencyUnit: "MONTHLY", startingDate: "", deadline: ""
+                });
                 if (memberId) {
                     const r = await apiClient.get(`/api/utility/${memberId}/room/${room.id}`, { withCredentials: true });
                     setUserUtilities((r.data || []).map(normalizeUtility));
@@ -277,6 +287,23 @@ const RoomDetailsPage = ({
 
     const choresByDate = getChoresByDate();
 
+    const getUtilitiesThisMonth = () => {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        const nextMonth = new Date(startOfMonth);
+        nextMonth.setMonth(startOfMonth.getMonth() + 1);
+
+        return userUtilities.filter(u => {
+            if (!u.dueAt) return false;
+            const d = new Date(u.dueAt);
+            if (Number.isNaN(d.getTime())) return false;
+            return d >= startOfMonth && d < nextMonth;
+        });
+    };
+
+    const monthlyUtilities = getUtilitiesThisMonth();
+
     const getMemberInitial = (m) => m.name?.charAt(0)?.toUpperCase() || '?';
     const getRoleLabel = (role) => {
         if (role === ROLES.HEAD_ROOMMATE) return 'Owner';
@@ -360,7 +387,7 @@ const RoomDetailsPage = ({
                 <div className="rd-stat-sep" />
                 <div className="rd-stat-cell">
                     <span className="rd-stat-num">
-                        ${userUtilities.reduce((s, u) => s + (u.utilityPrice || 0), 0).toFixed(0)}
+                        ${monthlyUtilities.reduce((s, u) => s + (u.utilityPrice || 0), 0).toFixed(0)}
                     </span>
                     <span className="rd-stat-lbl">Your Monthly</span>
                 </div>
@@ -403,12 +430,12 @@ const RoomDetailsPage = ({
 
                     {/* Your Utilities */}
                     <section className="rd-card">
-                        <h2 className="rd-card-title">Your Utilities</h2>
-                        {userUtilities.length === 0 ? (
-                            <p className="rd-empty-text">No utilities assigned to you.</p>
+                        <h2 className="rd-card-title">Your Utilities (This Month)</h2>
+                        {monthlyUtilities.length === 0 ? (
+                            <p className="rd-empty-text">No utilities assigned to you this month.</p>
                         ) : (
                             <div className="rd-utility-list">
-                                {userUtilities.map(u => (
+                                {monthlyUtilities.map(u => (
                                     <div key={u.id} className={`rd-utility-row ${isUtilityCompleted(u) ? 'is-completed' : ''}`}>
                                         <label className={`rd-checkbox ${isUtilityCompleted(u) ? 'is-checked' : ''}`}>
                                             <input
@@ -428,7 +455,7 @@ const RoomDetailsPage = ({
                                 ))}
                                 <div className="rd-utility-total">
                                     <span>Total</span>
-                                    <span>${userUtilities.reduce((s, u) => s + (u.utilityPrice || 0), 0).toFixed(2)}</span>
+                                    <span>${monthlyUtilities.reduce((s, u) => s + (u.utilityPrice || 0), 0).toFixed(2)}</span>
                                 </div>
                             </div>
                         )}
