@@ -143,6 +143,27 @@
   margin-bottom: 0;
 }
 
+.dashboard-content li input[type="checkbox"] {
+  accent-color: var(--lp-green);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dashboard-item-completed {
+  opacity: 0.72;
+}
+
+.dashboard-item-completed .item-title {
+  text-decoration: line-through;
+  color: var(--lp-ink-muted);
+}
+
+.dashboard-item-completed .item-meta {
+  color: var(--lp-ink-muted);
+}
+
 .item-icon {
   width: 32px;
   height: 32px;

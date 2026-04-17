@@ -1,12 +1,11 @@
 import apiClient from './apiClient';
 import React, {createContext, useCallback, useContext, useEffect, useRef, useState} from 'react';
-import {BrowserRouter as Router, Link, Route, Routes, useNavigate} from 'react-router-dom';
+import {BrowserRouter as Router, Link, Route, Routes} from 'react-router-dom';
 import Login from './webpages/auth/Login';
 import Register from './webpages/auth/Register';
 import Dashboard from './webpages/Dashboard';
 import Profile from './webpages/Profile';
 import Home from './webpages/Home';
-import useProfileCompletionRedirect from "./component/userProfileRedirection";
 import Personal from "./webpages/profileRedirect/Personal";
 import Rooms from "./webpages/room/Rooms";
 import './styling/App.css';
@@ -189,25 +188,43 @@ const AppDataProvider = ({children}) => {
 
     const appendUserChore = useCallback(c  => setUserChores(prev => [...prev, c]), []);
     const removeUserChore = useCallback(id => setUserChores(prev => prev.filter(c => c.id !== id)), []);
+    const updateUserChore = useCallback((choreId, patch) => {
+        setUserChores(prev => prev.map(chore => chore.id === choreId ? { ...chore, ...patch } : chore));
+    }, []);
 
     // --- user utilities ---
     const [userUtilities, setUserUtilities] = useState([]);
     const [userUtilitiesLoading, setUserUtilitiesLoading] = useState(false);
 
+    const normalizeUtility = useCallback((utility) => ({
+        ...utility,
+        isCompleted: utility?.isCompleted ?? utility?.completed ?? false,
+    }), []);
+
     const fetchUserUtilities = useCallback(async () => {
         setUserUtilitiesLoading(true);
         try {
             const res = await apiClient.get('/api/utility/user/me');
-            if (res.status === 200) setUserUtilities(res.data);
+            if (res.status === 200) setUserUtilities((res.data || []).map(normalizeUtility));
         } catch (err) {
             console.error('AppData: failed to fetch user utilities', err);
         } finally {
             setUserUtilitiesLoading(false);
         }
-    }, []);
+    }, [normalizeUtility]);
 
-    const appendUserUtility = useCallback(u  => setUserUtilities(prev => [...prev, u]), []);
+    const appendUserUtility = useCallback(u  => setUserUtilities(prev => [...prev, normalizeUtility(u)]), [normalizeUtility]);
     const removeUserUtility = useCallback(id => setUserUtilities(prev => prev.filter(u => u.id !== id)), []);
+    const updateUserUtility = useCallback((utilityId, patch) => {
+        setUserUtilities(prev => prev.map(utility => {
+            if (utility.id !== utilityId) return utility;
+            const merged = { ...utility, ...patch };
+            if (Object.prototype.hasOwnProperty.call(patch, 'isCompleted')) {
+                merged.completed = patch.isCompleted;
+            }
+            return merged;
+        }));
+    }, []);
 
     // --- calendar events (lazy) ---
     const [events, setEvents] = useState([]);
@@ -257,9 +274,9 @@ const AppDataProvider = ({children}) => {
             rooms, roomsLoading,
             refreshRooms: fetchRooms, appendRoom, removeRoom, updateRoom,
             userChores, userChoresLoading,
-            refreshUserChores: fetchUserChores, appendUserChore, removeUserChore,
+            refreshUserChores: fetchUserChores, appendUserChore, removeUserChore, updateUserChore,
             userUtilities, userUtilitiesLoading,
-            refreshUserUtilities: fetchUserUtilities, appendUserUtility, removeUserUtility,
+            refreshUserUtilities: fetchUserUtilities, appendUserUtility, removeUserUtility, updateUserUtility,
             events, eventsLoading, loadEvents, refreshEvents, appendEvent, removeEvent,
         }}>
             {children}
@@ -306,73 +323,10 @@ const LoggedInNavbar = () => {
 };
 
 
-const CheckEmailPage = () => {
-    const [hasSent, setHasSent] = useState(false);
-    const [isVisible, setIsVisible] = useState(true);
-
-    const sendVerification = async () => {
-        try {
-            await apiClient.post('/user/resend-verification');
-            setHasSent(true);
-        } catch (err) {
-            console.error('Error sending verification email:', err);
-        }
-    };
-
-    const handleClose = () => {
-        setIsVisible(false);
-    };
-
-    if (!isVisible) return null;
-
-    return (
-        <div className="check-email-page">
-            <h2>Email Verification Required</h2>
-            <p>
-                Your email is not verified. Please check your inbox and follow the link to verify your account.
-            </p>
-            <button onClick={sendVerification} disabled={hasSent}>
-                {hasSent ? "Verification Sent" : "Resend Verification Email"}
-            </button>
-            <button onClick={handleClose} style={{marginLeft: '10px'}}>
-                Close
-            </button>
-        </div>
-    );
-};
-
-
 const AppContent = () => {
-    const {isAuthenticated, isLoading, logout} = useAuth();
-    const navigate = useNavigate();
-    const [userVerified, setUserVerified] = useState(null); // null = unknown, true/false = known
+    const {isAuthenticated, isLoading} = useAuth();
     const [isOnboarding, setIsOnboarding] = useState(false);
     const hideNavbarPaths = ['/complete-profile'];
-
-    useProfileCompletionRedirect();
-
-    useEffect(() => {
-        if (isAuthenticated && !isLoading) {
-            const checkVerification = async () => {
-                try {
-                    const res = await apiClient.get('/user/verify-status');
-
-                    if (res.status === 200) {
-                        setUserVerified(res.data.verified);
-                    } else {
-                        setUserVerified(false);
-                    }
-                } catch (err) {
-                    console.error('Error checking verification status:', err);
-                    setUserVerified(false);
-                }
-            };
-
-            checkVerification();
-        } else if (!isAuthenticated && !isLoading) {
-            setUserVerified(null);
-        }
-    }, [isAuthenticated, isLoading]);
 
     // Public paths that don't need auth — render immediately without waiting for the backend.
     const publicPaths = ['/', '/login', '/register', '/verify'];
@@ -380,7 +334,7 @@ const AppContent = () => {
 
     // Only block render on authenticated routes — avoids a blank screen on the home page
     // while waiting for the /user/status round-trip to the backend.
-    if (!isPublicPath && (isLoading || (isAuthenticated && userVerified === null))) {
+    if (!isPublicPath && isLoading) {
         return (
             <div className="loading">
                 <div className="spinner"></div>
@@ -401,34 +355,22 @@ const AppContent = () => {
                 <div className="content-wrapper">
                     <Routes>
                         <Route path="/" element={
-                            isAuthenticated ? (
-                                userVerified ? <Dashboard/> : <CheckEmailPage/>
-                            ) : <Home/>
+                            isAuthenticated ? <Dashboard/> : <Home/>
                         }/>
                         <Route path="/dashboard" element={
-                            isAuthenticated ? (
-                                userVerified ? <Dashboard/> : <CheckEmailPage/>
-                            ) : <Login/>
+                            isAuthenticated ? <Dashboard/> : <Login/>
                         }/>
                         <Route path="/profile" element={
-                            isAuthenticated ? (
-                                userVerified ? <Profile/> : <CheckEmailPage/>
-                            ) : <Login/>
+                            isAuthenticated ? <Profile/> : <Login/>
                         }/>
                         <Route path="/rooms" element={
-                            isAuthenticated ? (
-                                userVerified ? <Rooms/> : <CheckEmailPage/>
-                            ) : <Login/>
+                            isAuthenticated ? <Rooms/> : <Login/>
                         }/>
                         <Route path="/calendar" element={
-                            isAuthenticated ? (
-                                userVerified ? <Calendar/> : <CheckEmailPage/>
-                            ) : <Login/>
+                            isAuthenticated ? <Calendar/> : <Login/>
                         }/>
                         <Route path="/rooms/:roomId" element={
-                            isAuthenticated ? (
-                                userVerified ? <RoomDetailsPageWrapper/> : <CheckEmailPage/>
-                            ) : <Login/>
+                            isAuthenticated ? <RoomDetailsPageWrapper/> : <Login/>
                         }/>
                         <Route path="/reset-password" element={isAuthenticated ? <PasswordReset/> : <Login/>}/>
                         <Route path="/update-personal" element={isAuthenticated ? <Personal/> : <Login/>}/>
