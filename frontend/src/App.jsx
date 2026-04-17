@@ -178,8 +178,8 @@ const AppDataProvider = ({children}) => {
     const [roomsLoading, setRoomsLoading] = useState(false);
 
     useEffect(() => {
-        localStorage.setItem('appRooms', JSON.stringify(rooms));
-    }, [rooms]);
+        if (isAuthenticated) localStorage.setItem('appRooms', JSON.stringify(rooms));
+    }, [rooms, isAuthenticated]);
 
     const fetchRooms = useCallback(async () => {
         setRoomsLoading(true);
@@ -205,8 +205,8 @@ const AppDataProvider = ({children}) => {
     const [userChoresLoading, setUserChoresLoading] = useState(false);
 
     useEffect(() => {
-        localStorage.setItem('appChores', JSON.stringify(userChores));
-    }, [userChores]);
+        if (isAuthenticated) localStorage.setItem('appChores', JSON.stringify(userChores));
+    }, [userChores, isAuthenticated]);
 
     const fetchUserChores = useCallback(async () => {
         setUserChoresLoading(true);
@@ -234,8 +234,8 @@ const AppDataProvider = ({children}) => {
     const [userUtilitiesLoading, setUserUtilitiesLoading] = useState(false);
 
     useEffect(() => {
-        localStorage.setItem('appUtilities', JSON.stringify(userUtilities));
-    }, [userUtilities]);
+        if (isAuthenticated) localStorage.setItem('appUtilities', JSON.stringify(userUtilities));
+    }, [userUtilities, isAuthenticated]);
 
     const normalizeUtility = useCallback((utility) => ({
         ...utility,
@@ -273,11 +273,11 @@ const AppDataProvider = ({children}) => {
         return cached ? JSON.parse(cached) : [];
     });
     const [eventsLoading, setEventsLoading] = useState(false);
-    const eventsLoadedRef = useRef(!!localStorage.getItem('appEvents'));
+    const eventsLoadedRef = useRef(!!localStorage.getItem('appEvents') && localStorage.getItem('appEvents') !== '[]');
 
     useEffect(() => {
-        localStorage.setItem('appEvents', JSON.stringify(events));
-    }, [events]);
+        if (isAuthenticated) localStorage.setItem('appEvents', JSON.stringify(events));
+    }, [events, isAuthenticated]);
 
     const fetchEvents = useCallback(async () => {
         setEventsLoading(true);
@@ -305,9 +305,12 @@ const AppDataProvider = ({children}) => {
     // --- eager load on login, reset on logout ---
     useEffect(() => {
         if (isAuthenticated && !isLoading) {
-            if (!localStorage.getItem('appRooms')) fetchRooms();
-            if (!localStorage.getItem('appChores')) fetchUserChores();
-            if (!localStorage.getItem('appUtilities')) fetchUserUtilities();
+            const cr = localStorage.getItem('appRooms');
+            const cc = localStorage.getItem('appChores');
+            const cu = localStorage.getItem('appUtilities');
+            if (!cr || cr === '[]') fetchRooms();
+            if (!cc || cc === '[]') fetchUserChores();
+            if (!cu || cu === '[]') fetchUserUtilities();
         } else if (!isAuthenticated && !isLoading) {
             setRooms([]);
             setUserChores([]);

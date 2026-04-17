@@ -12,6 +12,10 @@ apiClient.interceptors.request.use((config) => {
     }
     return config;
 }, (error) => {
+    return Promise.reject(error);
+});
+
+apiClient.interceptors.response.use((response) => response, (error) => {
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
         localStorage.removeItem('token');
         ['appUser', 'appRooms', 'appChores', 'appUtilities', 'appEvents', 'appAuth'].forEach(k => localStorage.removeItem(k));
