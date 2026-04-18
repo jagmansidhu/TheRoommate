@@ -12,7 +12,6 @@ import ChoreModal from './modals/ChoreModal';
 import InviteModal from './modals/InviteModal';
 import DeleteConfirmModal from './modals/DeleteConfirmModal';
 
-const roomCache = {};
 
 const RoomDetailsPage = ({
                              onClose, room, onLeaveRoom, onDeleteRoom,
@@ -28,8 +27,12 @@ const RoomDetailsPage = ({
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteStatus, setInviteStatus] = useState('');
     const { user } = useUser();
-    const { refreshUserChores, refreshUserUtilities, updateUserChore, updateUserUtility } = useAppData();
-    const [utilities, setUtilities] = useState(() => roomCache[room?.id]?.utilities || []);
+    const {
+        refreshUserChores, refreshUserUtilities, updateUserChore, updateUserUtility,
+        getRoomData, loadRoomData, refreshRoomData, patchRoomData,
+    } = useAppData();
+    const cached = getRoomData(room?.id);
+    const [utilities, setUtilities] = useState(() => cached?.utilities || []);
     const [showRemoveUtilityModal, setShowRemoveUtilityModal] = useState(false);
     const [selectedUtilityId, setSelectedUtilityId] = useState("");
     const [showUtilityModal, setShowUtilityModal] = useState(false);
@@ -44,10 +47,10 @@ const RoomDetailsPage = ({
         choreName: '', frequency: 1, frequencyUnit: 'WEEKLY', deadline: ''
     });
     const [selectedChoreType, setSelectedChoreType] = useState('');
-    const [chores, setChores] = useState(() => roomCache[room?.id]?.chores || []);
+    const [chores, setChores] = useState(() => cached?.chores || []);
 
-    const [userUtilities, setUserUtilities] = useState(() => roomCache[room?.id]?.userUtilities || []);
-    const [memberId, setMemberId] = useState(null);
+    const [userUtilities, setUserUtilities] = useState(() => cached?.userUtilities || []);
+    const [memberId, setMemberId] = useState(() => cached?.memberId || null);
     const [isCustomChore, setIsCustomChore] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
@@ -75,35 +78,22 @@ const RoomDetailsPage = ({
     };
 
     useEffect(() => {
-        if (room?.id) {
-            roomCache[room.id] = { chores, utilities, userUtilities };
-        }
-    }, [chores, utilities, userUtilities, room?.id]);
+        const d = getRoomData(room?.id);
+        if (!d) return;
+        setChores(d.chores || []);
+        setUtilities(d.utilities || []);
+        setUserUtilities(d.userUtilities || []);
+        if (d.memberId) setMemberId(d.memberId);
+    }, [getRoomData, room?.id]);
 
     useEffect(() => {
         if (!room?.id || !user?.email) return;
-        const fetchAll = async () => {
-            try {
-                const currentMember = room.members?.find(m => m.userId === user.email);
-                const mId = currentMember?.id;
-                setMemberId(mId);
-
-                if (!mId) return;
-
-                const [choresRes, utilitiesRes, userUtilitiesRes] = await Promise.all([
-                    apiClient.get(`/api/chores/${room.id}`, { withCredentials: true }),
-                    apiClient.get(`/api/utility/${room.id}`, { withCredentials: true }),
-                    apiClient.get(`/api/utility/${mId}/room/${room.id}`, { withCredentials: true }),
-                ]);
-                setChores(choresRes.data);
-                setUtilities((utilitiesRes.data || []).map(normalizeUtility));
-                setUserUtilities((userUtilitiesRes.data || []).map(normalizeUtility));
-            } catch (err) {
-                console.error("Error loading room data:", err);
-            }
-        };
-        fetchAll();
-    }, [room?.id, room?.members, user?.email]);
+        const currentMember = room.members?.find(m => m.userId === user.email);
+        const mId = currentMember?.id;
+        if (!mId) return;
+        setMemberId(mId);
+        loadRoomData(room.id, mId);
+    }, [room?.id, room?.members, user?.email, loadRoomData]);
 
     const memberRole = room?.members?.find(m => m.userId === user?.email)?.role;
     const isHeadRoommate = memberRole === ROLES.HEAD_ROOMMATE;
@@ -153,8 +143,7 @@ const RoomDetailsPage = ({
                     frequencyUnit: "MONTHLY", startingDate: "", deadline: ""
                 });
                 if (memberId) {
-                    const r = await apiClient.get(`/api/utility/${memberId}/room/${room.id}`, { withCredentials: true });
-                    setUserUtilities((r.data || []).map(normalizeUtility));
+                    refreshRoomData(room.id, memberId);
                     refreshUserUtilities();
                 }
             }
@@ -167,14 +156,18 @@ const RoomDetailsPage = ({
         if (!selectedUtilityId) return;
         try {
             await apiClient.delete(`/api/utility/${selectedUtilityId}`, { withCredentials: true });
-            if (memberId) {
-                const r = await apiClient.get(`/api/utility/${memberId}/room/${room.id}`, { withCredentials: true });
-                setUserUtilities((r.data || []).map(normalizeUtility));
-                refreshUserUtilities();
-            }
+            // Optimistically remove from local state
+            const nextUserUtilities = userUtilities.filter(u => u.id !== selectedUtilityId);
+            const nextUtilities = utilities.filter(u => u.id !== selectedUtilityId);
+            setUserUtilities(nextUserUtilities);
+            setUtilities(nextUtilities);
+            patchRoomData(room.id, { userUtilities: nextUserUtilities, utilities: nextUtilities });
+            refreshUserUtilities();
+            if (memberId) refreshRoomData(room.id, memberId);
             setShowRemoveUtilityModal(false);
             setSelectedUtilityId("");
-        } catch (err) {
+        }
+        catch (err) {
             console.error("Error removing utility:", err);
         }
     };
@@ -204,12 +197,7 @@ const RoomDetailsPage = ({
             if (response.status === 200) {
                 setShowChoreModal(false);
                 setPendingChores([]);
-
-                const choresResponse = await apiClient.get(`/api/chores/${room.id}`,
-                    { withCredentials: true }
-                );
-
-                setChores(choresResponse.data);
+                refreshRoomData(room.id, memberId);
                 refreshUserChores();
             }
         } catch (error) {
@@ -221,12 +209,14 @@ const RoomDetailsPage = ({
         if (!selectedChoreType) return;
         try {
             await apiClient.delete(`/api/chores/room/${room.id}/type/${selectedChoreType}`, { withCredentials: true });
-
-            const r = await apiClient.get(`/api/chores/${room.id}`, { withCredentials: true });
-            setChores(r.data);
+            const nextChores = chores.filter(c => c.choreName !== selectedChoreType);
+            setChores(nextChores);
+            patchRoomData(room.id, { chores: nextChores });
             setSelectedChoreType('');
             refreshUserChores();
-        } catch (err) {
+            if (memberId) refreshRoomData(room.id, memberId);
+        }
+        catch (err) {
             console.error("Error removing chores:", err);
         }
     };

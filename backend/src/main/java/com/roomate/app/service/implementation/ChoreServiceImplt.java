@@ -50,7 +50,7 @@ public class ChoreServiceImplt implements ChoreService {
             throw new IllegalArgumentException("Deadline must be in the future");
         }
 
-        List<ChoreDto> createdChores = new ArrayList<>();
+        List<ChoreEntity> toSave = new ArrayList<>();
         int memberIndex = 0;
         LocalDateTime dueDate = now;
 
@@ -62,9 +62,7 @@ public class ChoreServiceImplt implements ChoreService {
             chore.setRoom(room);
             chore.setAssignedToMember(roomMembers.get(memberIndex % roomMembers.size()));
             chore.setDueAt(dueDate);
-
-            choreRepository.save(chore);
-            createdChores.add(toDto(chore));
+            toSave.add(chore);
 
             memberIndex++;
             switch (choreDTO.getFrequencyUnit()) {
@@ -73,7 +71,10 @@ public class ChoreServiceImplt implements ChoreService {
                 case MONTHLY -> dueDate = dueDate.plusMonths(1);
             }
         }
-        return createdChores;
+
+        return choreRepository.saveAll(toSave).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -103,9 +104,9 @@ public class ChoreServiceImplt implements ChoreService {
         int memberIndex = 0;
         for (ChoreEntity chore : chores) {
             chore.setAssignedToMember(roomMembers.get(memberIndex % roomMembers.size()));
-            choreRepository.save(chore);
             memberIndex++;
         }
+        choreRepository.saveAll(chores);
     }
 
     @Override

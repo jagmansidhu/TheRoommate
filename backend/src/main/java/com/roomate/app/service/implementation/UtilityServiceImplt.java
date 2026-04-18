@@ -38,7 +38,7 @@ public class UtilityServiceImplt implements UtilityService {
                 .orElseThrow(() -> new EntityNotFoundException("Room not found"));
         Hibernate.initialize(room.getMembers());
 
-        List<UtilityEntity> createdUtilities = new ArrayList<>();
+
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startingDate = dto.getStartingDate() != null ? dto.getStartingDate() : now;
@@ -79,6 +79,7 @@ public class UtilityServiceImplt implements UtilityService {
             }
         }
 
+        List<UtilityEntity> toSave = new ArrayList<>();
         LocalDateTime dueDate = startingDate;
 
         do {
@@ -98,7 +99,7 @@ public class UtilityServiceImplt implements UtilityService {
                     utility.setAssignedToMember(member);
                     utility.setDueAt(currentDueDate);
                     utility.setChoreFrequencyUnitEnum(dto.getFrequencyUnit());
-                    createdUtilities.add(utilityRepository.save(utility));
+                    toSave.add(utility);
                 }
             } else if (dto.getUtilDistributionEnum() == UtilDistributionEnum.CUSTOMSPLIT) {
                 for (Map.Entry<UUID, Double> entry : dto.getCustomSplit().entrySet()) {
@@ -117,7 +118,7 @@ public class UtilityServiceImplt implements UtilityService {
                     utility.setAssignedToMember(member);
                     utility.setDueAt(currentDueDate);
                     utility.setChoreFrequencyUnitEnum(dto.getFrequencyUnit());
-                    createdUtilities.add(utilityRepository.save(utility));
+                    toSave.add(utility);
                 }
             }
 
@@ -135,7 +136,7 @@ public class UtilityServiceImplt implements UtilityService {
             }
         } while (!dueDate.isAfter(deadline));
 
-        return createdUtilities;
+        return utilityRepository.saveAll(toSave);
     }
 
     @Override
