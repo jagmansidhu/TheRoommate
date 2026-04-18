@@ -13,11 +13,12 @@ import java.util.UUID;
 
 @Repository
 public interface UtilityRepository extends JpaRepository<UtilityEntity, Long> {
-    List<UtilityEntity> findByRoomId(UUID roomId);
+    @Query("SELECT u FROM UtilityEntity u JOIN FETCH u.room WHERE u.room.id = :roomId")
+    List<UtilityEntity> findByRoomId(@Param("roomId") UUID roomId);
 
     Boolean existsById(UUID utilityId);
 
-    @Query("SELECT u FROM UtilityEntity u WHERE u.room.id = :roomId AND u.assignedToMember.id = :roomMemberId")
+    @Query("SELECT u FROM UtilityEntity u JOIN FETCH u.room WHERE u.room.id = :roomId AND u.assignedToMember.id = :roomMemberId")
     List<UtilityEntity> findByRoomIdAndMemberId(@Param("roomId") UUID roomId, @Param("roomMemberId") UUID memberId);
 
     @Query("SELECT u FROM UtilityEntity u WHERE u.assignedToMember = :userId")
@@ -39,6 +40,9 @@ public interface UtilityRepository extends JpaRepository<UtilityEntity, Long> {
 
     @Query("SELECT DISTINCT u FROM UtilityEntity u JOIN FETCH u.room r LEFT JOIN FETCH u.assignedToMember m WHERE u.assignedToMember.id IN :roomMemberIds")
     List<UtilityEntity> findAllByRoomMemberIds(@Param("roomMemberIds") List<UUID> roomMemberIds);
+
+    @Query("SELECT DISTINCT u FROM UtilityEntity u JOIN FETCH u.room r LEFT JOIN FETCH u.assignedToMember m JOIN m.user usr WHERE usr.email = :email")
+    List<UtilityEntity> findAllByUserEmail(@Param("email") String email);
 
     @Query("SELECT u FROM UtilityEntity u LEFT JOIN FETCH u.assignedToMember m LEFT JOIN FETCH m.user WHERE u.id = :utilityId")
     java.util.Optional<UtilityEntity> findByUtilityId(@Param("utilityId") UUID utilityId);

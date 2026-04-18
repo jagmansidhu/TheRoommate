@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.CacheControl;
+import java.util.concurrent.TimeUnit;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/utility")
@@ -27,13 +30,17 @@ public class UtilityControler {
 
     @GetMapping("/{roomId}")
     public ResponseEntity<List<UtilityDto>> getUtilitiesByRoom(@PathVariable UUID roomId) {
-        return ResponseEntity.ok(utilityService.getUtilitiesByRoom(roomId));
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS).cachePrivate())
+                .body(utilityService.getUtilitiesByRoom(roomId));
     }
 
     @GetMapping("/{memberId}/room/{roomId}")
     public ResponseEntity<List<UtilityDto>> getUtilitiesByRoomabdMemberId(@PathVariable UUID roomId,
             @PathVariable UUID memberId) {
-        return ResponseEntity.ok(utilityService.getUtilitiesByRoomandMemberId(roomId, memberId));
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS).cachePrivate())
+                .body(utilityService.getUtilitiesByRoomandMemberId(roomId, memberId));
     }
 
     @GetMapping("/upcoming")
@@ -42,8 +49,9 @@ public class UtilityControler {
         if (utilities.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-
-        return ResponseEntity.ok(utilities);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS).cachePrivate())
+                .body(utilities);
     }
 
     // Returns utilities assigned to the currently authenticated user.
@@ -53,7 +61,9 @@ public class UtilityControler {
     public ResponseEntity<List<UtilityDto>> getMyUtilities() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         List<UtilityDto> utilities = utilityService.getUpcomingUtilities(email);
-        return ResponseEntity.ok(utilities);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(utilities);
     }
 
     @DeleteMapping("/{utilityId}")

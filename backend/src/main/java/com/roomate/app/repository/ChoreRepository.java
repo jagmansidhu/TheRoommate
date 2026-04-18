@@ -20,6 +20,9 @@ public interface ChoreRepository extends JpaRepository<ChoreEntity, Long> {
     @Query("SELECT c FROM ChoreEntity c LEFT JOIN FETCH c.assignedToMember m LEFT JOIN FETCH m.user WHERE c.room = :room")
     List<ChoreEntity> findByRoom(@Param("room") RoomEntity room);
 
+    @Query("SELECT c FROM ChoreEntity c LEFT JOIN FETCH c.assignedToMember m LEFT JOIN FETCH m.user WHERE c.room = :room AND c.dueAt >= :start AND c.dueAt < :end")
+    List<ChoreEntity> findByRoomAndDueDateRange(@Param("room") RoomEntity room, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
     void deleteById(UUID choreId);
 
     @Query("SELECT c FROM ChoreEntity c " +
@@ -32,6 +35,9 @@ public interface ChoreRepository extends JpaRepository<ChoreEntity, Long> {
 
     @Query("SELECT c FROM ChoreEntity c JOIN FETCH c.room r LEFT JOIN FETCH c.assignedToMember m LEFT JOIN FETCH m.user WHERE c.assignedToMember.id IN :roomMemberIds")
     List<ChoreEntity> findAllByRoomMemberIds(@Param("roomMemberIds") List<UUID> roomMemberIds);
+
+    @Query("SELECT c FROM ChoreEntity c JOIN FETCH c.room r LEFT JOIN FETCH c.assignedToMember m LEFT JOIN FETCH m.user usr2 WHERE usr2.email = :email")
+    List<ChoreEntity> findAllByUserEmail(@Param("email") String email);
 
     @Query("SELECT c FROM ChoreEntity c LEFT JOIN FETCH c.assignedToMember m LEFT JOIN FETCH m.user WHERE c.id = :choreId")
     java.util.Optional<ChoreEntity> findByChoreId(@Param("choreId") UUID choreId);

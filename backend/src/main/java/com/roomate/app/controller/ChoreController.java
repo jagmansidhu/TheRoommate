@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.http.CacheControl;
+import java.util.concurrent.TimeUnit;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/chores")
@@ -37,20 +40,25 @@ public class ChoreController {
 
     @GetMapping("/{roomId}")
     public ResponseEntity<List<ChoreDto>> getRoomChores(@PathVariable UUID roomId) {
-        return ResponseEntity.ok(choreService.getChoresByRoomId(roomId));
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS).cachePrivate())
+                .body(choreService.getChoresByRoomId(roomId));
     }
 
     @GetMapping("/upcoming")
     public ResponseEntity<List<ChoreDto>> getUpcomingChores(@RequestParam String id) {
         List<ChoreDto> chores = choreService.getChoresByUserId(id);
-
-        return ResponseEntity.ok(chores);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS).cachePrivate())
+                .body(chores);
     }
 
     @GetMapping("/user/me")
     public ResponseEntity<List<ChoreDto>> getMyChores() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return ResponseEntity.ok(choreService.getChoresByUserId(email));
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(choreService.getChoresByUserId(email));
     }
 
     @DeleteMapping("/{choreId}")
