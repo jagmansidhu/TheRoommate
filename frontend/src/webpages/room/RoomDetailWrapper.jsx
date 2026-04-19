@@ -8,7 +8,7 @@ import { useAppData } from '../../App';
 const RoomDetailsPageWrapper = () => {
     const { roomId } = useParams();
     const navigate = useNavigate();
-    const { rooms, removeRoom } = useAppData();
+    const { rooms, removeRoom, invalidateRoomData } = useAppData();
 
     const [room, setRoom] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -50,6 +50,7 @@ const RoomDetailsPageWrapper = () => {
                     withCredentials: true,
                 });
                 removeRoom(roomId);
+                invalidateRoomData(roomId);
                 navigate('/rooms');
             } catch (error) {
                 console.error('Failed to leave room:', error);
@@ -65,6 +66,7 @@ const RoomDetailsPageWrapper = () => {
                     withCredentials: true,
                 });
                 removeRoom(roomId);
+                invalidateRoomData(roomId);
                 navigate('/rooms');
             } catch (error) {
                 console.error('Failed to Delete room:', error);

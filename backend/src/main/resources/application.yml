@@ -33,6 +33,10 @@ spring:
         globally_quoted_identifiers: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
   mail:
     host: ${EMAIL_HOST}
     port: ${EMAIL_PORT}

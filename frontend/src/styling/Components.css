@@ -15,6 +15,9 @@
   background-color: var(--lp-cream);
   background-image: radial-gradient(circle, var(--lp-border) 1px, transparent 1px);
   background-size: 28px 28px;
+  /* Cancel the content-wrapper's padding so the card is truly centered */
+  margin: calc(-1 * var(--spacing-6));
+  min-width: calc(100% + 2 * var(--spacing-6));
 }
 
 .auth-card {

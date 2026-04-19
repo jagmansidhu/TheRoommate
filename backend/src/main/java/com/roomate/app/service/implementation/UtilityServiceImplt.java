@@ -2,14 +2,12 @@ package com.roomate.app.service.implementation;
 
 import com.roomate.app.dto.UtilityCreateDto;
 import com.roomate.app.dto.UtilityDto;
-import com.roomate.app.entities.UserEntity;
 import com.roomate.app.entities.UtilityEntity;
 import com.roomate.app.entities.UtilDistributionEnum;
 import com.roomate.app.entities.room.RoomEntity;
 import com.roomate.app.entities.room.RoomMemberEntity;
 import com.roomate.app.repository.RoomMemberRepository;
 import com.roomate.app.repository.RoomRepository;
-import com.roomate.app.repository.UserRepository;
 import com.roomate.app.repository.UtilityRepository;
 import com.roomate.app.service.UtilityService;
 import jakarta.persistence.EntityNotFoundException;
@@ -32,7 +30,6 @@ public class UtilityServiceImplt implements UtilityService {
     private final UtilityRepository utilityRepository;
     private final RoomRepository roomRepository;
     private final RoomMemberRepository roomMemberRepository;
-    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -41,7 +38,7 @@ public class UtilityServiceImplt implements UtilityService {
                 .orElseThrow(() -> new EntityNotFoundException("Room not found"));
         Hibernate.initialize(room.getMembers());
 
-        List<UtilityEntity> createdUtilities = new ArrayList<>();
+
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startingDate = dto.getStartingDate() != null ? dto.getStartingDate() : now;
@@ -82,6 +79,7 @@ public class UtilityServiceImplt implements UtilityService {
             }
         }
 
+        List<UtilityEntity> toSave = new ArrayList<>();
         LocalDateTime dueDate = startingDate;
 
         do {
@@ -101,7 +99,7 @@ public class UtilityServiceImplt implements UtilityService {
                     utility.setAssignedToMember(member);
                     utility.setDueAt(currentDueDate);
                     utility.setChoreFrequencyUnitEnum(dto.getFrequencyUnit());
-                    createdUtilities.add(utilityRepository.save(utility));
+                    toSave.add(utility);
                 }
             } else if (dto.getUtilDistributionEnum() == UtilDistributionEnum.CUSTOMSPLIT) {
                 for (Map.Entry<UUID, Double> entry : dto.getCustomSplit().entrySet()) {
@@ -120,7 +118,7 @@ public class UtilityServiceImplt implements UtilityService {
                     utility.setAssignedToMember(member);
                     utility.setDueAt(currentDueDate);
                     utility.setChoreFrequencyUnitEnum(dto.getFrequencyUnit());
-                    createdUtilities.add(utilityRepository.save(utility));
+                    toSave.add(utility);
                 }
             }
 
@@ -138,14 +136,12 @@ public class UtilityServiceImplt implements UtilityService {
             }
         } while (!dueDate.isAfter(deadline));
 
-        return createdUtilities;
+        return utilityRepository.saveAll(toSave);
     }
 
     @Override
     @Transactional
     public List<UtilityDto> getUtilitiesByRoom(UUID roomId) {
-        roomRepository.findById(roomId).orElseThrow(() -> new EntityNotFoundException("Room not found"));
-
         return utilityRepository
                 .findByRoomId(roomId).stream().map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(),
                         utility.getUtilityPrice(),
@@ -158,8 +154,6 @@ public class UtilityServiceImplt implements UtilityService {
 
     @Override
     public List<UtilityDto> getUtilitiesByRoomandMemberId(UUID roomId, UUID memberId) {
-        roomRepository.findById(roomId).orElseThrow(() -> new EntityNotFoundException("Room not found"));
-
         return utilityRepository.findByRoomIdAndMemberId(roomId, memberId).stream()
                 .map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(), utility.getUtilityPrice(),
                         utility.getRoom() != null ? utility.getRoom().getId() : null,
@@ -172,15 +166,7 @@ public class UtilityServiceImplt implements UtilityService {
     @Override
     @Transactional
     public List<UtilityDto> getUpcomingUtilities(String id) {
-        UserEntity user = userRepository.findByEmail(id)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        List<UUID> roomMemberIds = roomMemberRepository.findAllByUserId(user.getId())
-                .stream()
-                .map(RoomMemberEntity::getId)
-                .collect(Collectors.toList());
-
-        return utilityRepository.findAllByRoomMemberIds(roomMemberIds)
+        return utilityRepository.findAllByUserEmail(id)
                 .stream()
                 .map(utility -> new UtilityDto(
                         utility.getId(),

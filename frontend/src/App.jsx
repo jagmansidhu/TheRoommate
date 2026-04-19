@@ -93,7 +93,7 @@ const AuthProvider = ({children}) => {
             console.error('Logout failed', err);
         }
         
-        ['token', 'appAuth', 'appUser', 'appRooms', 'appChores', 'appUtilities', 'appEvents'].forEach(k => localStorage.removeItem(k));
+        ['token', 'appAuth', 'appUser', 'appRooms', 'appChores', 'appUtilities', 'appEvents', 'appRoomData'].forEach(k => localStorage.removeItem(k));
         setIsAuthenticated(false);
         window.location.href = '/';
     };
@@ -160,7 +160,8 @@ const UserProvider = ({children}) => {
 // Caches shared app data so pages don't re-fetch on every navigation.
 //
 // Eager (fetched on login):  rooms, userChores, userUtilities
-// Lazy  (fetched on demand): events  — call loadEvents() from Calendar
+// Lazy  (fetched on demand): events — call loadEvents() from Calendar
+//                            roomData — call loadRoomData(roomId, memberId) from room detail
 //
 // Mutation helpers (append / remove) update the cache in-place.
 // Call the corresponding refresh* function only when a full server round-trip
@@ -267,7 +268,82 @@ const AppDataProvider = ({children}) => {
         }));
     }, []);
 
-    // --- calendar events (lazy) ---
+    // --- per-room data cache (lazy) ---
+    // Shape: { [roomId]: { chores, utilities, userUtilities, memberId } }
+    const [roomData, setRoomDataState] = useState(() => {
+        const cached = localStorage.getItem('appRoomData');
+        return cached ? JSON.parse(cached) : {};
+    });
+
+    useEffect(() => {
+        if (isAuthenticated) localStorage.setItem('appRoomData', JSON.stringify(roomData));
+    }, [roomData, isAuthenticated]);
+
+    // Read cached data for a room (returns null if not yet loaded)
+    const getRoomData = useCallback((roomId) => roomData[roomId] || null, [roomData]);
+
+    // Write room data into cache after a fetch or mutation
+    const setRoomData = useCallback((roomId, data) => {
+        setRoomDataState(prev => ({ ...prev, [roomId]: data }));
+    }, []);
+
+    // Merge a partial patch into existing room cache (e.g. after a mutation)
+    const patchRoomData = useCallback((roomId, patch) => {
+        setRoomDataState(prev => ({
+            ...prev,
+            [roomId]: { ...(prev[roomId] || {}), ...patch },
+        }));
+    }, []);
+
+    // Drop a room from cache (after leave/delete)
+    const invalidateRoomData = useCallback((roomId) => {
+        setRoomDataState(prev => {
+            const next = { ...prev };
+            delete next[roomId];
+            return next;
+        });
+    }, []);
+
+    // Fetch and cache all three room-scoped payloads in one Promise.all.
+    // Safe to call on every mount — skips network if already cached.
+    const loadRoomData = useCallback(async (roomId, memberId) => {
+        if (roomData[roomId]) return; // already cached
+        try {
+            const [choresRes, utilitiesRes, userUtilitiesRes] = await Promise.all([
+                apiClient.get(`/api/chores/${roomId}`),
+                apiClient.get(`/api/utility/${roomId}`),
+                apiClient.get(`/api/utility/${memberId}/room/${roomId}`),
+            ]);
+            setRoomData(roomId, {
+                memberId,
+                chores: choresRes.data || [],
+                utilities: (utilitiesRes.data || []),
+                userUtilities: (userUtilitiesRes.data || []),
+            });
+        } catch (err) {
+            console.error('AppData: failed to load room data for', roomId, err);
+        }
+    }, [roomData, setRoomData]);
+
+    // Force-refresh a room (after create/delete mutations)
+    const refreshRoomData = useCallback(async (roomId, memberId) => {
+        try {
+            const [choresRes, utilitiesRes, userUtilitiesRes] = await Promise.all([
+                apiClient.get(`/api/chores/${roomId}`),
+                apiClient.get(`/api/utility/${roomId}`),
+                apiClient.get(`/api/utility/${memberId}/room/${roomId}`),
+            ]);
+            setRoomData(roomId, {
+                memberId,
+                chores: choresRes.data || [],
+                utilities: (utilitiesRes.data || []),
+                userUtilities: (userUtilitiesRes.data || []),
+            });
+        } catch (err) {
+            console.error('AppData: failed to refresh room data for', roomId, err);
+        }
+    }, [setRoomData]);
+
     const [events, setEvents] = useState(() => {
         const cached = localStorage.getItem('appEvents');
         return cached ? JSON.parse(cached) : [];
@@ -316,6 +392,7 @@ const AppDataProvider = ({children}) => {
             setUserChores([]);
             setUserUtilities([]);
             setEvents([]);
+            setRoomDataState({});
             eventsLoadedRef.current = false;
         }
     }, [isAuthenticated, isLoading, fetchRooms, fetchUserChores, fetchUserUtilities]);
@@ -329,6 +406,9 @@ const AppDataProvider = ({children}) => {
             userUtilities, userUtilitiesLoading,
             refreshUserUtilities: fetchUserUtilities, appendUserUtility, removeUserUtility, updateUserUtility,
             events, eventsLoading, loadEvents, refreshEvents, appendEvent, removeEvent,
+            // per-room cache
+            getRoomData, setRoomData, patchRoomData, invalidateRoomData,
+            loadRoomData, refreshRoomData,
         }}>
             {children}
         </AppDataContext.Provider>

@@ -16,7 +16,8 @@ import java.util.UUID;
 @Entity
 @Table(indexes = {
         @Index(name = "idx_chore_room_id", columnList = "room_id"),
-        @Index(name = "idx_chore_room_member_id", columnList = "room_member_id")
+        @Index(name = "idx_chore_room_member_id", columnList = "room_member_id"),
+        @Index(name = "idx_chore_room_due", columnList = "room_id, due_at")
 })
 public class ChoreEntity {
     @Id

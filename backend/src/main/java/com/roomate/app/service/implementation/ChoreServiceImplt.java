@@ -3,13 +3,11 @@ package com.roomate.app.service.implementation;
 import com.roomate.app.dto.ChoreCreateDto;
 import com.roomate.app.dto.ChoreDto;
 import com.roomate.app.entities.ChoreEntity;
-import com.roomate.app.entities.UserEntity;
 import com.roomate.app.entities.room.RoomEntity;
 import com.roomate.app.entities.room.RoomMemberEntity;
 import com.roomate.app.repository.ChoreRepository;
 import com.roomate.app.repository.RoomMemberRepository;
 import com.roomate.app.repository.RoomRepository;
-import com.roomate.app.repository.UserRepository;
 import com.roomate.app.service.ChoreService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -29,7 +27,6 @@ public class ChoreServiceImplt implements ChoreService {
     private final RoomRepository roomRepository;
     private final ChoreRepository choreRepository;
     private final RoomMemberRepository roomMemberRepository;
-    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -53,7 +50,7 @@ public class ChoreServiceImplt implements ChoreService {
             throw new IllegalArgumentException("Deadline must be in the future");
         }
 
-        List<ChoreDto> createdChores = new ArrayList<>();
+        List<ChoreEntity> toSave = new ArrayList<>();
         int memberIndex = 0;
         LocalDateTime dueDate = now;
 
@@ -65,9 +62,7 @@ public class ChoreServiceImplt implements ChoreService {
             chore.setRoom(room);
             chore.setAssignedToMember(roomMembers.get(memberIndex % roomMembers.size()));
             chore.setDueAt(dueDate);
-
-            choreRepository.save(chore);
-            createdChores.add(toDto(chore));
+            toSave.add(chore);
 
             memberIndex++;
             switch (choreDTO.getFrequencyUnit()) {
@@ -76,7 +71,10 @@ public class ChoreServiceImplt implements ChoreService {
                 case MONTHLY -> dueDate = dueDate.plusMonths(1);
             }
         }
-        return createdChores;
+
+        return choreRepository.saveAll(toSave).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -88,8 +86,9 @@ public class ChoreServiceImplt implements ChoreService {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime twoWeeksAhead = startOfToday.plusWeeks(2);
 
-        return choreRepository.findByRoom(room).stream().filter(chore -> chore.getDueAt() != null
-                && !chore.getDueAt().isBefore(startOfToday) && chore.getDueAt().isBefore(twoWeeksAhead)).map(this::toDto)
+        return choreRepository.findByRoomAndDueDateRange(room, startOfToday, twoWeeksAhead)
+                .stream()
+                .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -105,9 +104,9 @@ public class ChoreServiceImplt implements ChoreService {
         int memberIndex = 0;
         for (ChoreEntity chore : chores) {
             chore.setAssignedToMember(roomMembers.get(memberIndex % roomMembers.size()));
-            choreRepository.save(chore);
             memberIndex++;
         }
+        choreRepository.saveAll(chores);
     }
 
     @Override
@@ -126,15 +125,7 @@ public class ChoreServiceImplt implements ChoreService {
     @Override
     @Transactional
     public List<ChoreDto> getChoresByUserId(String id) {
-        UserEntity user = userRepository.findByEmail(id)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        List<UUID> roomMemberIds = roomMemberRepository.findAllByUserId(user.getId())
-                .stream()
-                .map(RoomMemberEntity::getId)
-                .collect(Collectors.toList());
-
-        return choreRepository.findAllByRoomMemberIds(roomMemberIds)
+        return choreRepository.findAllByUserEmail(id)
                 .stream()
                 .map(chore -> new ChoreDto(
                         chore.getId(),
