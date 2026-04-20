@@ -143,7 +143,18 @@ const RoomDetailsPage = ({
                     frequencyUnit: "MONTHLY", startingDate: "", deadline: ""
                 });
                 if (memberId) {
-                    refreshRoomData(room.id, memberId);
+                    // Fetch fresh data and immediately update local state so the
+                    // UI reflects the new utility without waiting for a remount.
+                    const [utilitiesRes, userUtilitiesRes] = await Promise.all([
+                        apiClient.get(`/api/utility/${room.id}`),
+                        apiClient.get(`/api/utility/${memberId}/room/${room.id}`),
+                    ]);
+                    const freshUtilities = utilitiesRes.data || [];
+                    const freshUserUtilities = userUtilitiesRes.data || [];
+                    setUtilities(freshUtilities);
+                    setUserUtilities(freshUserUtilities);
+                    // Keep the room-level cache in sync too
+                    patchRoomData(room.id, { utilities: freshUtilities, userUtilities: freshUserUtilities });
                     refreshUserUtilities();
                 }
             }
@@ -197,7 +208,12 @@ const RoomDetailsPage = ({
             if (response.status === 200) {
                 setShowChoreModal(false);
                 setPendingChores([]);
-                refreshRoomData(room.id, memberId);
+                // Fetch fresh chores and immediately update local state so the
+                // UI reflects the new chores without waiting for a remount.
+                const choresRes = await apiClient.get(`/api/chores/${room.id}`);
+                const freshChores = choresRes.data || [];
+                setChores(freshChores);
+                patchRoomData(room.id, { chores: freshChores });
                 refreshUserChores();
             }
         } catch (error) {

@@ -105,8 +105,6 @@ const AuthProvider = ({children}) => {
     );
 };
 
-// Fetches /api/get-user exactly once after login, then caches in context.
-// Call refreshUser() explicitly after any mutation that changes user data.
 const UserProvider = ({children}) => {
     const {isAuthenticated, isLoading} = useAuth();
     const [user, setUser] = useState(() => {
@@ -159,19 +157,9 @@ const UserProvider = ({children}) => {
 // AppDataProvider
 // Caches shared app data so pages don't re-fetch on every navigation.
 //
-// Eager (fetched on login):  rooms, userChores, userUtilities
-// Lazy  (fetched on demand): events — call loadEvents() from Calendar
-//                            roomData — call loadRoomData(roomId, memberId) from room detail
-//
-// Mutation helpers (append / remove) update the cache in-place.
-// Call the corresponding refresh* function only when a full server round-trip
-// is genuinely necessary (e.g. joining a room where the server builds the
-// full room+members payload).
-// ---------------------------------------------------------------------------
 const AppDataProvider = ({children}) => {
     const {isAuthenticated, isLoading} = useAuth();
 
-    // --- rooms ---
     const [rooms, setRooms] = useState(() => {
         const cached = localStorage.getItem('appRooms');
         return cached ? JSON.parse(cached) : [];
@@ -198,7 +186,6 @@ const AppDataProvider = ({children}) => {
     const removeRoom       = useCallback(id => setRooms(prev => prev.filter(r => r.id !== id)), []);
     const updateRoom       = useCallback(r  => setRooms(prev => prev.map(x => x.id === r.id ? r : x)), []);
 
-    // --- user chores ---
     const [userChores, setUserChores] = useState(() => {
         const cached = localStorage.getItem('appChores');
         return cached ? JSON.parse(cached) : [];
