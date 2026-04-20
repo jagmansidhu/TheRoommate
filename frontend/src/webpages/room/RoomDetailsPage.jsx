@@ -137,12 +137,14 @@ const RoomDetailsPage = ({
                     frequencyUnit: "MONTHLY", startingDate: "", deadline: ""
                 });
                 if (memberId) {
+                    // Cache-Control: no-cache forces the browser to bypass its
+                    // 30-second HTTP cache on these GET endpoints so we get the
+                    // freshly-created data back.
+                    const noCacheHeaders = { headers: { 'Cache-Control': 'no-cache' } };
                     const [utilitiesRes, userUtilitiesRes] = await Promise.all([
-                        apiClient.get(`/api/utility/${room.id}`),
-                        apiClient.get(`/api/utility/${memberId}/room/${room.id}`),
+                        apiClient.get(`/api/utility/${room.id}`, noCacheHeaders),
+                        apiClient.get(`/api/utility/${memberId}/room/${room.id}`, noCacheHeaders),
                     ]);
-                    // patchRoomData updates the reactive roomData cache → component
-                    // re-renders automatically via the useMemo derivations above.
                     patchRoomData(room.id, {
                         utilities: utilitiesRes.data || [],
                         userUtilities: userUtilitiesRes.data || [],
@@ -198,10 +200,11 @@ const RoomDetailsPage = ({
             if (response.status === 200) {
                 setShowChoreModal(false);
                 setPendingChores([]);
-                const choresRes = await apiClient.get(`/api/chores/${room.id}`);
-                // patchRoomData updates the reactive roomData cache → component
-                // re-renders automatically via the useMemo derivations above.
-                patchRoomData(room.id, { chores: choresRes.data || [] });
+                // The POST already returns all created ChoreDtos —
+                // merge them with the existing cached chores to avoid a
+                // stale GET (backend sets 30s HTTP cache on GET endpoints).
+                const createdChores = response.data || [];
+                patchRoomData(room.id, { chores: [...chores, ...createdChores] });
                 refreshUserChores();
             }
         } catch (error) {

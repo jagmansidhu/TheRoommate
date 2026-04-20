@@ -314,11 +314,12 @@ const AppDataProvider = ({children}) => {
 
     // Force-refresh a room (after create/delete mutations)
     const refreshRoomData = useCallback(async (roomId, memberId) => {
+        const noCacheHeaders = { headers: { 'Cache-Control': 'no-cache' } };
         try {
             const [choresRes, utilitiesRes, userUtilitiesRes] = await Promise.all([
-                apiClient.get(`/api/chores/${roomId}`),
-                apiClient.get(`/api/utility/${roomId}`),
-                apiClient.get(`/api/utility/${memberId}/room/${roomId}`),
+                apiClient.get(`/api/chores/${roomId}`, noCacheHeaders),
+                apiClient.get(`/api/utility/${roomId}`, noCacheHeaders),
+                apiClient.get(`/api/utility/${memberId}/room/${roomId}`, noCacheHeaders),
             ]);
             setRoomData(roomId, {
                 memberId,
