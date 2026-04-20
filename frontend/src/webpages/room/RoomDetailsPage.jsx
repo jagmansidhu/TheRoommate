@@ -1,5 +1,5 @@
 import apiClient from '../../apiClient';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
 import { ROLES } from "../../constants/roles";
 import { useUser, useAppData } from '../../App';
@@ -29,10 +29,22 @@ const RoomDetailsPage = ({
     const { user } = useUser();
     const {
         refreshUserChores, refreshUserUtilities, updateUserChore, updateUserUtility,
-        getRoomData, loadRoomData, refreshRoomData, patchRoomData,
+        roomData, loadRoomData, patchRoomData,
     } = useAppData();
-    const cached = getRoomData(room?.id);
-    const [utilities, setUtilities] = useState(() => cached?.utilities || []);
+
+    // Derive chores/utilities/userUtilities directly from the reactive roomData cache.
+    // Whenever patchRoomData or setRoomData runs, roomData changes, this memo updates,
+    // and the component re-renders — no stale local-state bug.
+    const cachedRoom = roomData[room?.id];
+    const chores        = useMemo(() => cachedRoom?.chores        || [], [cachedRoom]);
+    const utilities     = useMemo(() => cachedRoom?.utilities     || [], [cachedRoom]);
+    const userUtilities = useMemo(() => cachedRoom?.userUtilities || [], [cachedRoom]);
+    const memberId      = useMemo(() => {
+        const fromCache = cachedRoom?.memberId;
+        if (fromCache) return fromCache;
+        return room?.members?.find(m => m.userId === user?.email)?.id || null;
+    }, [cachedRoom, room?.members, user?.email]);
+
     const [showRemoveUtilityModal, setShowRemoveUtilityModal] = useState(false);
     const [selectedUtilityId, setSelectedUtilityId] = useState("");
     const [showUtilityModal, setShowUtilityModal] = useState(false);
@@ -47,10 +59,6 @@ const RoomDetailsPage = ({
         choreName: '', frequency: 1, frequencyUnit: 'WEEKLY', deadline: ''
     });
     const [selectedChoreType, setSelectedChoreType] = useState('');
-    const [chores, setChores] = useState(() => cached?.chores || []);
-
-    const [userUtilities, setUserUtilities] = useState(() => cached?.userUtilities || []);
-    const [memberId, setMemberId] = useState(() => cached?.memberId || null);
     const [isCustomChore, setIsCustomChore] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
@@ -58,9 +66,7 @@ const RoomDetailsPage = ({
 
     const addChoreToList = () => {
         if (!choreData.choreName || choreData.frequency < 1 || !isValidDeadline(choreData.deadline)) return;
-
         setPendingChores([...pendingChores, { ...choreData }]);
-
         resetChoreData();
     };
 
@@ -77,23 +83,11 @@ const RoomDetailsPage = ({
         return d > now && d <= oneYearAhead;
     };
 
+    // Load room data into cache on mount (no-op if already cached).
     useEffect(() => {
-        const d = getRoomData(room?.id);
-        if (!d) return;
-        setChores(d.chores || []);
-        setUtilities(d.utilities || []);
-        setUserUtilities(d.userUtilities || []);
-        if (d.memberId) setMemberId(d.memberId);
-    }, [getRoomData, room?.id]);
-
-    useEffect(() => {
-        if (!room?.id || !user?.email) return;
-        const currentMember = room.members?.find(m => m.userId === user.email);
-        const mId = currentMember?.id;
-        if (!mId) return;
-        setMemberId(mId);
-        loadRoomData(room.id, mId);
-    }, [room?.id, room?.members, user?.email, loadRoomData]);
+        if (!room?.id || !memberId) return;
+        loadRoomData(room.id, memberId);
+    }, [room?.id, memberId, loadRoomData]);
 
     const memberRole = room?.members?.find(m => m.userId === user?.email)?.role;
     const isHeadRoommate = memberRole === ROLES.HEAD_ROOMMATE;
@@ -143,7 +137,18 @@ const RoomDetailsPage = ({
                     frequencyUnit: "MONTHLY", startingDate: "", deadline: ""
                 });
                 if (memberId) {
-                    refreshRoomData(room.id, memberId);
+                    // Cache-Control: no-cache forces the browser to bypass its
+                    // 30-second HTTP cache on these GET endpoints so we get the
+                    // freshly-created data back.
+                    const noCacheHeaders = { headers: { 'Cache-Control': 'no-cache' } };
+                    const [utilitiesRes, userUtilitiesRes] = await Promise.all([
+                        apiClient.get(`/api/utility/${room.id}`, noCacheHeaders),
+                        apiClient.get(`/api/utility/${memberId}/room/${room.id}`, noCacheHeaders),
+                    ]);
+                    patchRoomData(room.id, {
+                        utilities: utilitiesRes.data || [],
+                        userUtilities: userUtilitiesRes.data || [],
+                    });
                     refreshUserUtilities();
                 }
             }
@@ -156,14 +161,12 @@ const RoomDetailsPage = ({
         if (!selectedUtilityId) return;
         try {
             await apiClient.delete(`/api/utility/${selectedUtilityId}`, { withCredentials: true });
-            // Optimistically remove from local state
-            const nextUserUtilities = userUtilities.filter(u => u.id !== selectedUtilityId);
-            const nextUtilities = utilities.filter(u => u.id !== selectedUtilityId);
-            setUserUtilities(nextUserUtilities);
-            setUtilities(nextUtilities);
-            patchRoomData(room.id, { userUtilities: nextUserUtilities, utilities: nextUtilities });
+            // Optimistically remove via cache patch
+            patchRoomData(room.id, {
+                userUtilities: userUtilities.filter(u => u.id !== selectedUtilityId),
+                utilities: utilities.filter(u => u.id !== selectedUtilityId),
+            });
             refreshUserUtilities();
-            if (memberId) refreshRoomData(room.id, memberId);
             setShowRemoveUtilityModal(false);
             setSelectedUtilityId("");
         }
@@ -197,7 +200,11 @@ const RoomDetailsPage = ({
             if (response.status === 200) {
                 setShowChoreModal(false);
                 setPendingChores([]);
-                refreshRoomData(room.id, memberId);
+                // The POST already returns all created ChoreDtos —
+                // merge them with the existing cached chores to avoid a
+                // stale GET (backend sets 30s HTTP cache on GET endpoints).
+                const createdChores = response.data || [];
+                patchRoomData(room.id, { chores: [...chores, ...createdChores] });
                 refreshUserChores();
             }
         } catch (error) {
@@ -210,11 +217,9 @@ const RoomDetailsPage = ({
         try {
             await apiClient.delete(`/api/chores/room/${room.id}/type/${selectedChoreType}`, { withCredentials: true });
             const nextChores = chores.filter(c => c.choreName !== selectedChoreType);
-            setChores(nextChores);
             patchRoomData(room.id, { chores: nextChores });
             setSelectedChoreType('');
             refreshUserChores();
-            if (memberId) refreshRoomData(room.id, memberId);
         }
         catch (err) {
             console.error("Error removing chores:", err);
@@ -225,8 +230,10 @@ const RoomDetailsPage = ({
         if (!user?.email || chore.assignedToMemberName !== user.email) return;
 
         const nextCompleted = !Boolean(chore.isCompleted);
-        
-        setChores(prev => prev.map(item => item.id === chore.id ? { ...item, isCompleted: nextCompleted } : item));
+        // Optimistic update via cache patch
+        patchRoomData(room.id, {
+            chores: chores.map(item => item.id === chore.id ? { ...item, isCompleted: nextCompleted } : item),
+        });
         updateUserChore(chore.id, { isCompleted: nextCompleted });
 
         try {
@@ -235,15 +242,19 @@ const RoomDetailsPage = ({
             );
         } catch (error) {
             console.error('Error updating chore completion:', error);
-            setChores(prev => prev.map(item => item.id === chore.id ? { ...item, isCompleted: !nextCompleted } : item));
+            patchRoomData(room.id, {
+                chores: chores.map(item => item.id === chore.id ? { ...item, isCompleted: !nextCompleted } : item),
+            });
             updateUserChore(chore.id, { isCompleted: !nextCompleted });
         }
     };
 
     const toggleUtilityCompletion = async (utility) => {
         const nextCompleted = !isUtilityCompleted(utility);
-        
-        setUserUtilities(prev => prev.map(item => item.id === utility.id ? { ...item, isCompleted: nextCompleted, completed: nextCompleted } : item));
+        // Optimistic update via cache patch
+        patchRoomData(room.id, {
+            userUtilities: userUtilities.map(item => item.id === utility.id ? { ...item, isCompleted: nextCompleted, completed: nextCompleted } : item),
+        });
         updateUserUtility(utility.id, { isCompleted: nextCompleted });
 
         try {
@@ -252,7 +263,9 @@ const RoomDetailsPage = ({
             );
         } catch (error) {
             console.error('Error updating utility completion:', error);
-            setUserUtilities(prev => prev.map(item => item.id === utility.id ? { ...item, isCompleted: !nextCompleted, completed: !nextCompleted } : item));
+            patchRoomData(room.id, {
+                userUtilities: userUtilities.map(item => item.id === utility.id ? { ...item, isCompleted: !nextCompleted, completed: !nextCompleted } : item),
+            });
             updateUserUtility(utility.id, { isCompleted: !nextCompleted });
         }
     };
@@ -260,11 +273,11 @@ const RoomDetailsPage = ({
     const getChoresByDate = () => {
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
-        const oneMonthAhead = new Date(startOfToday);
-        oneMonthAhead.setMonth(startOfToday.getMonth() + 1);
+        const fourWeeksAhead = new Date(startOfToday);
+        fourWeeksAhead.setDate(startOfToday.getDate() + 28);
         const map = {};
         chores
-            .filter(c => { const d = new Date(c.dueAt); return d >= startOfToday && d <= oneMonthAhead; })
+            .filter(c => { const d = new Date(c.dueAt); return d >= startOfToday && d <= fourWeeksAhead; })
             .sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt))
             .forEach(c => {
                 const d = new Date(c.dueAt);
@@ -277,22 +290,20 @@ const RoomDetailsPage = ({
 
     const choresByDate = getChoresByDate();
 
-    const getUtilitiesThisMonth = () => {
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
-        const nextMonth = new Date(startOfMonth);
-        nextMonth.setMonth(startOfMonth.getMonth() + 1);
+    const getUpcomingUtilities = () => {
+        const now = new Date();
+        const fourWeeksAhead = new Date(now);
+        fourWeeksAhead.setDate(now.getDate() + 28);
 
         return userUtilities.filter(u => {
             if (!u.dueAt) return false;
             const d = new Date(u.dueAt);
             if (Number.isNaN(d.getTime())) return false;
-            return d >= startOfMonth && d < nextMonth;
+            return d >= now && d <= fourWeeksAhead;
         });
     };
 
-    const monthlyUtilities = getUtilitiesThisMonth();
+    const monthlyUtilities = getUpcomingUtilities();
 
     const getMemberInitial = (m) => m.name?.charAt(0)?.toUpperCase() || '?';
     const getRoleLabel = (role) => {
@@ -361,17 +372,17 @@ const RoomDetailsPage = ({
                 </div>
                 <div className="rd-stat-sep" />
                 <div className="rd-stat-cell">
-                    <span className="rd-stat-num">{chores.length}</span>
-                    <span className="rd-stat-lbl">Total Chores</span>
+                    <span className="rd-stat-num">{Object.values(choresByDate).reduce((s, arr) => s + arr.length, 0)}</span>
+                    <span className="rd-stat-lbl">Chores</span>
                 </div>
                 <div className="rd-stat-sep" />
                 <div className="rd-stat-cell">
                     <span className="rd-stat-num">{Object.keys(choresByDate).length}</span>
-                    <span className="rd-stat-lbl">Due This Month</span>
+                    <span className="rd-stat-lbl">Due Next 4 Weeks</span>
                 </div>
                 <div className="rd-stat-sep" />
                 <div className="rd-stat-cell">
-                    <span className="rd-stat-num">{utilities.length}</span>
+                    <span className="rd-stat-num">{monthlyUtilities.length}</span>
                     <span className="rd-stat-lbl">Utilities</span>
                 </div>
                 <div className="rd-stat-sep" />
@@ -379,7 +390,7 @@ const RoomDetailsPage = ({
                     <span className="rd-stat-num">
                         ${monthlyUtilities.reduce((s, u) => s + (u.utilityPrice || 0), 0).toFixed(0)}
                     </span>
-                    <span className="rd-stat-lbl">Your Monthly</span>
+                    <span className="rd-stat-lbl">Your Next 4 Weeks</span>
                 </div>
             </div>
 
@@ -420,9 +431,9 @@ const RoomDetailsPage = ({
 
                     {/* Your Utilities */}
                     <section className="rd-card">
-                        <h2 className="rd-card-title">Your Utilities (This Month)</h2>
+                        <h2 className="rd-card-title">Your Utilities (Next 4 Weeks)</h2>
                         {monthlyUtilities.length === 0 ? (
-                            <p className="rd-empty-text">No utilities assigned to you this month.</p>
+                            <p className="rd-empty-text">No utilities assigned to you in the next 4 weeks.</p>
                         ) : (
                             <div className="rd-utility-list">
                                 {monthlyUtilities.map(u => (
@@ -462,7 +473,7 @@ const RoomDetailsPage = ({
                                     <path d="M9 11l3 3L22 4"/>
                                     <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
                                 </svg>
-                                <p>No chores in the next 30 days</p>
+                                <p>No chores in the next 4 weeks</p>
                             </div>
                         ) : (
                             <div className="rd-timeline">
