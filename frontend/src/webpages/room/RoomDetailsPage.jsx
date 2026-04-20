@@ -372,8 +372,8 @@ const RoomDetailsPage = ({
                 </div>
                 <div className="rd-stat-sep" />
                 <div className="rd-stat-cell">
-                    <span className="rd-stat-num">{chores.length}</span>
-                    <span className="rd-stat-lbl">Total Chores</span>
+                    <span className="rd-stat-num">{Object.values(choresByDate).reduce((s, arr) => s + arr.length, 0)}</span>
+                    <span className="rd-stat-lbl">Chores</span>
                 </div>
                 <div className="rd-stat-sep" />
                 <div className="rd-stat-cell">
@@ -382,7 +382,7 @@ const RoomDetailsPage = ({
                 </div>
                 <div className="rd-stat-sep" />
                 <div className="rd-stat-cell">
-                    <span className="rd-stat-num">{utilities.length}</span>
+                    <span className="rd-stat-num">{monthlyUtilities.length}</span>
                     <span className="rd-stat-lbl">Utilities</span>
                 </div>
                 <div className="rd-stat-sep" />
