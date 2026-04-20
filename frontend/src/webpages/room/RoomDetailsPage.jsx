@@ -273,11 +273,11 @@ const RoomDetailsPage = ({
     const getChoresByDate = () => {
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
-        const oneMonthAhead = new Date(startOfToday);
-        oneMonthAhead.setMonth(startOfToday.getMonth() + 1);
+        const fourWeeksAhead = new Date(startOfToday);
+        fourWeeksAhead.setDate(startOfToday.getDate() + 28);
         const map = {};
         chores
-            .filter(c => { const d = new Date(c.dueAt); return d >= startOfToday && d <= oneMonthAhead; })
+            .filter(c => { const d = new Date(c.dueAt); return d >= startOfToday && d <= fourWeeksAhead; })
             .sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt))
             .forEach(c => {
                 const d = new Date(c.dueAt);
@@ -290,22 +290,20 @@ const RoomDetailsPage = ({
 
     const choresByDate = getChoresByDate();
 
-    const getUtilitiesThisMonth = () => {
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
-        const nextMonth = new Date(startOfMonth);
-        nextMonth.setMonth(startOfMonth.getMonth() + 1);
+    const getUpcomingUtilities = () => {
+        const now = new Date();
+        const fourWeeksAhead = new Date(now);
+        fourWeeksAhead.setDate(now.getDate() + 28);
 
         return userUtilities.filter(u => {
             if (!u.dueAt) return false;
             const d = new Date(u.dueAt);
             if (Number.isNaN(d.getTime())) return false;
-            return d >= startOfMonth && d < nextMonth;
+            return d >= now && d <= fourWeeksAhead;
         });
     };
 
-    const monthlyUtilities = getUtilitiesThisMonth();
+    const monthlyUtilities = getUpcomingUtilities();
 
     const getMemberInitial = (m) => m.name?.charAt(0)?.toUpperCase() || '?';
     const getRoleLabel = (role) => {
@@ -380,7 +378,7 @@ const RoomDetailsPage = ({
                 <div className="rd-stat-sep" />
                 <div className="rd-stat-cell">
                     <span className="rd-stat-num">{Object.keys(choresByDate).length}</span>
-                    <span className="rd-stat-lbl">Due This Month</span>
+                    <span className="rd-stat-lbl">Due Next 4 Weeks</span>
                 </div>
                 <div className="rd-stat-sep" />
                 <div className="rd-stat-cell">
@@ -392,7 +390,7 @@ const RoomDetailsPage = ({
                     <span className="rd-stat-num">
                         ${monthlyUtilities.reduce((s, u) => s + (u.utilityPrice || 0), 0).toFixed(0)}
                     </span>
-                    <span className="rd-stat-lbl">Your Monthly</span>
+                    <span className="rd-stat-lbl">Your Next 4 Weeks</span>
                 </div>
             </div>
 
@@ -433,9 +431,9 @@ const RoomDetailsPage = ({
 
                     {/* Your Utilities */}
                     <section className="rd-card">
-                        <h2 className="rd-card-title">Your Utilities (This Month)</h2>
+                        <h2 className="rd-card-title">Your Utilities (Next 4 Weeks)</h2>
                         {monthlyUtilities.length === 0 ? (
-                            <p className="rd-empty-text">No utilities assigned to you this month.</p>
+                            <p className="rd-empty-text">No utilities assigned to you in the next 4 weeks.</p>
                         ) : (
                             <div className="rd-utility-list">
                                 {monthlyUtilities.map(u => (
@@ -475,7 +473,7 @@ const RoomDetailsPage = ({
                                     <path d="M9 11l3 3L22 4"/>
                                     <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
                                 </svg>
-                                <p>No chores in the next 30 days</p>
+                                <p>No chores in the next 4 weeks</p>
                             </div>
                         ) : (
                             <div className="rd-timeline">

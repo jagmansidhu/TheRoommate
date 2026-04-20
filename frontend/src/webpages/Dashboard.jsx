@@ -57,10 +57,8 @@ const Dashboard = () => {
     });
 
     const now = new Date();
-    const in7Days = new Date(now);
-    in7Days.setDate(now.getDate() + 7);
-    const in30Days = new Date(now);
-    in30Days.setDate(now.getDate() + 30);
+    const in28Days = new Date(now);
+    in28Days.setDate(now.getDate() + 28);
 
     const getFrequencyLabel = (freq) => {
         if (freq === 'WEEKLY') return 'Weekly';
@@ -69,25 +67,12 @@ const Dashboard = () => {
         return freq || '';
     };
 
-    const weeklyBills = userUtilities.filter(u => {
-        const freq = u.choreFrequencyUnitEnum;
-        if (freq !== 'WEEKLY' && freq !== 'BIWEEKLY') return false;
-        if (!u.dueAt) return true;
+    // Show all utilities due within the next 4 weeks, regardless of frequency.
+    const relevantUtilities = userUtilities.filter(u => {
+        if (!u.dueAt) return false;
         const due = new Date(u.dueAt);
-        return due >= now && due <= in7Days;
+        return due >= now && due <= in28Days;
     });
-
-    const monthlyBills = userUtilities.filter(u => {
-        const freq = u.choreFrequencyUnitEnum;
-        if (freq !== 'MONTHLY') return false;
-        if (!u.dueAt) return true;
-        const due = new Date(u.dueAt);
-        return due >= now && due <= in30Days;
-    });
-
-    const miscBills = userUtilities.filter(u => !u.choreFrequencyUnitEnum);
-
-    const relevantUtilities = [...weeklyBills, ...monthlyBills, ...miscBills];
 
     const toggleChoreCompletion = async (chore) => {
         const nextCompleted = !Boolean(chore.isCompleted);
