@@ -1,0 +1,27 @@
+# Dev-only image: runs mvn spring-boot:run with source mounted as a volume.
+# Rebuilds are only needed when pom.xml changes.
+FROM eclipse-temurin:21-jdk-alpine
+WORKDIR /app
+
+# Install bash (needed by mvnw on Alpine)
+RUN apk add --no-cache bash
+
+# Copy Maven wrapper + pom first for dependency layer caching
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw
+
+# Pre-download all dependencies (cached until pom.xml changes)
+RUN ./mvnw dependency:go-offline -B
+
+# Source code is volume-mounted at runtime — not copied here.
+# This means editing .java files on the host triggers DevTools auto-restart
+# inside the container without rebuilding the image.
+
+EXPOSE 8085
+
+# spring-boot:run with DevTools active.
+# -Dspring-boot.run.jvmArguments enables remote restart trigger.
+ENTRYPOINT ["./mvnw", "spring-boot:run", \
+    "-Dspring-boot.run.profiles=dev", \
+    "-Dspring-boot.run.jvmArguments=-Dspring.devtools.restart.enabled=true -Dspring.devtools.restart.pollInterval=2s -Dspring.devtools.restart.quietPeriod=1s"]
