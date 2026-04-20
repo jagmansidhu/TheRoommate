@@ -1,5 +1,5 @@
 import apiClient from '../../apiClient';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
 import { ROLES } from "../../constants/roles";
 import { useUser, useAppData } from '../../App';
@@ -29,10 +29,22 @@ const RoomDetailsPage = ({
     const { user } = useUser();
     const {
         refreshUserChores, refreshUserUtilities, updateUserChore, updateUserUtility,
-        getRoomData, loadRoomData, refreshRoomData, patchRoomData,
+        roomData, loadRoomData, patchRoomData,
     } = useAppData();
-    const cached = getRoomData(room?.id);
-    const [utilities, setUtilities] = useState(() => cached?.utilities || []);
+
+    // Derive chores/utilities/userUtilities directly from the reactive roomData cache.
+    // Whenever patchRoomData or setRoomData runs, roomData changes, this memo updates,
+    // and the component re-renders — no stale local-state bug.
+    const cachedRoom = roomData[room?.id];
+    const chores        = useMemo(() => cachedRoom?.chores        || [], [cachedRoom]);
+    const utilities     = useMemo(() => cachedRoom?.utilities     || [], [cachedRoom]);
+    const userUtilities = useMemo(() => cachedRoom?.userUtilities || [], [cachedRoom]);
+    const memberId      = useMemo(() => {
+        const fromCache = cachedRoom?.memberId;
+        if (fromCache) return fromCache;
+        return room?.members?.find(m => m.userId === user?.email)?.id || null;
+    }, [cachedRoom, room?.members, user?.email]);
+
     const [showRemoveUtilityModal, setShowRemoveUtilityModal] = useState(false);
     const [selectedUtilityId, setSelectedUtilityId] = useState("");
     const [showUtilityModal, setShowUtilityModal] = useState(false);
@@ -47,10 +59,6 @@ const RoomDetailsPage = ({
         choreName: '', frequency: 1, frequencyUnit: 'WEEKLY', deadline: ''
     });
     const [selectedChoreType, setSelectedChoreType] = useState('');
-    const [chores, setChores] = useState(() => cached?.chores || []);
-
-    const [userUtilities, setUserUtilities] = useState(() => cached?.userUtilities || []);
-    const [memberId, setMemberId] = useState(() => cached?.memberId || null);
     const [isCustomChore, setIsCustomChore] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
@@ -58,9 +66,7 @@ const RoomDetailsPage = ({
 
     const addChoreToList = () => {
         if (!choreData.choreName || choreData.frequency < 1 || !isValidDeadline(choreData.deadline)) return;
-
         setPendingChores([...pendingChores, { ...choreData }]);
-
         resetChoreData();
     };
 
@@ -77,23 +83,11 @@ const RoomDetailsPage = ({
         return d > now && d <= oneYearAhead;
     };
 
+    // Load room data into cache on mount (no-op if already cached).
     useEffect(() => {
-        const d = getRoomData(room?.id);
-        if (!d) return;
-        setChores(d.chores || []);
-        setUtilities(d.utilities || []);
-        setUserUtilities(d.userUtilities || []);
-        if (d.memberId) setMemberId(d.memberId);
-    }, [getRoomData, room?.id]);
-
-    useEffect(() => {
-        if (!room?.id || !user?.email) return;
-        const currentMember = room.members?.find(m => m.userId === user.email);
-        const mId = currentMember?.id;
-        if (!mId) return;
-        setMemberId(mId);
-        loadRoomData(room.id, mId);
-    }, [room?.id, room?.members, user?.email, loadRoomData]);
+        if (!room?.id || !memberId) return;
+        loadRoomData(room.id, memberId);
+    }, [room?.id, memberId, loadRoomData]);
 
     const memberRole = room?.members?.find(m => m.userId === user?.email)?.role;
     const isHeadRoommate = memberRole === ROLES.HEAD_ROOMMATE;
@@ -143,18 +137,16 @@ const RoomDetailsPage = ({
                     frequencyUnit: "MONTHLY", startingDate: "", deadline: ""
                 });
                 if (memberId) {
-                    // Fetch fresh data and immediately update local state so the
-                    // UI reflects the new utility without waiting for a remount.
                     const [utilitiesRes, userUtilitiesRes] = await Promise.all([
                         apiClient.get(`/api/utility/${room.id}`),
                         apiClient.get(`/api/utility/${memberId}/room/${room.id}`),
                     ]);
-                    const freshUtilities = utilitiesRes.data || [];
-                    const freshUserUtilities = userUtilitiesRes.data || [];
-                    setUtilities(freshUtilities);
-                    setUserUtilities(freshUserUtilities);
-                    // Keep the room-level cache in sync too
-                    patchRoomData(room.id, { utilities: freshUtilities, userUtilities: freshUserUtilities });
+                    // patchRoomData updates the reactive roomData cache → component
+                    // re-renders automatically via the useMemo derivations above.
+                    patchRoomData(room.id, {
+                        utilities: utilitiesRes.data || [],
+                        userUtilities: userUtilitiesRes.data || [],
+                    });
                     refreshUserUtilities();
                 }
             }
@@ -167,14 +159,12 @@ const RoomDetailsPage = ({
         if (!selectedUtilityId) return;
         try {
             await apiClient.delete(`/api/utility/${selectedUtilityId}`, { withCredentials: true });
-            // Optimistically remove from local state
-            const nextUserUtilities = userUtilities.filter(u => u.id !== selectedUtilityId);
-            const nextUtilities = utilities.filter(u => u.id !== selectedUtilityId);
-            setUserUtilities(nextUserUtilities);
-            setUtilities(nextUtilities);
-            patchRoomData(room.id, { userUtilities: nextUserUtilities, utilities: nextUtilities });
+            // Optimistically remove via cache patch
+            patchRoomData(room.id, {
+                userUtilities: userUtilities.filter(u => u.id !== selectedUtilityId),
+                utilities: utilities.filter(u => u.id !== selectedUtilityId),
+            });
             refreshUserUtilities();
-            if (memberId) refreshRoomData(room.id, memberId);
             setShowRemoveUtilityModal(false);
             setSelectedUtilityId("");
         }
@@ -208,12 +198,10 @@ const RoomDetailsPage = ({
             if (response.status === 200) {
                 setShowChoreModal(false);
                 setPendingChores([]);
-                // Fetch fresh chores and immediately update local state so the
-                // UI reflects the new chores without waiting for a remount.
                 const choresRes = await apiClient.get(`/api/chores/${room.id}`);
-                const freshChores = choresRes.data || [];
-                setChores(freshChores);
-                patchRoomData(room.id, { chores: freshChores });
+                // patchRoomData updates the reactive roomData cache → component
+                // re-renders automatically via the useMemo derivations above.
+                patchRoomData(room.id, { chores: choresRes.data || [] });
                 refreshUserChores();
             }
         } catch (error) {
@@ -226,11 +214,9 @@ const RoomDetailsPage = ({
         try {
             await apiClient.delete(`/api/chores/room/${room.id}/type/${selectedChoreType}`, { withCredentials: true });
             const nextChores = chores.filter(c => c.choreName !== selectedChoreType);
-            setChores(nextChores);
             patchRoomData(room.id, { chores: nextChores });
             setSelectedChoreType('');
             refreshUserChores();
-            if (memberId) refreshRoomData(room.id, memberId);
         }
         catch (err) {
             console.error("Error removing chores:", err);
@@ -241,8 +227,10 @@ const RoomDetailsPage = ({
         if (!user?.email || chore.assignedToMemberName !== user.email) return;
 
         const nextCompleted = !Boolean(chore.isCompleted);
-        
-        setChores(prev => prev.map(item => item.id === chore.id ? { ...item, isCompleted: nextCompleted } : item));
+        // Optimistic update via cache patch
+        patchRoomData(room.id, {
+            chores: chores.map(item => item.id === chore.id ? { ...item, isCompleted: nextCompleted } : item),
+        });
         updateUserChore(chore.id, { isCompleted: nextCompleted });
 
         try {
@@ -251,15 +239,19 @@ const RoomDetailsPage = ({
             );
         } catch (error) {
             console.error('Error updating chore completion:', error);
-            setChores(prev => prev.map(item => item.id === chore.id ? { ...item, isCompleted: !nextCompleted } : item));
+            patchRoomData(room.id, {
+                chores: chores.map(item => item.id === chore.id ? { ...item, isCompleted: !nextCompleted } : item),
+            });
             updateUserChore(chore.id, { isCompleted: !nextCompleted });
         }
     };
 
     const toggleUtilityCompletion = async (utility) => {
         const nextCompleted = !isUtilityCompleted(utility);
-        
-        setUserUtilities(prev => prev.map(item => item.id === utility.id ? { ...item, isCompleted: nextCompleted, completed: nextCompleted } : item));
+        // Optimistic update via cache patch
+        patchRoomData(room.id, {
+            userUtilities: userUtilities.map(item => item.id === utility.id ? { ...item, isCompleted: nextCompleted, completed: nextCompleted } : item),
+        });
         updateUserUtility(utility.id, { isCompleted: nextCompleted });
 
         try {
@@ -268,7 +260,9 @@ const RoomDetailsPage = ({
             );
         } catch (error) {
             console.error('Error updating utility completion:', error);
-            setUserUtilities(prev => prev.map(item => item.id === utility.id ? { ...item, isCompleted: !nextCompleted, completed: !nextCompleted } : item));
+            patchRoomData(room.id, {
+                userUtilities: userUtilities.map(item => item.id === utility.id ? { ...item, isCompleted: !nextCompleted, completed: !nextCompleted } : item),
+            });
             updateUserUtility(utility.id, { isCompleted: !nextCompleted });
         }
     };

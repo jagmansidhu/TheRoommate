@@ -394,7 +394,7 @@ const AppDataProvider = ({children}) => {
             refreshUserUtilities: fetchUserUtilities, appendUserUtility, removeUserUtility, updateUserUtility,
             events, eventsLoading, loadEvents, refreshEvents, appendEvent, removeEvent,
             // per-room cache
-            getRoomData, setRoomData, patchRoomData, invalidateRoomData,
+            roomData, getRoomData, setRoomData, patchRoomData, invalidateRoomData,
             loadRoomData, refreshRoomData,
         }}>
             {children}
