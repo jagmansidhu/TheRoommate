@@ -1,0 +1,260 @@
+name: Database Migration Safety
+
+on:
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - "**/migrations/**"
+      - "**/flyway/**"
+      - "**/liquibase/**"
+      - "**/*.sql"
+      - "**/application*.yml"
+      - "**/application*.properties"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  migration-safety-check:
+    name: Database Migration Safety Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for dangerous SQL operations
+        run: |
+          echo "🔍 Scanning SQL files for dangerous operations..."
+
+          SQL_FILES=$(find . -type f -name "*.sql" ! -path "*/node_modules/*" ! -path "*/.git/*")
+
+          VIOLATIONS_FOUND=0
+
+          DANGEROUS_OPERATIONS=(
+            "DROP TABLE"
+            "DROP DATABASE"
+            "DROP SCHEMA"
+            "TRUNCATE TABLE"
+            "DELETE FROM.*WHERE.*1.*=.*1"
+            "ALTER TABLE.*DROP COLUMN"
+            "DROP INDEX"
+          )
+
+          for sql_file in $SQL_FILES; do
+            echo "Checking: $sql_file"
+
+            for operation in "${DANGEROUS_OPERATIONS[@]}"; do
+              if grep -iE "$operation" "$sql_file" > /dev/null; then
+                echo "⚠️  DANGER: Found '$operation' in $sql_file"
+
+                # Check if it's in a test/dev context
+                if [[ "$sql_file" == *"test"* ]] || [[ "$sql_file" == *"dev"* ]] || [[ "$sql_file" == *"sample"* ]]; then
+                  echo "   ℹ️  Found in test/dev file - OK"
+                else
+                  echo "   ❌ VIOLATION: Dangerous operation in production migration!"
+                  VIOLATIONS_FOUND=1
+                fi
+              fi
+            done
+          done
+
+          if [ $VIOLATIONS_FOUND -eq 1 ]; then
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "⛔ DANGEROUS DATABASE OPERATIONS DETECTED"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "❌ The following operations are NOT allowed in migrations:"
+            echo "   - DROP TABLE"
+            echo "   - DROP DATABASE"
+            echo "   - TRUNCATE TABLE"
+            echo "   - DELETE without specific WHERE clause"
+            echo "   - DROP COLUMN (unless explicitly reviewed)"
+            echo ""
+            echo "✅ Safe alternatives:"
+            echo "   - Instead of DROP COLUMN: Add a new column, migrate data, mark old as deprecated"
+            echo "   - Instead of TRUNCATE: Use DELETE with explicit WHERE clauses"
+            echo "   - Instead of DROP TABLE: Rename to _deprecated first, drop after verification"
+            echo ""
+            echo "⚠️  If this operation is intentional and reviewed:"
+            echo "   1. Add a comment explaining why it's safe"
+            echo "   2. Add '-- REVIEWED: [ticket-number]' in the SQL file"
+            echo "   3. Get approval from database admin"
+            echo ""
+            exit 1
+          fi
+
+          echo "✅ No dangerous operations found"
+
+      - name: Check for missing WHERE clauses in UPDATE/DELETE
+        run: |
+          echo "🔍 Checking for UPDATE/DELETE without WHERE..."
+
+          SQL_FILES=$(find . -type f -name "*.sql" ! -path "*/node_modules/*" ! -path "*/.git/*")
+
+          WARNINGS_FOUND=0
+
+          for sql_file in $SQL_FILES; do
+            # Check for UPDATE without WHERE
+            if grep -iE "^[[:space:]]*UPDATE.*SET" "$sql_file" | grep -viE "WHERE" > /dev/null; then
+              echo "⚠️  WARNING: UPDATE without WHERE in $sql_file"
+              grep -in "UPDATE.*SET" "$sql_file" | grep -v "WHERE" || true
+              WARNINGS_FOUND=1
+            fi
+
+            # Check for DELETE without WHERE
+            if grep -iE "^[[:space:]]*DELETE FROM" "$sql_file" | grep -viE "WHERE" > /dev/null; then
+              echo "⚠️  WARNING: DELETE without WHERE in $sql_file"
+              grep -in "DELETE FROM" "$sql_file" | grep -v "WHERE" || true
+              WARNINGS_FOUND=1
+            fi
+          done
+
+          if [ $WARNINGS_FOUND -eq 1 ]; then
+            echo ""
+            echo "⚠️  Found UPDATE/DELETE statements without WHERE clauses!"
+            echo "This could affect all rows in the table."
+            echo "Add explicit WHERE clauses or add comment '-- INTENTIONAL: affects all rows'"
+          else
+            echo "✅ All UPDATE/DELETE statements have WHERE clauses"
+          fi
+
+      - name: Check for schema-breaking changes
+        run: |
+          echo "🔍 Checking for schema-breaking changes..."
+
+          # Get changed SQL files
+          CHANGED_SQL=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep "\.sql$" || true)
+
+          if [ -z "$CHANGED_SQL" ]; then
+            echo "ℹ️  No SQL files changed"
+            exit 0
+          fi
+
+          BREAKING_CHANGES=0
+
+          for file in $CHANGED_SQL; do
+            if [ -f "$file" ]; then
+              echo "Checking: $file"
+
+              # Check for NOT NULL additions to existing columns
+              if git diff origin/${{ github.base_ref }}...HEAD -- "$file" | grep -E "^\+.*ALTER.*ADD.*NOT NULL" > /dev/null; then
+                echo "⚠️  WARNING: Adding NOT NULL constraint in $file"
+                echo "   Ensure existing rows have values or provide DEFAULT"
+                BREAKING_CHANGES=1
+              fi
+
+              # Check for column renames
+              if git diff origin/${{ github.base_ref }}...HEAD -- "$file" | grep -E "^\+.*ALTER.*RENAME COLUMN" > /dev/null; then
+                echo "⚠️  WARNING: Renaming column in $file"
+                echo "   This may break existing application code!"
+                BREAKING_CHANGES=1
+              fi
+
+              # Check for type changes
+              if git diff origin/${{ github.base_ref }}...HEAD -- "$file" | grep -E "^\+.*ALTER.*TYPE" > /dev/null; then
+                echo "⚠️  WARNING: Changing column type in $file"
+                echo "   Ensure data is compatible with new type!"
+                BREAKING_CHANGES=1
+              fi
+            fi
+          done
+
+          if [ $BREAKING_CHANGES -eq 1 ]; then
+            echo ""
+            echo "⚠️  Potentially breaking schema changes detected!"
+            echo "Review carefully and ensure:"
+            echo "  1. Backwards compatibility is maintained"
+            echo "  2. Application code is updated accordingly"
+            echo "  3. Rollback plan is in place"
+          fi
+
+      - name: Verify ddl-auto configuration
+        run: |
+          echo "🔍 Verifying JPA ddl-auto configuration..."
+
+          # Check application.yml files
+          APP_CONFIGS=$(find . -name "application*.yml" -o -name "application*.properties" \
+            ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/target/*")
+
+          for config in $APP_CONFIGS; do
+            echo "Checking: $config"
+
+            # Skip if it's a test config
+            if [[ "$config" == *"test"* ]]; then
+              echo "  ℹ️  Test configuration - skipping"
+              continue
+            fi
+
+            # Check for dangerous ddl-auto values in non-test configs
+            if grep -iE "ddl-auto:?.*(create-drop|drop|create)" "$config" > /dev/null; then
+              if [[ "$config" == *"prod"* ]]; then
+                echo "  ❌ VIOLATION: Dangerous ddl-auto in production config!"
+                grep -i "ddl-auto" "$config"
+                exit 1
+              else
+                echo "  ⚠️  WARNING: ddl-auto allows schema changes in $config"
+                grep -i "ddl-auto" "$config" || true
+              fi
+            fi
+          done
+
+          echo "✅ ddl-auto configuration check complete"
+
+      - name: Generate migration checklist
+        if: always()
+        run: |
+          echo "📋 Database Migration Checklist" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Before merging this PR, ensure:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Migration has been tested on a copy of production data" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Rollback script exists and has been tested" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Application code is compatible with both old and new schema (for zero-downtime)" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Database backup is scheduled before deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Migration has been reviewed by a DBA or senior engineer" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Performance impact has been considered (indexes, table size)" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] No data loss will occur" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+  test-migrations:
+    name: Test Migrations with H2
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Run tests with schema validation
+        run: |
+          echo "🔍 Running tests with ddl-auto=validate..."
+
+          # Override ddl-auto to validate
+          mvn test \
+            -Dspring.jpa.hibernate.ddl-auto=validate \
+            -Dspring.profiles.active=test
+
+      - name: Check for schema validation errors
+        run: |
+          if [ $? -ne 0 ]; then
+            echo "❌ Schema validation failed!"
+            echo "Entity definitions don't match database schema."
+            exit 1
+          fi
+
+          echo "✅ Schema validation passed"
