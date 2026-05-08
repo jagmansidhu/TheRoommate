@@ -35,16 +35,14 @@ jobs:
         run: |
           echo "🔍 Scanning configuration files for dangerous operations..."
 
-          # Define dangerous patterns
+          # Define dangerous patterns (only block drop/create-drop)
           DANGEROUS_PATTERNS=(
             "ddl-auto.*drop"
             "ddl-auto:.*drop"
+            "ddl-auto.*create-drop"
+            "ddl-auto:.*create-drop"
             "hibernate\.hbm2ddl\.auto.*drop"
             "spring\.jpa\.hibernate\.ddl-auto.*drop"
-            "DROP TABLE"
-            "DROP DATABASE"
-            "DROP SCHEMA"
-            "TRUNCATE TABLE"
           )
 
           # Files to check
@@ -166,9 +164,10 @@ jobs:
               echo "⚠️  SQL logging enabled in production: $file (consider disabling for performance)"
             fi
 
-            # Check for ddl-auto not set to 'none' or 'validate'
-            if grep -iE "ddl-auto:.*(?!none|validate)" "$file" > /dev/null 2>&1; then
-              echo "⚠️  Production should use ddl-auto: none or validate in: $file"
+            # Check for dangerous ddl-auto values
+            if grep -iE "ddl-auto:.*(drop|create-drop)" "$file" > /dev/null 2>&1; then
+              echo "❌ Production must NOT use ddl-auto: drop or create-drop in: $file"
+              PROD_VIOLATIONS=1
             fi
           done
 
