@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.CacheControl;
+
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -37,7 +38,7 @@ public class UtilityControler {
 
     @GetMapping("/{memberId}/room/{roomId}")
     public ResponseEntity<List<UtilityDto>> getUtilitiesByRoomabdMemberId(@PathVariable UUID roomId,
-            @PathVariable UUID memberId) {
+                                                                          @PathVariable UUID memberId) {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS).cachePrivate())
                 .body(utilityService.getUtilitiesByRoomandMemberId(roomId, memberId));
@@ -74,7 +75,7 @@ public class UtilityControler {
 
     @PatchMapping("/{utilityId}/completion")
     public ResponseEntity<UtilityDto> updateCompletion(@PathVariable UUID utilityId,
-            @RequestBody CompletionUpdateDto request) {
+                                                       @RequestBody CompletionUpdateDto request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
             return ResponseEntity.ok(utilityService.updateCompletion(utilityId, email, request.isCompleted()));

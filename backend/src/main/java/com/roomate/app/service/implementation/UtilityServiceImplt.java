@@ -14,6 +14,8 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -33,6 +35,7 @@ public class UtilityServiceImplt implements UtilityService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"roomUtilities", "userUtilities"}, allEntries = true)
     public List<UtilityEntity> createUtility(UtilityCreateDto dto) {
         RoomEntity room = roomRepository.findById(dto.getRoomId())
                 .orElseThrow(() -> new EntityNotFoundException("Room not found"));
@@ -141,6 +144,7 @@ public class UtilityServiceImplt implements UtilityService {
 
     @Override
     @Transactional
+    @Cacheable(value = "roomUtilities", key = "#roomId")
     public List<UtilityDto> getUtilitiesByRoom(UUID roomId) {
         return utilityRepository
                 .findByRoomId(roomId).stream().map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(),
@@ -153,6 +157,7 @@ public class UtilityServiceImplt implements UtilityService {
     }
 
     @Override
+    @Cacheable(value = "roomUtilities", key = "#roomId + '-' + #memberId")
     public List<UtilityDto> getUtilitiesByRoomandMemberId(UUID roomId, UUID memberId) {
         return utilityRepository.findByRoomIdAndMemberId(roomId, memberId).stream()
                 .map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(), utility.getUtilityPrice(),
@@ -165,6 +170,7 @@ public class UtilityServiceImplt implements UtilityService {
 
     @Override
     @Transactional
+    @Cacheable(value = "userUtilities", key = "#id")
     public List<UtilityDto> getUpcomingUtilities(String id) {
         return utilityRepository.findAllByUserEmail(id)
                 .stream()
@@ -179,6 +185,7 @@ public class UtilityServiceImplt implements UtilityService {
     }
 
     @Override
+    @CacheEvict(value = {"roomUtilities", "userUtilities"}, allEntries = true)
     public void deleteUtility(UUID utilityId) {
         if (!utilityRepository.existsById(utilityId)) {
             throw new EntityNotFoundException("Utility with id " + utilityId + " not found");
@@ -188,6 +195,7 @@ public class UtilityServiceImplt implements UtilityService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"roomUtilities", "userUtilities"}, allEntries = true)
     public UtilityDto updateCompletion(UUID utilityId, String userEmail, boolean completed) {
         UtilityEntity utility = utilityRepository.findByUtilityId(utilityId)
                 .orElseThrow(() -> new EntityNotFoundException("Utility not found"));
