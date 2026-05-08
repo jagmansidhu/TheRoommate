@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea
+.vscode
+*.iml
+*.swp
+*.swo
+
+# Build artifacts
+target/
+*.jar
+*.war
+*.ear
+
+# Environment files (contains secrets!)
+.env
+.env.*
+*.env
+application-local.yml
+application-local.properties
+
+# Secrets and credentials
+**/secrets/
+**/*secret*
+**/*password*
+**/*credentials*
+
+# Logs
+*.log
+logs/
+
+# Testing
+.mvn/
+mvnw
+mvnw.cmd
+
+# Documentation
+README.md
+SECURITY.md
+docs/
+
+# CI/CD
+.github/
+Jenkinsfile
+.gitlab-ci.yml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db

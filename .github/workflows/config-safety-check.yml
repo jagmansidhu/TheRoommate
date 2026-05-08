@@ -1,0 +1,180 @@
+name: Configuration Safety Check
+
+on:
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - "**/*.yml"
+      - "**/*.yaml"
+      - "**/*.properties"
+      - "**/*.xml"
+  push:
+    branches: ["main", "develop"]
+    paths:
+      - "**/*.yml"
+      - "**/*.yaml"
+      - "**/*.properties"
+      - "**/*.xml"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check-dangerous-config:
+    runs-on: ubuntu-latest
+    name: Scan for dangerous configuration changes
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for DROP statements in config files
+        run: |
+          echo "🔍 Scanning configuration files for dangerous operations..."
+
+          # Define dangerous patterns
+          DANGEROUS_PATTERNS=(
+            "ddl-auto.*drop"
+            "ddl-auto:.*drop"
+            "hibernate\.hbm2ddl\.auto.*drop"
+            "spring\.jpa\.hibernate\.ddl-auto.*drop"
+            "DROP TABLE"
+            "DROP DATABASE"
+            "DROP SCHEMA"
+            "TRUNCATE TABLE"
+          )
+
+          # Files to check
+          CONFIG_FILES=$(find . -type f \( -name "*.yml" -o -name "*.yaml" -o -name "*.properties" -o -name "*.xml" \) \
+            ! -path "*/node_modules/*" \
+            ! -path "*/.git/*" \
+            ! -path "*/target/*" \
+            ! -path "*/build/*")
+
+          VIOLATIONS_FOUND=0
+
+          for file in $CONFIG_FILES; do
+            for pattern in "${DANGEROUS_PATTERNS[@]}"; do
+              if grep -iE "$pattern" "$file" > /dev/null 2>&1; then
+                echo "❌ VIOLATION: Found dangerous pattern '$pattern' in $file"
+                grep -niE "$pattern" "$file" | head -5
+                VIOLATIONS_FOUND=1
+              fi
+            done
+          done
+
+          if [ $VIOLATIONS_FOUND -eq 1 ]; then
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "⛔ SECURITY VIOLATION DETECTED"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "Dangerous database operations found in configuration files!"
+            echo ""
+            echo "❌ DROP or TRUNCATE operations are NOT allowed in:"
+            echo "   - application.yml"
+            echo "   - application.properties"
+            echo "   - application-prod.yml"
+            echo "   - application-dev.yml"
+            echo "   - Any other configuration files"
+            echo ""
+            echo "⚠️  Allowed values for ddl-auto:"
+            echo "   ✅ none          - No schema management (recommended for production)"
+            echo "   ✅ validate      - Validate schema, no changes"
+            echo "   ✅ update        - Update schema (use with caution)"
+            echo "   ❌ create-drop   - NOT ALLOWED (drops on shutdown)"
+            echo "   ❌ drop          - NOT ALLOWED (drops schema)"
+            echo ""
+            echo "📖 For production, use:"
+            echo "   spring.jpa.hibernate.ddl-auto: none"
+            echo "   spring.jpa.hibernate.ddl-auto: validate"
+            echo ""
+            echo "Use database migrations (Flyway/Liquibase) for schema changes."
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            exit 1
+          fi
+
+          echo "✅ No dangerous configuration patterns found"
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "🔍 Scanning for hardcoded secrets..."
+
+          SECRET_PATTERNS=(
+            "password.*=.*[^{]"
+            "api[-_]?key.*=.*[^{]"
+            "secret.*=.*[^{]"
+            "token.*=.*[^{]"
+            "jdbc:.*//.*:[^$].*@"
+          )
+
+          CONFIG_FILES=$(find . -type f \( -name "*.yml" -o -name "*.yaml" -o -name "*.properties" \) \
+            ! -path "*/node_modules/*" \
+            ! -path "*/.git/*" \
+            ! -path "*/target/*")
+
+          SECRETS_FOUND=0
+
+          for file in $CONFIG_FILES; do
+            # Skip example/template files
+            if [[ "$file" == *"example"* ]] || [[ "$file" == *"template"* ]] || [[ "$file" == *"test"* ]]; then
+              continue
+            fi
+
+            for pattern in "${SECRET_PATTERNS[@]}"; do
+              if grep -iE "$pattern" "$file" | grep -v "ENC(" | grep -v "\${" > /dev/null 2>&1; then
+                echo "⚠️  Potential hardcoded secret in $file"
+                SECRETS_FOUND=1
+              fi
+            done
+          done
+
+          if [ $SECRETS_FOUND -eq 1 ]; then
+            echo ""
+            echo "⚠️  WARNING: Potential hardcoded secrets detected!"
+            echo "Use environment variables: \${ENV_VAR_NAME}"
+            echo "Or encrypted values: ENC(encrypted_value)"
+          fi
+
+          echo "✅ Secret scan complete"
+
+      - name: Validate production configuration
+        run: |
+          echo "🔍 Validating production configuration safety..."
+
+          PROD_FILES=$(find . -type f \( -name "*prod*.yml" -o -name "*prod*.yaml" -o -name "*prod*.properties" \) \
+            ! -path "*/node_modules/*" \
+            ! -path "*/.git/*" \
+            ! -path "*/target/*")
+
+          PROD_VIOLATIONS=0
+
+          for file in $PROD_FILES; do
+            echo "Checking production file: $file"
+
+            # Check for debug mode enabled
+            if grep -iE "debug.*true|logging\.level.*debug" "$file" > /dev/null 2>&1; then
+              echo "❌ Debug mode should not be enabled in production: $file"
+              PROD_VIOLATIONS=1
+            fi
+
+            # Check for show-sql enabled
+            if grep -iE "show-sql:.*true|show_sql.*true" "$file" > /dev/null 2>&1; then
+              echo "⚠️  SQL logging enabled in production: $file (consider disabling for performance)"
+            fi
+
+            # Check for ddl-auto not set to 'none' or 'validate'
+            if grep -iE "ddl-auto:.*(?!none|validate)" "$file" > /dev/null 2>&1; then
+              echo "⚠️  Production should use ddl-auto: none or validate in: $file"
+            fi
+          done
+
+          if [ $PROD_VIOLATIONS -eq 1 ]; then
+            echo "❌ Production configuration violations found!"
+            exit 1
+          fi
+
+          echo "✅ Production configuration validated"

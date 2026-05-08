@@ -1,0 +1,207 @@
+name: PR Security Checklist
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: ["main", "develop"]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-checklist:
+    name: Generate Security Review Checklist
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analyze changes
+        id: analyze
+        run: |
+          echo "📊 Analyzing PR changes..."
+
+          # Get list of changed files
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+
+          # Check for various file types
+          HAS_JAVA=$(echo "$CHANGED_FILES" | grep "\.java$" || true)
+          HAS_JS=$(echo "$CHANGED_FILES" | grep "\.jsx\?$\|\.tsx\?$" || true)
+          HAS_SQL=$(echo "$CHANGED_FILES" | grep "\.sql$" || true)
+          HAS_CONFIG=$(echo "$CHANGED_FILES" | grep "\.yml$\|\.yaml$\|\.properties$" || true)
+          HAS_DOCKER=$(echo "$CHANGED_FILES" | grep "Dockerfile\|docker-compose" || true)
+          HAS_DEPS=$(echo "$CHANGED_FILES" | grep "pom\.xml\|package\.json\|package-lock\.json" || true)
+
+          # Set outputs
+          echo "has_java=$( [ -n \"$HAS_JAVA\" ] && echo 'true' || echo 'false' )" >> $GITHUB_OUTPUT
+          echo "has_js=$( [ -n \"$HAS_JS\" ] && echo 'true' || echo 'false' )" >> $GITHUB_OUTPUT
+          echo "has_sql=$( [ -n \"$HAS_SQL\" ] && echo 'true' || echo 'false' )" >> $GITHUB_OUTPUT
+          echo "has_config=$( [ -n \"$HAS_CONFIG\" ] && echo 'true' || echo 'false' )" >> $GITHUB_OUTPUT
+          echo "has_docker=$( [ -n \"$HAS_DOCKER\" ] && echo 'true' || echo 'false' )" >> $GITHUB_OUTPUT
+          echo "has_deps=$( [ -n \"$HAS_DEPS\" ] && echo 'true' || echo 'false' )" >> $GITHUB_OUTPUT
+
+      - name: Generate security checklist comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const hasJava = '${{ steps.analyze.outputs.has_java }}' === 'true';
+            const hasJs = '${{ steps.analyze.outputs.has_js }}' === 'true';
+            const hasSql = '${{ steps.analyze.outputs.has_sql }}' === 'true';
+            const hasConfig = '${{ steps.analyze.outputs.has_config }}' === 'true';
+            const hasDocker = '${{ steps.analyze.outputs.has_docker }}' === 'true';
+            const hasDeps = '${{ steps.analyze.outputs.has_deps }}' === 'true';
+
+            let checklist = `## 🔒 Security Review Checklist\n\n`;
+            checklist += `Please review the following security considerations for this PR:\n\n`;
+
+            checklist += `### General Security\n`;
+            checklist += `- [ ] No hardcoded secrets (API keys, passwords, tokens)\n`;
+            checklist += `- [ ] No sensitive data in logs\n`;
+            checklist += `- [ ] Input validation for user-provided data\n`;
+            checklist += `- [ ] Error messages don't leak sensitive information\n`;
+            checklist += `- [ ] Authentication/authorization checks are in place\n\n`;
+
+            if (hasJava) {
+              checklist += `### Backend (Java) Security\n`;
+              checklist += `- [ ] No SQL injection vulnerabilities (use @Param, PreparedStatement)\n`;
+              checklist += `- [ ] No command injection (avoid Runtime.exec with user input)\n`;
+              checklist += `- [ ] Input validation with @Valid or manual checks\n`;
+              checklist += `- [ ] Proper exception handling (no stack traces to users)\n`;
+              checklist += `- [ ] Access control checks (@PreAuthorize, manual)\n`;
+              checklist += `- [ ] No deserialization of untrusted data\n\n`;
+            }
+
+            if (hasJs) {
+              checklist += `### Frontend (React) Security\n`;
+              checklist += `- [ ] No XSS vulnerabilities (avoid dangerouslySetInnerHTML, innerHTML)\n`;
+              checklist += `- [ ] User input is sanitized before display\n`;
+              checklist += `- [ ] No eval() or Function() with user input\n`;
+              checklist += `- [ ] CSRF tokens for state-changing operations\n`;
+              checklist += `- [ ] Sensitive data not exposed in client-side code\n`;
+              checklist += `- [ ] API calls use proper authentication headers\n\n`;
+            }
+
+            if (hasSql) {
+              checklist += `### Database Security\n`;
+              checklist += `- [ ] No DROP, TRUNCATE, or mass DELETE operations\n`;
+              checklist += `- [ ] All UPDATE/DELETE have specific WHERE clauses\n`;
+              checklist += `- [ ] Migration is reversible (rollback script exists)\n`;
+              checklist += `- [ ] Migration tested on production-like data\n`;
+              checklist += `- [ ] No direct data access from application bypassing ORM\n`;
+              checklist += `- [ ] Indexes created for performance-critical queries\n\n`;
+            }
+
+            if (hasConfig) {
+              checklist += `### Configuration Security\n`;
+              checklist += `- [ ] ddl-auto is NOT 'drop' or 'create-drop' in production\n`;
+              checklist += `- [ ] Secrets use environment variables (\${VAR})\n`;
+              checklist += `- [ ] Debug mode disabled in production configs\n`;
+              checklist += `- [ ] CORS settings are not overly permissive\n`;
+              checklist += `- [ ] Database credentials not in version control\n\n`;
+            }
+
+            if (hasDocker) {
+              checklist += `### Docker Security\n`;
+              checklist += `- [ ] Containers run as non-root user (USER directive)\n`;
+              checklist += `- [ ] Base images use specific versions (not :latest)\n`;
+              checklist += `- [ ] No hardcoded secrets in Dockerfile\n`;
+              checklist += `- [ ] .dockerignore includes sensitive files\n`;
+              checklist += `- [ ] Multi-stage builds used to minimize image size\n`;
+              checklist += `- [ ] Privileged mode not used without justification\n\n`;
+            }
+
+            if (hasDeps) {
+              checklist += `### Dependency Security\n`;
+              checklist += `- [ ] New dependencies are from trusted sources\n`;
+              checklist += `- [ ] Dependencies don't have known high/critical CVEs\n`;
+              checklist += `- [ ] Licenses are compatible with project license\n`;
+              checklist += `- [ ] Dependency versions are pinned (not using ranges)\n`;
+              checklist += `- [ ] npm audit / OWASP check passed\n\n`;
+            }
+
+            checklist += `### Deployment Safety\n`;
+            checklist += `- [ ] Changes are backwards compatible (zero-downtime)\n`;
+            checklist += `- [ ] Rollback plan documented\n`;
+            checklist += `- [ ] Feature flags used for risky changes\n`;
+            checklist += `- [ ] Monitoring/alerts in place for new functionality\n\n`;
+
+            checklist += `---\n`;
+            checklist += `*This checklist is generated automatically based on file changes. Not all items may apply.*\n`;
+            checklist += `*Security scans are running in parallel - check the Actions tab for results.*`;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Security Review Checklist')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: checklist
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: checklist
+              });
+            }
+
+  check-pr-title:
+    name: Check PR Title and Description
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check PR title format
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prTitle = context.payload.pull_request.title;
+            const prBody = context.payload.pull_request.body || '';
+
+            const issues = [];
+
+            // Check for security-related keywords
+            const securityKeywords = ['security', 'vuln', 'cve', 'fix', 'patch', 'hotfix'];
+            const hasSecurityKeyword = securityKeywords.some(keyword =>
+              prTitle.toLowerCase().includes(keyword)
+            );
+
+            if (hasSecurityKeyword && !prBody.includes('Security Impact')) {
+              issues.push('⚠️  Security-related PR should include "Security Impact" section in description');
+            }
+
+            // Check for database-related keywords
+            const dbKeywords = ['migration', 'schema', 'database', 'sql', 'drop', 'alter'];
+            const hasDbKeyword = dbKeywords.some(keyword =>
+              prTitle.toLowerCase().includes(keyword)
+            );
+
+            if (hasDbKeyword && !prBody.includes('Rollback')) {
+              issues.push('⚠️  Database-related PR should include rollback instructions');
+            }
+
+            if (issues.length > 0) {
+              const comment = `## PR Description Recommendations\n\n${issues.join('\n')}`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }

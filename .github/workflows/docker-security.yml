@@ -1,0 +1,217 @@
+name: Docker Security Scan
+
+on:
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - "**/Dockerfile"
+      - "**/docker-compose*.yml"
+  push:
+    branches: ["main", "develop"]
+    paths:
+      - "**/Dockerfile"
+      - "**/docker-compose*.yml"
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+jobs:
+  dockerfile-lint:
+    name: Dockerfile Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Hadolint (Dockerfile linter)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: backend/Dockerfile
+          failure-threshold: warning
+
+      - name: Run Hadolint on frontend
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: frontend/Dockerfile
+          failure-threshold: warning
+
+  docker-security-check:
+    name: Docker Configuration Security
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for security issues in Dockerfiles
+        run: |
+          echo "🔍 Checking Dockerfile security best practices..."
+
+          VIOLATIONS_FOUND=0
+
+          # Check all Dockerfiles
+          DOCKERFILES=$(find . -name "Dockerfile" ! -path "*/node_modules/*" ! -path "*/.git/*")
+
+          for dockerfile in $DOCKERFILES; do
+            echo "Checking: $dockerfile"
+
+            # Check for running as root
+            if ! grep -q "USER" "$dockerfile"; then
+              echo "⚠️  WARNING: $dockerfile does not specify a USER (runs as root)"
+              VIOLATIONS_FOUND=1
+            fi
+
+            # Check for latest tag
+            if grep -E "FROM.*:latest" "$dockerfile" > /dev/null; then
+              echo "⚠️  WARNING: $dockerfile uses :latest tag (not reproducible)"
+            fi
+
+            # Check for apt-get without --no-install-recommends
+            if grep "apt-get install" "$dockerfile" | grep -v "\--no-install-recommends" > /dev/null; then
+              echo "⚠️  INFO: Consider using --no-install-recommends to reduce image size"
+            fi
+
+            # Check for COPY . . (copies everything including secrets)
+            if grep -E "COPY \. \." "$dockerfile" > /dev/null; then
+              echo "⚠️  WARNING: $dockerfile uses 'COPY . .' - ensure .dockerignore is comprehensive"
+            fi
+
+            # Check for hardcoded secrets
+            if grep -iE "PASSWORD|SECRET|KEY|TOKEN" "$dockerfile" | grep -v "ARG\|ENV" > /dev/null; then
+              echo "❌ VIOLATION: Potential hardcoded secret in $dockerfile"
+              VIOLATIONS_FOUND=1
+            fi
+          done
+
+          if [ $VIOLATIONS_FOUND -eq 1 ]; then
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "⛔ DOCKERFILE SECURITY VIOLATIONS DETECTED"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "Security best practices:"
+            echo "  ✅ Always specify USER (don't run as root)"
+            echo "  ✅ Use specific version tags, not :latest"
+            echo "  ✅ Never hardcode secrets"
+            echo "  ✅ Use multi-stage builds to reduce image size"
+            echo "  ✅ Use .dockerignore to exclude sensitive files"
+            echo ""
+            exit 1
+          fi
+
+          echo "✅ Dockerfile security check passed"
+
+      - name: Check docker-compose.yml security
+        run: |
+          echo "🔍 Checking docker-compose security..."
+
+          COMPOSE_FILES=$(find . -name "docker-compose*.yml" ! -path "*/.git/*")
+
+          VIOLATIONS_FOUND=0
+
+          for compose in $COMPOSE_FILES; do
+            echo "Checking: $compose"
+
+            # Check for privileged mode
+            if grep "privileged.*true" "$compose" > /dev/null; then
+              echo "❌ VIOLATION: Privileged mode enabled in $compose"
+              VIOLATIONS_FOUND=1
+            fi
+
+            # Check for host network mode
+            if grep "network_mode.*host" "$compose" > /dev/null; then
+              echo "⚠️  WARNING: Host network mode in $compose (bypasses network isolation)"
+            fi
+
+            # Check for volume mounts to sensitive directories
+            if grep -E "volumes:.*/(etc|root|home)" "$compose" > /dev/null; then
+              echo "⚠️  WARNING: Mounting sensitive host directories in $compose"
+            fi
+
+            # Check for environment variables with secrets in plain text
+            if grep -iE "PASSWORD.*:|API_KEY.*:|SECRET.*:" "$compose" | grep -v "\${" > /dev/null; then
+              echo "⚠️  WARNING: Potential hardcoded secrets in $compose"
+              echo "Use environment variable substitution: \${ENV_VAR}"
+            fi
+          done
+
+          if [ $VIOLATIONS_FOUND -eq 1 ]; then
+            echo ""
+            echo "❌ Docker Compose security violations found!"
+            exit 1
+          fi
+
+          echo "✅ Docker Compose security check passed"
+
+  trivy-scan:
+    name: Trivy Container Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build backend Docker image
+        run: |
+          cd backend
+          docker build -t daroomate-backend:test .
+
+      - name: Run Trivy vulnerability scanner on backend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "daroomate-backend:test"
+          format: "sarif"
+          output: "trivy-backend-results.sarif"
+          severity: "HIGH,CRITICAL"
+
+      - name: Build frontend Docker image
+        run: |
+          cd frontend
+          docker build -t daroomate-frontend:test \
+            --build-arg REACT_APP_BASE_API_URL=http://test .
+
+      - name: Run Trivy vulnerability scanner on frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "daroomate-frontend:test"
+          format: "sarif"
+          output: "trivy-frontend-results.sarif"
+          severity: "HIGH,CRITICAL"
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "."
+
+      - name: Check for critical vulnerabilities
+        run: |
+          echo "🔍 Checking for critical vulnerabilities..."
+
+          # Check backend results
+          if [ -f trivy-backend-results.sarif ]; then
+            CRITICAL_COUNT=$(jq '[.runs[].results[] | select(.level == "error")] | length' trivy-backend-results.sarif)
+            echo "Backend - Critical vulnerabilities: $CRITICAL_COUNT"
+
+            if [ "$CRITICAL_COUNT" -gt 0 ]; then
+              echo "❌ Found $CRITICAL_COUNT critical vulnerabilities in backend image!"
+              exit 1
+            fi
+          fi
+
+          # Check frontend results
+          if [ -f trivy-frontend-results.sarif ]; then
+            CRITICAL_COUNT=$(jq '[.runs[].results[] | select(.level == "error")] | length' trivy-frontend-results.sarif)
+            echo "Frontend - Critical vulnerabilities: $CRITICAL_COUNT"
+
+            if [ "$CRITICAL_COUNT" -gt 0 ]; then
+              echo "❌ Found $CRITICAL_COUNT critical vulnerabilities in frontend image!"
+              exit 1
+            fi
+          fi
+
+          echo "✅ No critical vulnerabilities found in Docker images"

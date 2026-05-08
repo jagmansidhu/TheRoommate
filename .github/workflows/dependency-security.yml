@@ -1,0 +1,163 @@
+name: Dependency Security Scan
+
+on:
+  pull_request:
+    branches: ["main", "develop"]
+  push:
+    branches: ["main", "develop"]
+  schedule:
+    # Run weekly on Monday at 9 AM UTC
+    - cron: "0 9 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+jobs:
+  backend-security:
+    name: Backend Dependency Scan (Maven)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Run OWASP Dependency Check
+        run: |
+          mvn org.owasp:dependency-check-maven:check \
+            -DfailBuildOnCVSS=7 \
+            -DsuppressionFiles=dependency-check-suppressions.xml \
+            -Dformats=HTML,JSON || true
+
+      - name: Upload dependency check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: backend/target/dependency-check-report.html
+          retention-days: 30
+
+      - name: Check for high severity vulnerabilities
+        run: |
+          if [ -f target/dependency-check-report.json ]; then
+            HIGH_VULNS=$(jq '[.dependencies[].vulnerabilities[] | select(.severity == "HIGH" or .severity == "CRITICAL")] | length' target/dependency-check-report.json)
+
+            if [ "$HIGH_VULNS" -gt 0 ]; then
+              echo "❌ Found $HIGH_VULNS HIGH/CRITICAL vulnerabilities!"
+              echo "Review the dependency-check report artifact for details."
+              exit 1
+            else
+              echo "✅ No HIGH/CRITICAL vulnerabilities found"
+            fi
+          fi
+
+  frontend-security:
+    name: Frontend Dependency Scan (npm)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: |
+          echo "🔍 Running npm audit..."
+          npm audit --audit-level=moderate || true
+          npm audit --json > npm-audit-report.json || true
+
+      - name: Check for critical vulnerabilities
+        run: |
+          if [ -f npm-audit-report.json ]; then
+            CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' npm-audit-report.json)
+            HIGH=$(jq '.metadata.vulnerabilities.high // 0' npm-audit-report.json)
+
+            echo "📊 Vulnerability Summary:"
+            echo "   Critical: $CRITICAL"
+            echo "   High: $HIGH"
+
+            if [ "$CRITICAL" -gt 0 ]; then
+              echo "❌ Found $CRITICAL CRITICAL vulnerabilities!"
+              echo "Run 'npm audit fix' to resolve automatically fixable issues."
+              exit 1
+            elif [ "$HIGH" -gt 5 ]; then
+              echo "⚠️  Found $HIGH HIGH vulnerabilities (threshold: 5)"
+              echo "Consider running 'npm audit fix' to address these issues."
+              exit 1
+            else
+              echo "✅ Vulnerability check passed"
+            fi
+          fi
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: frontend/npm-audit-report.json
+          retention-days: 30
+
+  license-check:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Check Maven licenses
+        working-directory: ./backend
+        run: |
+          echo "🔍 Checking for incompatible licenses..."
+
+          # Generate license report
+          mvn license:add-third-party -Dlicense.excludedScopes=test
+
+          # Check for GPL/AGPL licenses (copy-left that may require disclosure)
+          if grep -iE "GPL|AGPL" target/generated-sources/license/THIRD-PARTY.txt 2>/dev/null; then
+            echo "⚠️  WARNING: Found GPL/AGPL licensed dependencies"
+            echo "Review these licenses for compliance:"
+            grep -iE "GPL|AGPL" target/generated-sources/license/THIRD-PARTY.txt || true
+          else
+            echo "✅ No GPL/AGPL licenses found"
+          fi
+
+      - name: Upload license report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-report
+          path: backend/target/generated-sources/license/THIRD-PARTY.txt
+          retention-days: 30
