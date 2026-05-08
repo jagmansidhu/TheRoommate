@@ -12,12 +12,16 @@ import com.roomate.app.service.ChoreService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,6 +34,7 @@ public class ChoreServiceImplt implements ChoreService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"roomChores", "userChores"}, allEntries = true)
     public List<ChoreDto> distributeChores(UUID roomId, ChoreCreateDto choreDTO) {
         RoomEntity room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new EntityNotFoundException("Room not found"));
@@ -79,6 +84,7 @@ public class ChoreServiceImplt implements ChoreService {
 
     @Override
     @Transactional
+    @Cacheable(value = "roomChores", key = "#roomId")
     public List<ChoreDto> getChoresByRoomId(UUID roomId) {
         RoomEntity room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new EntityNotFoundException("Room not found"));
@@ -94,6 +100,7 @@ public class ChoreServiceImplt implements ChoreService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"roomChores", "userChores"}, allEntries = true)
     public void redistributeChores(UUID roomId) {
         RoomEntity room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new EntityNotFoundException("Room not found"));
@@ -101,22 +108,30 @@ public class ChoreServiceImplt implements ChoreService {
         List<RoomMemberEntity> roomMembers = roomMemberRepository.findByRoomID(roomId);
         List<ChoreEntity> chores = choreRepository.findByRoomWithMemberAndUser(room);
 
-        int memberIndex = 0;
-        for (ChoreEntity chore : chores) {
-            chore.setAssignedToMember(roomMembers.get(memberIndex % roomMembers.size()));
-            memberIndex++;
+        // Group chores by new assignee using round-robin
+        Map<UUID, List<UUID>> memberToChoreIds = new HashMap<>();
+        for (int i = 0; i < chores.size(); i++) {
+            UUID memberId = roomMembers.get(i % roomMembers.size()).getId();
+            memberToChoreIds.computeIfAbsent(memberId, k -> new ArrayList<>())
+                .add(chores.get(i).getId());
         }
-        choreRepository.saveAll(chores);
+
+        // Batch update per member (reduces N queries to M queries where M = member count)
+        for (Map.Entry<UUID, List<UUID>> entry : memberToChoreIds.entrySet()) {
+            choreRepository.bulkUpdateAssignedMember(entry.getValue(), entry.getKey());
+        }
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = {"roomChores", "userChores"}, allEntries = true)
     public void deleteChore(UUID choreId) {
         choreRepository.deleteById(choreId);
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = {"roomChores", "userChores"}, allEntries = true)
     public void deleteChoresByType(UUID roomId, String choreName) {
         roomRepository.findById(roomId).orElseThrow(() -> new EntityNotFoundException("Room not found"));
         choreRepository.deleteAllByRoomIdAndChoreName(roomId, choreName);
@@ -124,6 +139,7 @@ public class ChoreServiceImplt implements ChoreService {
 
     @Override
     @Transactional
+    @Cacheable(value = "userChores", key = "#id")
     public List<ChoreDto> getChoresByUserId(String id) {
         return choreRepository.findAllByUserEmail(id)
                 .stream()
@@ -138,6 +154,7 @@ public class ChoreServiceImplt implements ChoreService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"roomChores", "userChores"}, allEntries = true)
     public ChoreDto updateCompletion(UUID choreId, String userEmail, boolean completed) {
         ChoreEntity chore = choreRepository.findByChoreId(choreId)
                 .orElseThrow(() -> new EntityNotFoundException("Chore not found"));
