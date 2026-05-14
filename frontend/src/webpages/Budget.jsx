@@ -103,9 +103,11 @@ const Budget = () => {
         const formData = new FormData();
         files.forEach(f => formData.append('files[]', f, f.name));
 
-        // Attach the app's JWT so the n8n webhook can verify the caller
-        const token = localStorage.getItem('token');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        // Static webhook secret (set REACT_APP_N8N_WEBHOOK_TOKEN in .env.production)
+        // Must match the Header Auth value configured on the n8n webhook node.
+        const webhookToken = process.env.REACT_APP_N8N_WEBHOOK_TOKEN;
+        if (!webhookToken) console.warn('REACT_APP_N8N_WEBHOOK_TOKEN is not set — webhook may return 401');
+        const headers = webhookToken ? { 'X-Webhook-Token': webhookToken } : {};
 
         try {
             const res = await fetch(WEBHOOK_URL, {
