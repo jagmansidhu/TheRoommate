@@ -103,9 +103,14 @@ const Budget = () => {
         const formData = new FormData();
         files.forEach(f => formData.append('files[]', f, f.name));
 
+        // Attach the app's JWT so the n8n webhook can verify the caller
+        const token = localStorage.getItem('token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
         try {
             const res = await fetch(WEBHOOK_URL, {
                 method: 'POST',
+                headers,
                 body: formData,
             });
 
