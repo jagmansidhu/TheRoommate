@@ -1,0 +1,14 @@
+export const ROLES = {
+    HEAD_ROOMMATE: 'HEAD_ROOMMATE',
+    ASSISTANT: 'ASSISTANT',
+    ROOMMATE: 'ROOMMATE',
+    GUEST: 'GUEST',
+    ADMIN: 'ADMIN',
+}
+
+export const ROLE_RANK = {
+    HEAD_ROOMMATE: 3,
+    ASSISTANT: 2,
+    ROOMMATE: 1,
+    GUEST: 0,
+};

@@ -1,0 +1,693 @@
+/* ==========================================
+   DaRoomate — App Layout & Navigation
+   Living-Paper Aesthetic
+   ========================================== */
+
+/* ==========================================
+   Main App Structure
+   ========================================== */
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--lp-cream);
+  color: var(--lp-ink);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-wrapper {
+  flex: 1;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--spacing-6);
+}
+
+/* ==========================================
+   Header / Navbar
+   ========================================== */
+.App-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background-color: var(--lp-cream);
+  border-bottom: 1px solid var(--lp-rule);
+  transition: none;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 40px;
+}
+
+/* Logo */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--lp-orange);
+  color: white;
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 1rem;
+  border-radius: 6px;
+  letter-spacing: -0.02em;
+}
+
+.logo span {
+  font-family: var(--f-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--lp-ink);
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 24;
+}
+
+/* Navigation */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-family: var(--f-label);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--lp-ink-muted);
+  text-decoration: none;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.nav-link.active {
+  color: var(--lp-orange);
+  background-color: rgba(201, 74, 26, 0.07);
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background-color: var(--lp-parchment);
+  border: 1px solid var(--lp-border);
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: none;
+}
+
+/* ==========================================
+   Loading State
+   ========================================== */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: var(--spacing-4);
+  color: var(--text-secondary);
+}
+
+.loading .spinner {
+  width: 40px;
+  height: 40px;
+  border-width: 3px;
+}
+
+/* ==========================================
+   Check Email Page
+   ========================================== */
+.check-email-page {
+  max-width: 480px;
+  margin: var(--spacing-12) auto;
+  padding: var(--spacing-8);
+  text-align: center;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+}
+
+.check-email-page h2 {
+  margin-bottom: var(--spacing-4);
+  color: var(--text-primary);
+}
+
+.check-email-page p {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-6);
+}
+
+.check-email-page button {
+  margin: var(--spacing-2);
+}
+
+/* ==========================================
+   Page Transitions
+   ========================================== */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all var(--transition-slow);
+}
+
+/* ==========================================
+   Mobile Navigation
+   ========================================== */
+@media (max-width: 768px) {
+  .header-content {
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+
+  .logo span {
+    display: none;
+  }
+
+  .nav {
+    gap: var(--spacing-1);
+  }
+
+  .nav-link {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-xs);
+  }
+
+  .nav-link span {
+    display: none;
+  }
+
+  .content-wrapper {
+    padding: var(--spacing-4);
+  }
+}
+
+/* ==========================================
+   Empty States
+   ========================================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-12);
+  text-align: center;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-4);
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-2);
+}
+
+.empty-state p {
+  color: var(--text-tertiary);
+  max-width: 300px;
+}
+
+/* ==========================================
+   Section Headers
+   ========================================== */
+.section-header {
+  margin-bottom: var(--spacing-8);
+  text-align: center;
+}
+
+.section-header h2 {
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--spacing-3);
+}
+
+.section-header p {
+  font-size: var(--font-size-lg);
+  color: var(--text-tertiary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ==========================================
+   Modal/Dialog Base
+   ========================================== */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: var(--z-modal-backdrop);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4);
+  animation: fadeIn var(--transition-normal) ease-out;
+}
+
+.modal {
+    background-color: var(--lp-card);
+    border: 1.5px solid var(--lp-border);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: var(--z-modal);
+  animation: fadeInUp var(--transition-normal) ease-out;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-6);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  box-shadow: none;
+  transform: none;
+}
+
+.modal-body {
+  padding: var(--spacing-6);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-3);
+  padding: var(--spacing-6);
+  border-top: 1px solid var(--border-light);
+}
+
+/* Modal overlay alias (used in some components) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: var(--z-modal-backdrop);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4);
+  animation: fadeIn var(--transition-normal) ease-out;
+}
+
+/* Modal actions (button group at bottom) */
+.modal-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-6);
+  border-top: 1px solid var(--border-light);
+}
+
+/* Large modal variant */
+.modal-large {
+  max-width: 640px;
+}
+
+/* form-input — used by all room modals (ChoreModal, UtilityModal, etc.) */
+.form-input {
+    background-color: var(--lp-parchment);
+    border: 1.5px solid var(--lp-border);
+    border-radius: 4px;
+    color: var(--lp-ink);
+    font-family: var(--f-body);
+    font-size: 0.88rem;
+    padding: 9px 12px;
+    width: 100%;
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px var(--primary-100);
+}
+
+.form-input:disabled {
+    outline: none;
+    border-color: var(--lp-orange);
+    box-shadow: 3px 3px 0 var(--lp-orange);
+    background-color: var(--lp-cream);
+}
+
+/* heading reset inside modal body */
+.modal-body h4 {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  margin: var(--spacing-4) 0 var(--spacing-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* pending chore list inside modal uses .dashboard-content ul / li */
+.modal-body ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.modal-body li {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+}
+
+
+/* ==========================================
+   Toast Notifications
+   ========================================== */
+.toast-container {
+  position: fixed;
+  top: var(--spacing-6);
+  right: var(--spacing-6);
+  z-index: var(--z-tooltip);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  animation: slideInRight var(--transition-normal) ease-out;
+}
+
+.toast-success {
+  border-left: 3px solid var(--success-500);
+}
+
+.toast-error {
+  border-left: 3px solid var(--error-500);
+}
+
+.toast-warning {
+  border-left: 3px solid var(--warning-500);
+}
+
+/* ==========================================
+   Tooltips
+   ========================================== */
+.tooltip {
+  position: relative;
+}
+
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--spacing-2) var(--spacing-3);
+  background-color: var(--gray-800);
+  color: white;
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-fast);
+  z-index: var(--z-tooltip);
+}
+
+.tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+  bottom: calc(100% + 8px);
+}
+
+/* ==========================================
+   Tables
+   ========================================== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: var(--spacing-4);
+  text-align: left;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.table th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+}
+
+.table tbody tr:hover {
+  background-color: transparent;
+}
+
+/* ==========================================
+   Tabs
+   ========================================== */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: var(--spacing-6);
+}
+
+.tab {
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-tertiary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--text-tertiary);
+  transform: none;
+  box-shadow: none;
+}
+
+.tab.active {
+  color: var(--primary-600);
+  border-bottom-color: var(--primary-600);
+}
+
+.tab-content {
+  animation: fadeIn var(--transition-normal) ease-out;
+}
+
+/* ==========================================
+   Dropdown Menu
+   ========================================== */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 180px;
+  margin-top: var(--spacing-2);
+  padding: var(--spacing-2);
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-dropdown);
+  animation: fadeInUp var(--transition-fast) ease-out;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  box-shadow: none;
+  transform: none;
+}
+
+.dropdown-divider {
+  height: 1px;
+  margin: var(--spacing-2) 0;
+  background-color: var(--border-light);
+}
+
+/* ==========================================
+   Progress Bar
+   ========================================== */
+.progress {
+  width: 100%;
+  height: 8px;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: var(--primary-600);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+}
+
+.progress-bar.success {
+  background-color: var(--success-500);
+}
+
+.progress-bar.warning {
+  background-color: var(--warning-500);
+}
+
+.progress-bar.error {
+  background-color: var(--error-500);
+}
+
+/* ==========================================
+   Skeleton Loading
+   ========================================== */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    var(--bg-secondary) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+  height: 1em;
+  margin-bottom: var(--spacing-2);
+}
+
+.skeleton-title {
+  height: 1.5em;
+  width: 60%;
+  margin-bottom: var(--spacing-4);
+}
+
+.skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+}
+
+.skeleton-card {
+  height: 200px;
+}
+
+/* ==========================================
+   Dividers
+   ========================================== */
+.divider {
+  height: 1px;
+  background-color: var(--border-light);
+  margin: var(--spacing-6) 0;
+}
+
+.divider-vertical {
+  width: 1px;
+  height: 100%;
+  background-color: var(--border-light);
+  margin: 0 var(--spacing-4);
+}

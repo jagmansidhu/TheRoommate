@@ -1,0 +1,4 @@
+{
+  "error": "NoResourceFoundException",
+  "message": "No static resource api/auth/verify."
+}

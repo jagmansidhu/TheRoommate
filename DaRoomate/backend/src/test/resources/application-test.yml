@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+# Dummy JWT Secret for testing (must be same length requirement as prod)
+spring.jwt:
+  secret: aVeryLongDummySecretKeyForTestingPurposesThatIsAtLeast256BitsLong2023!aVeryLongDummySecretKeyForTestingPurposesThatIsAtLeast256BitsLong2023!
+  expiration: 86400000
+
+# Mock properties for email or external services if any
+spring.mail.host: localhost
+spring.mail.port: 3025
+spring.mail.username: test
+spring.mail.password: test

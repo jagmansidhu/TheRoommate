@@ -1,0 +1,4 @@
+{
+  "error": "InternalAuthenticationServiceException",
+  "message": "JDBC exception executing SQL [select ue1_0.\"id\",ue1_0.\"email\",ue1_0.\"enabled\",ue1_0.\"first_name\",ue1_0.\"last_name\",ue1_0.\"password\",ue1_0.\"phone\" from \"users\" ue1_0 where ue1_0.\"email\"=?] [ERROR: column ue1_0.enabled does not exist\n  Position: 33] [n/a]; SQL [n/a]"
+}

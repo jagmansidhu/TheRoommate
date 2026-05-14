@@ -1,0 +1,587 @@
+import apiClient from '../../apiClient';
+import { useState, useEffect, useMemo } from 'react';
+import React from 'react';
+import { ROLES } from "../../constants/roles";
+import { useUser, useAppData } from '../../App';
+import '../../styling/Rooms.css';
+import '../../styling/RoomDetails.css';
+import RemoveUtilityModal from './modals/RemoveUtilityModal';
+import UtilityModal from './modals/UtilityModal';
+import RemoveChoreModal from './modals/RemoveChoreModal';
+import ChoreModal from './modals/ChoreModal';
+import InviteModal from './modals/InviteModal';
+import DeleteConfirmModal from './modals/DeleteConfirmModal';
+
+
+const RoomDetailsPage = ({
+                             onClose, room, onLeaveRoom, onDeleteRoom,
+                         }) => {
+    const normalizeUtility = (utility) => ({
+        ...utility,
+        isCompleted: utility?.isCompleted ?? utility?.completed ?? false,
+    });
+
+    const isUtilityCompleted = (utility) => Boolean(utility?.isCompleted ?? utility?.completed);
+
+    const [showInviteModal, setShowInviteModal] = useState(false);
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteStatus, setInviteStatus] = useState('');
+    const { user } = useUser();
+    const {
+        refreshUserChores, refreshUserUtilities, updateUserChore, updateUserUtility,
+        roomData, loadRoomData, patchRoomData,
+    } = useAppData();
+
+    // Derive chores/utilities/userUtilities directly from the reactive roomData cache.
+    // Whenever patchRoomData or setRoomData runs, roomData changes, this memo updates,
+    // and the component re-renders — no stale local-state bug.
+    const cachedRoom = roomData[room?.id];
+    const chores        = useMemo(() => cachedRoom?.chores        || [], [cachedRoom]);
+    const utilities     = useMemo(() => cachedRoom?.utilities     || [], [cachedRoom]);
+    const userUtilities = useMemo(() => cachedRoom?.userUtilities || [], [cachedRoom]);
+    const memberId      = useMemo(() => {
+        const fromCache = cachedRoom?.memberId;
+        if (fromCache) return fromCache;
+        return room?.members?.find(m => m.userId === user?.email)?.id || null;
+    }, [cachedRoom, room?.members, user?.email]);
+
+    const [showRemoveUtilityModal, setShowRemoveUtilityModal] = useState(false);
+    const [selectedUtilityId, setSelectedUtilityId] = useState("");
+    const [showUtilityModal, setShowUtilityModal] = useState(false);
+    const [utilityData, setUtilityData] = useState({
+        utilityName: "", description: "", utilityPrice: 0, utilDistributionEnum: "EQUALSPLIT", customSplit: {}, splitType: "AMOUNT",
+        frequencyUnit: "MONTHLY", startingDate: "", deadline: ""
+    });
+    const [showChoreModal, setShowChoreModal] = useState(false);
+    const [showRemoveChoreModal, setShowRemoveChoreModal] = useState(false);
+    const [pendingChores, setPendingChores] = useState([]);
+    const [choreData, setChoreData] = useState({
+        choreName: '', frequency: 1, frequencyUnit: 'WEEKLY', deadline: ''
+    });
+    const [selectedChoreType, setSelectedChoreType] = useState('');
+    const [isCustomChore, setIsCustomChore] = useState(false);
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+
+    const resetChoreData = () => setChoreData({ choreName: '', frequency: 1, frequencyUnit: 'WEEKLY' });
+
+    const addChoreToList = () => {
+        if (!choreData.choreName || choreData.frequency < 1 || !isValidDeadline(choreData.deadline)) return;
+        setPendingChores([...pendingChores, { ...choreData }]);
+        resetChoreData();
+    };
+
+    const removeChoreFromList = (idx) => {
+        setPendingChores(pendingChores.filter((_, i) => i !== idx));
+    };
+
+    const isValidDeadline = (deadline) => {
+        if (!deadline) return false;
+        const d = new Date(deadline);
+        const now = new Date();
+        const oneYearAhead = new Date();
+        oneYearAhead.setFullYear(now.getFullYear() + 1);
+        return d > now && d <= oneYearAhead;
+    };
+
+    // Load room data into cache on mount (no-op if already cached).
+    useEffect(() => {
+        if (!room?.id || !memberId) return;
+        loadRoomData(room.id, memberId);
+    }, [room?.id, memberId, loadRoomData]);
+
+    const memberRole = room?.members?.find(m => m.userId === user?.email)?.role;
+    const isHeadRoommate = memberRole === ROLES.HEAD_ROOMMATE;
+    const isAssistantRoommate = memberRole === ROLES.ASSISTANT;
+
+    const handleInviteUser = async () => {
+        try {
+            const response = await apiClient.post(`/api/rooms/invite`,
+                { email: inviteEmail, roomId: room.id },
+                { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
+            );
+            if (response.status === 200) {
+                setInviteStatus('Invite sent successfully!');
+                setInviteEmail('');
+            } else {
+                setInviteStatus('Failed to send invite.');
+            }
+        } catch (error) {
+            console.error(error);
+            setInviteStatus('Failed to send invite.');
+        }
+    };
+
+    const handleSubmitUtility = async () => {
+        try {
+            let processedSplit = { ...utilityData.customSplit };
+            if (utilityData.utilDistributionEnum === "CUSTOMSPLIT" && utilityData.splitType === "PERCENT") {
+                const total = parseFloat(utilityData.utilityPrice) || 0;
+                for (let key in processedSplit) {
+                    processedSplit[key] = (parseFloat(processedSplit[key]) / 100.0) * total;
+                }
+            }
+            const payload = { 
+                ...utilityData, 
+                roomId: room.id, 
+                customSplit: processedSplit,
+                startingDate: utilityData.startingDate ? `${utilityData.startingDate}T00:00:00` : null,
+                deadline: utilityData.deadline ? `${utilityData.deadline}T23:59:59` : null
+            };
+            const response = await apiClient.post(`/api/utility/create`, payload,
+                { withCredentials: true, headers: { "Content-Type": "application/json" } }
+            );
+            if (response.status === 200) {
+                setShowUtilityModal(false);
+                setUtilityData({ 
+                    utilityName: "", description: "", utilityPrice: 0, utilDistributionEnum: "EQUALSPLIT", customSplit: {}, splitType: "AMOUNT",
+                    frequencyUnit: "MONTHLY", startingDate: "", deadline: ""
+                });
+                if (memberId) {
+                    // Cache-Control: no-cache forces the browser to bypass its
+                    // 30-second HTTP cache on these GET endpoints so we get the
+                    // freshly-created data back.
+                    const noCacheHeaders = { headers: { 'Cache-Control': 'no-cache' } };
+                    const [utilitiesRes, userUtilitiesRes] = await Promise.all([
+                        apiClient.get(`/api/utility/${room.id}`, noCacheHeaders),
+                        apiClient.get(`/api/utility/${memberId}/room/${room.id}`, noCacheHeaders),
+                    ]);
+                    patchRoomData(room.id, {
+                        utilities: utilitiesRes.data || [],
+                        userUtilities: userUtilitiesRes.data || [],
+                    });
+                    refreshUserUtilities();
+                }
+            }
+        } catch (err) {
+            console.error("Error creating utility:", err);
+        }
+    };
+
+    const handleRemoveUtility = async () => {
+        if (!selectedUtilityId) return;
+        try {
+            await apiClient.delete(`/api/utility/${selectedUtilityId}`, { withCredentials: true });
+            // Optimistically remove via cache patch
+            patchRoomData(room.id, {
+                userUtilities: userUtilities.filter(u => u.id !== selectedUtilityId),
+                utilities: utilities.filter(u => u.id !== selectedUtilityId),
+            });
+            refreshUserUtilities();
+            setShowRemoveUtilityModal(false);
+            setSelectedUtilityId("");
+        }
+        catch (err) {
+            console.error("Error removing utility:", err);
+        }
+    };
+
+    const CHORE_OPTIONS = ["Broom", "Sweep", "Trash", "Mop", "Vacuum", "Kitchen", "Other"];
+
+    const handleSubmitChores = async () => {
+        if (pendingChores.length === 0) return;
+
+        try {
+            const payload = pendingChores.map(chore => {
+                const strictLocalDateTime = `${chore.deadline}T23:59:59`;
+
+                return {
+                    choreName: chore.choreName,
+                    frequency: parseInt(chore.frequency, 10),
+                    frequencyUnit: (chore.frequencyUnit || 'WEEKLY').toUpperCase(),
+                    deadline: strictLocalDateTime
+                };
+            });
+
+            const response = await apiClient.post(`/api/chores/room/${room.id}`,
+                payload,
+                { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
+            );
+
+            if (response.status === 200) {
+                setShowChoreModal(false);
+                setPendingChores([]);
+                // The POST already returns all created ChoreDtos —
+                // merge them with the existing cached chores to avoid a
+                // stale GET (backend sets 30s HTTP cache on GET endpoints).
+                const createdChores = response.data || [];
+                patchRoomData(room.id, { chores: [...chores, ...createdChores] });
+                refreshUserChores();
+            }
+        } catch (error) {
+            console.error('Error creating chores:', error);
+        }
+    };
+
+    const handleRemoveChoresByType = async () => {
+        if (!selectedChoreType) return;
+        try {
+            await apiClient.delete(`/api/chores/room/${room.id}/type/${selectedChoreType}`, { withCredentials: true });
+            const nextChores = chores.filter(c => c.choreName !== selectedChoreType);
+            patchRoomData(room.id, { chores: nextChores });
+            setSelectedChoreType('');
+            refreshUserChores();
+        }
+        catch (err) {
+            console.error("Error removing chores:", err);
+        }
+    };
+
+    const toggleChoreCompletion = async (chore) => {
+        if (!user?.email || chore.assignedToMemberName !== user.email) return;
+
+        const nextCompleted = !Boolean(chore.isCompleted);
+        // Optimistic update via cache patch
+        patchRoomData(room.id, {
+            chores: chores.map(item => item.id === chore.id ? { ...item, isCompleted: nextCompleted } : item),
+        });
+        updateUserChore(chore.id, { isCompleted: nextCompleted });
+
+        try {
+            await apiClient.patch(`/api/chores/${chore.id}/completion`, { completed: nextCompleted },
+                { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
+            );
+        } catch (error) {
+            console.error('Error updating chore completion:', error);
+            patchRoomData(room.id, {
+                chores: chores.map(item => item.id === chore.id ? { ...item, isCompleted: !nextCompleted } : item),
+            });
+            updateUserChore(chore.id, { isCompleted: !nextCompleted });
+        }
+    };
+
+    const toggleUtilityCompletion = async (utility) => {
+        const nextCompleted = !isUtilityCompleted(utility);
+        // Optimistic update via cache patch
+        patchRoomData(room.id, {
+            userUtilities: userUtilities.map(item => item.id === utility.id ? { ...item, isCompleted: nextCompleted, completed: nextCompleted } : item),
+        });
+        updateUserUtility(utility.id, { isCompleted: nextCompleted });
+
+        try {
+            await apiClient.patch(`/api/utility/${utility.id}/completion`, { completed: nextCompleted },
+                { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
+            );
+        } catch (error) {
+            console.error('Error updating utility completion:', error);
+            patchRoomData(room.id, {
+                userUtilities: userUtilities.map(item => item.id === utility.id ? { ...item, isCompleted: !nextCompleted, completed: !nextCompleted } : item),
+            });
+            updateUserUtility(utility.id, { isCompleted: !nextCompleted });
+        }
+    };
+
+    const getChoresByDate = () => {
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const fourWeeksAhead = new Date(startOfToday);
+        fourWeeksAhead.setDate(startOfToday.getDate() + 28);
+        const map = {};
+        chores
+            .filter(c => { const d = new Date(c.dueAt); return d >= startOfToday && d <= fourWeeksAhead; })
+            .sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt))
+            .forEach(c => {
+                const d = new Date(c.dueAt);
+                const key = d.toLocaleString('default', { month: 'short' }) + ' ' + d.getDate();
+                if (!map[key]) map[key] = [];
+                map[key].push(c);
+            });
+        return map;
+    };
+
+    const choresByDate = getChoresByDate();
+
+    const getUpcomingUtilities = () => {
+        const now = new Date();
+        const fourWeeksAhead = new Date(now);
+        fourWeeksAhead.setDate(now.getDate() + 28);
+
+        return userUtilities.filter(u => {
+            if (!u.dueAt) return false;
+            const d = new Date(u.dueAt);
+            if (Number.isNaN(d.getTime())) return false;
+            return d >= now && d <= fourWeeksAhead;
+        });
+    };
+
+    const monthlyUtilities = getUpcomingUtilities();
+
+    const getMemberInitial = (m) => m.name?.charAt(0)?.toUpperCase() || '?';
+    const getRoleLabel = (role) => {
+        if (role === ROLES.HEAD_ROOMMATE) return 'Owner';
+        if (role === ROLES.ASSISTANT) return 'Manager';
+        return 'Resident';
+    };
+
+    const memberCount = room.members?.length || 0;
+    const occupancy = Math.min(Math.round((memberCount / 6) * 100), 100);
+    const currentMember = room.members?.find(m => m.userId === user?.email);
+    const myRole = getRoleLabel(currentMember?.role);
+
+    return (
+        <div className="rd-container">
+
+            {/* ── Back nav ── */}
+            <nav className="rd-nav">
+                <button className="rd-back-btn" onClick={onClose}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                    Rooms
+                </button>
+            </nav>
+
+            {/* ── Header Band ── */}
+            <div className="rd-header-band">
+                <div className="rd-header-band-left">
+                    <div className="rd-monogram" aria-hidden="true">
+                        {room.name?.[0]?.toUpperCase()}
+                    </div>
+                    <div className="rd-header-text">
+                        <div className="rd-header-eyebrow">Shared Housing · {myRole}</div>
+                        <h1 className="rd-room-name">{room.name}</h1>
+                        {room.address && (
+                            <p className="rd-room-address">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                    <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                                {room.address}
+                            </p>
+                        )}
+                    </div>
+                </div>
+                <div className="rd-header-band-right">
+                    <div className="rd-header-occ">
+                        <div className="rd-header-occ-text">
+                            <span className="rd-header-occ-count">{memberCount} <span className="rd-header-occ-max">of 6</span></span>
+                            <span className="rd-header-occ-label">Occupied</span>
+                        </div>
+                        <div className="rd-header-occ-bar">
+                            <div className="rd-header-occ-fill" style={{ width: `${occupancy}%` }} />
+                        </div>
+                    </div>
+                    <code className="rd-room-code-badge">{room.roomCode}</code>
+                </div>
+            </div>
+
+            {/* ── Stat Strip ── */}
+            <div className="rd-stat-strip">
+                <div className="rd-stat-cell">
+                    <span className="rd-stat-num">{memberCount}<span className="rd-stat-denom">/6</span></span>
+                    <span className="rd-stat-lbl">Members</span>
+                </div>
+                <div className="rd-stat-sep" />
+                <div className="rd-stat-cell">
+                    <span className="rd-stat-num">{Object.values(choresByDate).reduce((s, arr) => s + arr.length, 0)}</span>
+                    <span className="rd-stat-lbl">Chores</span>
+                </div>
+                <div className="rd-stat-sep" />
+                <div className="rd-stat-cell">
+                    <span className="rd-stat-num">{Object.keys(choresByDate).length}</span>
+                    <span className="rd-stat-lbl">Due Next 4 Weeks</span>
+                </div>
+                <div className="rd-stat-sep" />
+                <div className="rd-stat-cell">
+                    <span className="rd-stat-num">{monthlyUtilities.length}</span>
+                    <span className="rd-stat-lbl">Utilities</span>
+                </div>
+                <div className="rd-stat-sep" />
+                <div className="rd-stat-cell">
+                    <span className="rd-stat-num">
+                        ${monthlyUtilities.reduce((s, u) => s + (u.utilityPrice || 0), 0).toFixed(0)}
+                    </span>
+                    <span className="rd-stat-lbl">Your Next 4 Weeks</span>
+                </div>
+            </div>
+
+            {/* ── Content Grid ── */}
+            <div className="rd-content-grid">
+
+                {/* Left column */}
+                <div className="rd-col-left">
+
+                    {/* Members */}
+                    <section className="rd-card">
+                        <h2 className="rd-card-title">Members</h2>
+                        <div className="rd-member-list">
+                            {room.members?.map((member) => {
+                                const isSelf = member.userId === user?.email;
+                                return (
+                                    <div key={member.id} className="rd-member-row">
+                                        <div className="rd-member-avatar">{getMemberInitial(member)}</div>
+                                        <div className="rd-member-info">
+                                            <div className="rd-member-name">
+                                                {member.name}
+                                                {isSelf && <span className="rd-you-tag">You</span>}
+                                            </div>
+                                            <span className={`rd-role-tag ${member.role}`}>
+                                                {getRoleLabel(member.role)}
+                                            </span>
+                                        </div>
+                                        {isSelf && member.role !== ROLES.HEAD_ROOMMATE && (
+                                            <button className="rd-leave-btn" onClick={() => onLeaveRoom(member.id)}>
+                                                Leave
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+
+                    {/* Your Utilities */}
+                    <section className="rd-card">
+                        <h2 className="rd-card-title">Your Utilities (Next 4 Weeks)</h2>
+                        {monthlyUtilities.length === 0 ? (
+                            <p className="rd-empty-text">No utilities assigned to you in the next 4 weeks.</p>
+                        ) : (
+                            <div className="rd-utility-list">
+                                {monthlyUtilities.map(u => (
+                                    <div key={u.id} className={`rd-utility-row ${isUtilityCompleted(u) ? 'is-completed' : ''}`}>
+                                        <label className={`rd-checkbox ${isUtilityCompleted(u) ? 'is-checked' : ''}`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={isUtilityCompleted(u)}
+                                                onChange={() => toggleUtilityCompletion(u)}
+                                                aria-label={`${isUtilityCompleted(u) ? 'Mark utility as incomplete' : 'Mark utility as complete'}: ${u.utilityName}`}
+                                            />
+                                            <span className="rd-checkbox-ui" aria-hidden="true" />
+                                        </label>
+                                        <span className="rd-utility-name">{u.utilityName}</span>
+                                        <span className="rd-utility-freq">
+                                            {u.choreFrequencyUnitEnum?.toLowerCase() || '—'}
+                                        </span>
+                                        <span className="rd-utility-price">${Number(u.utilityPrice).toFixed(2)}</span>
+                                    </div>
+                                ))}
+                                <div className="rd-utility-total">
+                                    <span>Total</span>
+                                    <span>${monthlyUtilities.reduce((s, u) => s + (u.utilityPrice || 0), 0).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        )}
+                    </section>
+                </div>
+
+                {/* Right column — Chores */}
+                <div className="rd-col-right">
+                    <section className="rd-card rd-card-full">
+                        <h2 className="rd-card-title">Upcoming Chores</h2>
+                        {Object.keys(choresByDate).length === 0 ? (
+                            <div className="rd-empty-state">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                                    <path d="M9 11l3 3L22 4"/>
+                                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                                </svg>
+                                <p>No chores in the next 4 weeks</p>
+                            </div>
+                        ) : (
+                            <div className="rd-timeline">
+                                {Object.entries(choresByDate).map(([date, dayChores]) => (
+                                    <div key={date} className="rd-timeline-row">
+                                        <div className="rd-timeline-date">
+                                            <span className="rd-timeline-day">{date.split(' ')[1]}</span>
+                                            <span className="rd-timeline-month">{date.split(' ')[0]}</span>
+                                        </div>
+                                        <div className="rd-timeline-content">
+                                            {dayChores.map(chore => (
+                                                <div key={chore.id} className={`rd-timeline-item ${chore.isCompleted ? 'is-completed' : ''}`}>
+                                                    {chore.assignedToMemberName === user?.email && (
+                                                        <label className={`rd-checkbox ${chore.isCompleted ? 'is-checked' : ''}`}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={Boolean(chore.isCompleted)}
+                                                                onChange={() => toggleChoreCompletion(chore)}
+                                                                aria-label={`${chore.isCompleted ? 'Mark chore as incomplete' : 'Mark chore as complete'}: ${chore.choreName}`}
+                                                            />
+                                                            <span className="rd-checkbox-ui" aria-hidden="true" />
+                                                        </label>
+                                                    )}
+                                                    {chore.choreName}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                </div>
+            </div>
+
+            {/* ── Management ── */}
+            {(isAssistantRoommate || isHeadRoommate) && (
+                <section className="rd-card rd-manage-section">
+                    <h2 className="rd-card-title">Room Management</h2>
+                    <div className="rd-manage-grid">
+
+                        <div className="rd-action-group">
+                            <p className="rd-action-group-label">Add</p>
+                            <div className="rd-action-list">
+                                {[
+                                    { icon: 'rd-icon-invite', label: 'Invite Roommate', desc: 'Send an invite by email', action: () => setShowInviteModal(true) },
+                                    { icon: 'rd-icon-chore', label: 'Create Chore', desc: 'Schedule recurring tasks', action: () => setShowChoreModal(true) },
+                                    { icon: 'rd-icon-utility', label: 'Add Utility', desc: 'Track bills and split costs', action: () => setShowUtilityModal(true) },
+                                ].map(item => (
+                                    <button key={item.label} className="rd-action-row" onClick={item.action}>
+                                        <div className={`rd-action-icon ${item.icon}`} />
+                                        <div className="rd-action-text">
+                                            <span className="rd-action-title">{item.label}</span>
+                                            <span className="rd-action-desc">{item.desc}</span>
+                                        </div>
+                                        <div className="rd-chevron" />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="rd-action-group">
+                            <p className="rd-action-group-label">Remove</p>
+                            <div className="rd-action-list">
+                                {[
+                                    { icon: 'rd-icon-remove-chore', label: 'Remove Chore', desc: 'Delete a chore type', action: () => setShowRemoveChoreModal(true) },
+                                    { icon: 'rd-icon-remove-utility', label: 'Remove Utility', desc: 'Delete a tracked utility', action: () => setShowRemoveUtilityModal(true) },
+                                ].map(item => (
+                                    <button key={item.label} className="rd-action-row" onClick={item.action}>
+                                        <div className={`rd-action-icon ${item.icon}`} />
+                                        <div className="rd-action-text">
+                                            <span className="rd-action-title">{item.label}</span>
+                                            <span className="rd-action-desc">{item.desc}</span>
+                                        </div>
+                                        <div className="rd-chevron" />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {isHeadRoommate && (
+                            <div className="rd-action-group">
+                                <p className="rd-action-group-label rd-danger-label">Danger Zone</p>
+                                <div className="rd-action-list rd-action-list-danger">
+                                    <button className="rd-action-row rd-action-danger" onClick={() => setShowDeleteConfirmModal(true)}>
+                                        <div className="rd-action-icon rd-icon-delete" />
+                                        <div className="rd-action-text">
+                                            <span className="rd-action-title rd-danger-title">Delete Room</span>
+                                            <span className="rd-action-desc">Permanently remove this room and all data</span>
+                                        </div>
+                                        <div className="rd-chevron" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </section>
+            )}
+
+            {/* ── Modals ── */}
+            <RemoveUtilityModal show={showRemoveUtilityModal} onClose={() => setShowRemoveUtilityModal(false)} utilities={utilities} selectedUtilityId={selectedUtilityId} setSelectedUtilityId={setSelectedUtilityId} handleRemoveUtility={handleRemoveUtility} />
+            <UtilityModal show={showUtilityModal} onClose={() => setShowUtilityModal(false)} utilityData={utilityData} setUtilityData={setUtilityData} handleSubmitUtility={handleSubmitUtility} members={room.members} />
+            <RemoveChoreModal show={showRemoveChoreModal} onClose={() => setShowRemoveChoreModal(false)} selectedChoreType={selectedChoreType} setSelectedChoreType={setSelectedChoreType} handleRemoveChoresByType={handleRemoveChoresByType} CHORE_OPTIONS={CHORE_OPTIONS} />
+            <ChoreModal show={showChoreModal} onClose={() => setShowChoreModal(false)} isCustomChore={isCustomChore} setIsCustomChore={setIsCustomChore} choreData={choreData} setChoreData={setChoreData} CHORE_OPTIONS={CHORE_OPTIONS} addChoreToList={addChoreToList} pendingChores={pendingChores} removeChoreFromList={removeChoreFromList} handleSubmitChores={handleSubmitChores} isValidDeadline={isValidDeadline} />
+            <InviteModal show={showInviteModal} onClose={() => setShowInviteModal(false)} inviteEmail={inviteEmail} setInviteEmail={setInviteEmail} inviteStatus={inviteStatus} handleInviteUser={handleInviteUser} />
+            <DeleteConfirmModal show={showDeleteConfirmModal} onClose={() => setShowDeleteConfirmModal(false)} onConfirm={onDeleteRoom} roomName={room.name} />
+        </div>
+    );
+};
+
+export default RoomDetailsPage;

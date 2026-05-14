@@ -1,0 +1,255 @@
+name: Code Security Scan (SAST)
+
+on:
+  pull_request:
+    branches: ["main", "develop"]
+  push:
+    branches: ["main", "develop"]
+  schedule:
+    # Run daily at midnight
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+jobs:
+  semgrep:
+    name: Semgrep Security Scan
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Don't block on Semgrep failures
+
+    container:
+      image: returntocorp/semgrep
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        run: |
+          semgrep scan \
+            --config=p/sql-injection \
+            --config=p/xss \
+            --config=p/command-injection \
+            --severity ERROR \
+            --json \
+            --output=semgrep-report.json \
+            || true
+
+      - name: Check for critical findings
+        continue-on-error: true
+        run: |
+          if [ -f semgrep-report.json ]; then
+            ERRORS=$(jq '[.results[] | select(.extra.severity == "ERROR")] | length' semgrep-report.json 2>/dev/null || echo "0")
+
+            echo "📊 Semgrep Results:"
+            echo "   Errors: $ERRORS"
+
+            if [ "$ERRORS" -gt 0 ]; then
+              echo "⚠️  Found $ERRORS security findings (review recommended)"
+              jq -r '.results[] | select(.extra.severity == "ERROR") | "  - \(.check_id): \(.path):\(.start.line)"' semgrep-report.json 2>/dev/null || true
+            else
+              echo "✅ No critical security issues found"
+            fi
+          fi
+
+      - name: Upload Semgrep report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report
+          path: semgrep-report.json
+          retention-days: 30
+
+  spotbugs:
+    name: SpotBugs Security Analysis
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Compile code
+        run: mvn clean compile test-compile
+
+      - name: Run SpotBugs
+        run: |
+          mvn com.github.spotbugs:spotbugs-maven-plugin:check \
+            -Dspotbugs.effort=Max \
+            -Dspotbugs.threshold=Low \
+            -Dspotbugs.failOnError=false || true
+
+      - name: Upload SpotBugs report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spotbugs-report
+          path: backend/target/spotbugsXml.xml
+          retention-days: 30
+
+  sql-injection-check:
+    name: SQL Injection Pattern Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for SQL injection vulnerabilities
+        run: |
+          echo "🔍 Scanning for SQL injection patterns..."
+
+          VIOLATIONS_FOUND=0
+
+          # Check for string concatenation in SQL queries (exclude @Query annotations)
+          if grep -rn --include="*.java" "\".*SELECT.*\" +\|+.*\".*SELECT" backend/src/main/java/ 2>/dev/null | grep -v "@Query" | grep -v "//"; then
+            echo "❌ VIOLATION: String concatenation in SQL query detected!"
+            echo "Use PreparedStatement or @Param annotations instead."
+            VIOLATIONS_FOUND=1
+          fi
+
+          # Check for executeQuery with string concatenation
+          if grep -rn --include="*.java" "executeQuery(.*+.*)" backend/src/main/java/ 2>/dev/null | grep -v "//"; then
+            echo "❌ VIOLATION: executeQuery with concatenation detected!"
+            VIOLATIONS_FOUND=1
+          fi
+
+          # Check for missing @Param in @Query annotations (informational only)
+          echo ""
+          echo "🔍 Checking for @Query without @Param (informational)..."
+
+          QUERY_FILES=$(grep -rl "@Query" backend/src/main/java/ 2>/dev/null || true)
+          for file in $QUERY_FILES; do
+            # Check if @Query uses parameters (:param) but method doesn't have @Param
+            if grep -A 5 "@Query" "$file" | grep -E ":[a-zA-Z]+" > /dev/null; then
+              if ! grep -A 10 "@Query" "$file" | grep "@Param" > /dev/null; then
+                echo "ℹ️  Info: @Query with parameters in: $file (verify @Param is present)"
+              fi
+            fi
+          done
+
+          if [ $VIOLATIONS_FOUND -eq 1 ]; then
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "⛔ SQL INJECTION VULNERABILITY DETECTED"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "❌ Never use string concatenation in SQL queries!"
+            echo ""
+            echo "❌ Bad:"
+            echo '   String query = "SELECT * FROM users WHERE id = " + userId;'
+            echo ""
+            echo "✅ Good:"
+            echo '   @Query("SELECT u FROM User u WHERE u.id = :userId")'
+            echo '   User findByUserId(@Param("userId") Long userId);'
+            echo ""
+            exit 1
+          fi
+
+          echo "✅ No SQL injection patterns detected"
+
+  secrets-scan:
+    name: Secret Detection Scan
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Don't block on secret scan
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run TruffleHog
+        continue-on-error: true
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
+
+      - name: Manual secret patterns check
+        continue-on-error: true
+        run: |
+          echo "🔍 Checking for common secret patterns..."
+
+          SECRET_PATTERNS=(
+            "AKIA[0-9A-Z]{16}"                    # AWS Access Key
+            "AIza[0-9A-Za-z\\-_]{35}"             # Google API Key
+            "ghp_[0-9a-zA-Z]{36}"                 # GitHub Personal Access Token
+            "sk_live_[0-9a-zA-Z]{24,}"            # Stripe Live Key
+            "xox[baprs]-[0-9]{10,13}-[a-zA-Z0-9-]+" # Slack Token
+            "sk-[a-zA-Z0-9]{48}"                  # OpenAI API Key
+          )
+
+          SECRETS_FOUND=0
+
+          for pattern in "${SECRET_PATTERNS[@]}"; do
+            if git grep -E "$pattern" -- ':!*.md' ':!.github' ':!SECURITY.md' 2>/dev/null; then
+              echo "⚠️  Potential secret detected matching pattern: $pattern"
+              SECRETS_FOUND=1
+            fi
+          done
+
+          if [ $SECRETS_FOUND -eq 1 ]; then
+            echo ""
+            echo "⚠️  Potential secrets detected in repository (review recommended)"
+            echo ""
+            echo "If this is a false positive, add to .gitignore."
+            echo "If real secrets were committed:"
+            echo "  1. Revoke the compromised credentials immediately"
+            echo "  2. Use 'git filter-repo' to remove from history"
+          fi
+
+          echo "✅ Secret scan complete"
+
+  xss-check:
+    name: XSS Vulnerability Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for XSS vulnerabilities
+        run: |
+          echo "🔍 Scanning for XSS vulnerabilities..."
+
+          VIOLATIONS_FOUND=0
+
+          # Check for dangerouslySetInnerHTML in React
+          if grep -rn "dangerouslySetInnerHTML" frontend/src/ 2>/dev/null; then
+            echo "⚠️  WARNING: dangerouslySetInnerHTML usage detected in React components"
+            echo "Ensure user input is properly sanitized!"
+            VIOLATIONS_FOUND=1
+          fi
+
+          # Check for innerHTML usage
+          if grep -rn "\.innerHTML\s*=" frontend/src/ 2>/dev/null; then
+            echo "⚠️  WARNING: innerHTML usage detected"
+            echo "Consider using textContent or proper React rendering"
+            VIOLATIONS_FOUND=1
+          fi
+
+          # Check for eval() usage
+          if grep -rn "eval(" frontend/src/ backend/src/ 2>/dev/null; then
+            echo "❌ VIOLATION: eval() usage detected - this is dangerous!"
+            VIOLATIONS_FOUND=1
+          fi
+
+          if [ $VIOLATIONS_FOUND -eq 1 ]; then
+            echo ""
+            echo "⚠️  XSS risk patterns detected. Review manually for proper sanitization."
+          else
+            echo "✅ No obvious XSS patterns detected"
+          fi

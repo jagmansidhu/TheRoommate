@@ -1,0 +1,827 @@
+DELETE http://localhost:8085/api/utility/d6b6524b-0e79-452e-9e23-26c1d5d3d9cb
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZlZjM1OEBnbWFpbC5jb20iLCJpZCI6IjgiLCJpYXQiOjE3NTY0MzE4MTIsImV4cCI6MTc1ODUwNTQxMn0.ncZvVHMDpj-RM9zhY8zPqKRIk9qDK1MgH1dUU67mYks
+content-length: 0
+
+###
+
+DELETE http://localhost:8085/api/utility/d6b6524b-0e79-452e-9e23-26c1d5d3d9cb
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZlZjM1OEBnbWFpbC5jb20iLCJpZCI6IjgiLCJpYXQiOjE3NTY0MzE4MTIsImV4cCI6MTc1ODUwNTQxMn0.ncZvVHMDpj-RM9zhY8zPqKRIk9qDK1MgH1dUU67mYks
+content-length: 0
+
+###
+
+DELETE http://localhost:8085/api/utility/d6b6524b-0e79-452e-9e23-26c1d5d3d9cb
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZlZjM1OEBnbWFpbC5jb20iLCJpZCI6IjgiLCJpYXQiOjE3NTY0MzE4MTIsImV4cCI6MTc1ODUwNTQxMn0.ncZvVHMDpj-RM9zhY8zPqKRIk9qDK1MgH1dUU67mYks
+content-length: 0
+
+###
+
+GET http://localhost:8085/api/get-user
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZlZjM1OEBnbWFpbC5jb20iLCJpZCI6IjgiLCJpYXQiOjE3NTY0MzE4MTIsImV4cCI6MTc1ODUwNTQxMn0.ncZvVHMDpj-RM9zhY8zPqKRIk9qDK1MgH1dUU67mYks
+
+<> 2025-08-28T184537.200.json
+
+###
+
+DELETE http://localhost:8085/api/utility/d6b6524b-0e79-452e-9e23-26c1d5d3d9cb
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZlZjM1OEBnbWFpbC5jb20iLCJpZCI6IjgiLCJpYXQiOjE3NTY0MzE4MTIsImV4cCI6MTc1ODUwNTQxMn0.ncZvVHMDpj-RM9zhY8zPqKRIk9qDK1MgH1dUU67mYks
+content-length: 0
+
+###
+
+DELETE http://localhost:8085/api/utility/d6b6524b-0e79-452e-9e23-26c1d5d3d9cb
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZlZjM1OEBnbWFpbC5jb20iLCJpZCI6IjgiLCJpYXQiOjE3NTY0MzE4MTIsImV4cCI6MTc1ODUwNTQxMn0.ncZvVHMDpj-RM9zhY8zPqKRIk9qDK1MgH1dUU67mYks
+content-length: 0
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 62
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jefef358@gmail.com",
+  "password": "Test_123!"
+}
+
+<> 2025-08-28T184332.200.json
+
+###
+
+GET http://localhost:8085/user/verify?token=b338ef07-ed0d-49a8-941f-b45565ad7c7d
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MzI4ODc4LCJleHAiOjE3NTg0MDI0Nzh9.TdxvNaOfAmmWaGyBAUSzKPFtZxZGwAm0B81mRUIomNs
+
+<> 2025-08-27T141703.200.json
+
+###
+
+GET http://localhost:8085/api/auth/verify?token=b338ef07-ed0d-49a8-941f-b45565ad7c7d
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MzI4ODc4LCJleHAiOjE3NTg0MDI0Nzh9.TdxvNaOfAmmWaGyBAUSzKPFtZxZGwAm0B81mRUIomNs
+
+<> 2025-08-27T141651.400.json
+
+###
+
+POST http://localhost:8085/user/register
+Content-Type: application/json
+Content-Length: 111
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MzI4ODc4LCJleHAiOjE3NTg0MDI0Nzh9.TdxvNaOfAmmWaGyBAUSzKPFtZxZGwAm0B81mRUIomNs
+
+{
+  "email": "jefef358@gmail.com",
+  "password": "Test_123!",
+  "firstName": "Joesph",
+  "lastName": "Monkey"
+}
+
+<> 2025-08-27T141537.200.json
+
+###
+
+POST http://localhost:8085/user/register
+Content-Type: application/json
+Content-Length: 111
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MzI4ODc4LCJleHAiOjE3NTg0MDI0Nzh9.TdxvNaOfAmmWaGyBAUSzKPFtZxZGwAm0B81mRUIomNs
+
+{
+  "email": "jefef358@gmail.com",
+  "password": "Test_123!",
+  "firstName": "Joesph",
+  "lastName": "Monkey"
+}
+
+<> 2025-08-27T141529.400.json
+
+###
+
+POST http://localhost:8085/user/register
+Content-Type: application/json
+Content-Length: 111
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MzI4ODc4LCJleHAiOjE3NTg0MDI0Nzh9.TdxvNaOfAmmWaGyBAUSzKPFtZxZGwAm0B81mRUIomNs
+
+{
+  "email": "jefef358@gmail.com",
+  "password": "Test_123!",
+  "firstName": "Joesph",
+  "lastName": "Monkey"
+}
+
+<> 2025-08-27T141326.400.json
+
+###
+
+POST http://localhost:8085/user/register
+Content-Type: application/json
+Content-Length: 111
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MzI4ODc4LCJleHAiOjE3NTg0MDI0Nzh9.TdxvNaOfAmmWaGyBAUSzKPFtZxZGwAm0B81mRUIomNs
+
+{
+  "email": "jefef358@gmail.com",
+  "password": "Test_123!",
+  "firstName": "Joesph",
+  "lastName": "Monkey"
+}
+
+<> 2025-08-27T141257.400.json
+
+###
+
+POST http://localhost:8085/user/register
+Content-Type: application/json
+Content-Length: 115
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MzI4ODc4LCJleHAiOjE3NTg0MDI0Nzh9.TdxvNaOfAmmWaGyBAUSzKPFtZxZGwAm0B81mRUIomNs
+
+{
+  "email": "jagmansidhu1@gmail.com",
+  "password": "Test_123!",
+  "firstName": "Joesph",
+  "lastName": "Monkey"
+}
+
+<> 2025-08-27T141012.400.json
+
+###
+
+POST http://localhost:8085/api/rooms/invite
+Content-Type: application/json
+Content-Length: 87
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MzI4ODc4LCJleHAiOjE3NTg0MDI0Nzh9.TdxvNaOfAmmWaGyBAUSzKPFtZxZGwAm0B81mRUIomNs
+
+{
+  "email": "jefef358@gmail.com",
+  "roomId": "939cf363-cb18-49a0-9270-2ee28a26bfbf"
+}
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-27T140758.200.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 57
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "123"
+}
+
+<> 2025-08-27T140750.400.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 57
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "123"
+}
+
+<> 2025-08-27T140732.400.json
+
+###
+
+POST http://localhost:8085/user/register
+Content-Type: application/json
+Content-Length: 111
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jefef358@gmail.com",
+  "password": "Test_123!",
+  "firstName": "Joesph",
+  "lastName": "Monkey"
+}
+
+<> 2025-08-27T140229.400.json
+
+###
+
+POST http://localhost:8085/user/register
+Content-Type: application/json
+Content-Length: 111
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jefef358@gmail.com",
+  "password": "Test_123!",
+  "firstName": "Joesph",
+  "lastName": "Monkey"
+}
+
+<> 2025-08-27T140128.400.json
+
+###
+
+POST http://localhost:8085/user/register
+Content-Type: application/json
+Content-Length: 111
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jefef358@gmail.com",
+  "password": "Test_123!",
+  "firstName": "Joesph",
+  "lastName": "Monkey"
+}
+
+<> 2025-08-27T140041.400.json
+
+###
+
+POST http://localhost:8085/user/register
+Content-Type: application/json
+Content-Length: 110
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jefef358@gmail.com",
+  "password": "Test_123",
+  "firstName": "Joesph",
+  "lastName": "Monkey"
+}
+
+<> 2025-08-27T140024.400.json
+
+###
+
+POST http://localhost:8085/user/register
+Content-Type: application/json
+Content-Length: 106
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jefef358@gmail.com",
+  "password": "1234",
+  "firstName": "Joesph",
+  "lastName": "Monkey"
+}
+
+<> 2025-08-27T140017.400.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 57
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb0BnbWFpbC5jb20iLCJpZCI6IjIiLCJpYXQiOjE3NTYzMjgyMzcsImV4cCI6MTc1ODQwMTgzN30.jgyZ_Lw1l40LS3S_y7MIbMmShLc60qk8hounvq7Xir4
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "123"
+}
+
+<> 2025-08-27T135820.400.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 55
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jo@gmail.com",
+  "password": "Test_123"
+}
+
+<> 2025-08-27T135717.200.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 55
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jo@gmail.com",
+  "password": "Test_123"
+}
+
+<> 2025-08-27T134805.400.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 55
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jo@gmail.com",
+  "password": "Test_123"
+}
+
+<> 2025-08-27T134521.400.json
+
+###
+
+POST http://localhost:8085/api/utility/create
+Content-Type: application/json
+Content-Length: 182
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYzMjk0LCJleHAiOjE3NTgyMzY4OTR9.Fa_0ZUGgpGYhrQvj3xR-Xay02T8j8xZlBTwR8hjPrbw
+
+{
+  "utilityName": "Rent",
+  "description": "Rent for mcdonalds",
+  "utilityPrice": 4000,
+  "utilDistributionEnum": "EQUALSPLIT",
+  "roomId": "939cf363-cb18-49a0-9270-2ee28a26bfbf"
+}
+
+<> 2025-08-25T160826.200.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-25T160814.200.json
+
+###
+
+POST http://localhost:8085/api/utility/create
+Content-Type: application/json
+Content-Length: 182
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxNzQ2LCJleHAiOjE3NTgyMzUzNDZ9.4p-a89Z2uY8cpUJennWThfu0lykewpZSKIz1vTYS0kI
+
+{
+  "utilityName": "Rent",
+  "description": "Rent for mcdonalds",
+  "utilityPrice": 4000,
+  "utilDistributionEnum": "EQUALSPLIT",
+  "roomId": "939cf363-cb18-49a0-9270-2ee28a26bfbf"
+}
+
+<> 2025-08-25T154229.200.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxNjI5LCJleHAiOjE3NTgyMzUyMjl9.XnJ8Jvux8etiQl4Co6zOqSXRHCIjwnqo2w2lKMDvI7w
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-25T154226.200.json
+
+###
+
+POST http://localhost:8085/api/utility/create
+Content-Type: application/json
+Content-Length: 182
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxNjI5LCJleHAiOjE3NTgyMzUyMjl9.XnJ8Jvux8etiQl4Co6zOqSXRHCIjwnqo2w2lKMDvI7w
+
+{
+  "utilityName": "Rent",
+  "description": "Rent for mcdonalds",
+  "utilityPrice": 4000,
+  "utilDistributionEnum": "EQUALSPLIT",
+  "roomId": "939cf363-cb18-49a0-9270-2ee28a26bfbf"
+}
+
+<> 2025-08-25T154032.200.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxNTgzLCJleHAiOjE3NTgyMzUxODN9.UVyLswo8jcjkmdp-BEVG2mt5K3CZfeC0fCXS0kIlYpQ
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-25T154029.200.json
+
+###
+
+POST http://localhost:8085/api/utility/create
+Content-Type: application/json
+Content-Length: 182
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxNTgzLCJleHAiOjE3NTgyMzUxODN9.UVyLswo8jcjkmdp-BEVG2mt5K3CZfeC0fCXS0kIlYpQ
+
+{
+  "utilityName": "Rent",
+  "description": "Rent for mcdonalds",
+  "utilityPrice": 4000,
+  "utilDistributionEnum": "EQUALSPLIT",
+  "roomId": "939cf363-cb18-49a0-9270-2ee28a26bfbf"
+}
+
+<> 2025-08-25T153944.200.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxNDkxLCJleHAiOjE3NTgyMzUwOTF9.JV76UCi-2DmtrqiD141ITm9I4Bmc7R_PI-5lpiBxyYs
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-25T153943.200.json
+
+###
+
+POST http://localhost:8085/api/utility/create
+Content-Type: application/json
+Content-Length: 182
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxNDkxLCJleHAiOjE3NTgyMzUwOTF9.JV76UCi-2DmtrqiD141ITm9I4Bmc7R_PI-5lpiBxyYs
+
+{
+  "utilityName": "Rent",
+  "description": "Rent for mcdonalds",
+  "utilityPrice": 4000,
+  "utilDistributionEnum": "EQUALSPLIT",
+  "roomId": "939cf363-cb18-49a0-9270-2ee28a26bfbf"
+}
+
+<> 2025-08-25T153813.200.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxNDE2LCJleHAiOjE3NTgyMzUwMTZ9.tC_JiXht2cETQlRNsQjElc75iXu4XzqNCmf-AmJT1XI
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-25T153811.200.json
+
+###
+
+POST http://localhost:8085/api/utility/create
+Content-Type: application/json
+Content-Length: 182
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxNDE2LCJleHAiOjE3NTgyMzUwMTZ9.tC_JiXht2cETQlRNsQjElc75iXu4XzqNCmf-AmJT1XI
+
+{
+  "utilityName": "Rent",
+  "description": "Rent for mcdonalds",
+  "utilityPrice": 4000,
+  "utilDistributionEnum": "EQUALSPLIT",
+  "roomId": "939cf363-cb18-49a0-9270-2ee28a26bfbf"
+}
+
+<> 2025-08-25T153702.200.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxMzU5LCJleHAiOjE3NTgyMzQ5NTl9.7ibFS8yCZzq-5rKpkikYxFMugq28o76Y-2g4OH0gsPQ
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-25T153656.200.json
+
+###
+
+POST http://localhost:8085/api/utility/create
+Content-Type: application/json
+Content-Length: 182
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxMzU5LCJleHAiOjE3NTgyMzQ5NTl9.7ibFS8yCZzq-5rKpkikYxFMugq28o76Y-2g4OH0gsPQ
+
+{
+  "utilityName": "Rent",
+  "description": "Rent for mcdonalds",
+  "utilityPrice": 4000,
+  "utilDistributionEnum": "EQUALSPLIT",
+  "roomId": "939cf363-cb18-49a0-9270-2ee28a26bfbf"
+}
+
+<> 2025-08-25T153601.200.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxMjkzLCJleHAiOjE3NTgyMzQ4OTN9.N9rw0bDI2qFzFRmh-yMZ1Av90sD5Rv0m1QMi9iJr0-o
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-25T153559.200.json
+
+###
+
+POST http://localhost:8085/api/utility/create
+Content-Type: application/json
+Content-Length: 182
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxMjkzLCJleHAiOjE3NTgyMzQ4OTN9.N9rw0bDI2qFzFRmh-yMZ1Av90sD5Rv0m1QMi9iJr0-o
+
+{
+  "utilityName": "Rent",
+  "description": "Rent for mcdonalds",
+  "utilityPrice": 4000,
+  "utilDistributionEnum": "EQUALSPLIT",
+  "roomId": "939cf363-cb18-49a0-9270-2ee28a26bfbf"
+}
+
+<> 2025-08-25T153457.200.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxMDgyLCJleHAiOjE3NTgyMzQ2ODJ9.Fbg8dH9bJruFDtSyI2y2fycPFqcONm1o7KLwcEJqHGs
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-25T153453.200.json
+
+###
+
+POST http://localhost:8085/api/utility/create
+Content-Type: application/json
+Content-Length: 182
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYxMDgyLCJleHAiOjE3NTgyMzQ2ODJ9.Fbg8dH9bJruFDtSyI2y2fycPFqcONm1o7KLwcEJqHGs
+
+{
+  "utilityName": "Rent",
+  "description": "Rent for mcdonalds",
+  "utilityPrice": 4000,
+  "utilDistributionEnum": "EQUALSPLIT",
+  "roomId": "939cf363-cb18-49a0-9270-2ee28a26bfbf"
+}
+
+<> 2025-08-25T153125.200.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYwNjI1LCJleHAiOjE3NTgyMzQyMjV9.XNTLWfzHpeiED_rjue65psotZn-f8o4vBhCi6ev2MCc
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-25T153122.200.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYwNjI1LCJleHAiOjE3NTgyMzQyMjV9.XNTLWfzHpeiED_rjue65psotZn-f8o4vBhCi6ev2MCc
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-25T153024.401.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYwNjI1LCJleHAiOjE3NTgyMzQyMjV9.XNTLWfzHpeiED_rjue65psotZn-f8o4vBhCi6ev2MCc
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-25T152949.401.json
+
+###
+
+POST http://localhost:8085/api/utility/create
+Content-Type: application/json
+Content-Length: 182
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYwNjI1LCJleHAiOjE3NTgyMzQyMjV9.XNTLWfzHpeiED_rjue65psotZn-f8o4vBhCi6ev2MCc
+
+{
+  "utilityName": "Rent",
+  "description": "Rent for mcdonalds",
+  "utilityPrice": 4000,
+  "utilDistributionEnum": "EQUALSPLIT",
+  "roomId": "939cf363-cb18-49a0-9270-2ee28a26bfbf"
+}
+
+<> 2025-08-25T152923.401.json
+
+###
+
+POST http://localhost:8085/api/utility/create
+Content-Type: application/json
+Content-Length: 182
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYwNjI1LCJleHAiOjE3NTgyMzQyMjV9.XNTLWfzHpeiED_rjue65psotZn-f8o4vBhCi6ev2MCc
+
+{
+  "utilityName": "Rent",
+  "description": "Rent for mcdonalds",
+  "utilityPrice": 4000,
+  "utilDistributionEnum": "EQUALSPLIT",
+  "roomId": "939cf363-cb18-49a0-9270-2ee28a26bfbf"
+}
+
+<> 2025-08-25T152922.401.json
+
+###
+
+POST http://localhost:8085/user/login
+Content-Type: application/json
+Content-Length: 58
+User-Agent: IntelliJ HTTP Client/IntelliJ IDEA 2025.2.1 RC
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+Cookie: jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZWZmcGV6bzJAZ21haWwuY29tIiwiaWQiOiIzIiwiaWF0IjoxNzU2MTYwNjI1LCJleHAiOjE3NTgyMzQyMjV9.XNTLWfzHpeiED_rjue65psotZn-f8o4vBhCi6ev2MCc
+
+{
+  "email": "jeffpezo2@gmail.com",
+  "password": "1234"
+}
+
+<> 2025-08-25T152918.401.json
+
+###
+

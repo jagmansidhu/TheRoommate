@@ -1,0 +1,4 @@
+{
+  "error": "DataIntegrityViolationException",
+  "message": "could not execute statement [ERROR: null value in column \"user_id\" of relation \"verification_token_entity\" violates not-null constraint\n  Detail: Failing row contains (3, 2025-08-28 14:12:57.460832, 64588bf6-170b-427d-8dbd-1c2111694e87, 6, null).] [insert into \"verification_token_entity\" (\"expiry_date\",\"token\",\"users_id\") values (?,?,?)]; SQL [insert into \"verification_token_entity\" (\"expiry_date\",\"token\",\"users_id\") values (?,?,?)]; constraint [user_id\" of relation \"verification_token_entity]"
+}
