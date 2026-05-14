@@ -33,10 +33,10 @@ application-local.properties
 *.log
 logs/
 
-# Testing
-.mvn/
-mvnw
-mvnw.cmd
+# Maven wrapper — required by Dockerfile build stage (do NOT ignore)
+# .mvn/
+# mvnw
+# mvnw.cmd
 
 # Documentation
 README.md
