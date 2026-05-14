@@ -7,6 +7,7 @@ import Dashboard from './webpages/Dashboard';
 import Profile from './webpages/Profile';
 import Home from './webpages/Home';
 import Personal from "./webpages/profileRedirect/Personal";
+import Budget from "./webpages/Budget";
 import Rooms from "./webpages/room/Rooms";
 import './styling/App.css';
 import RoomDetailsPageWrapper from "./webpages/room/RoomDetailWrapper";
@@ -434,6 +435,7 @@ const LoggedInNavbar = () => {
                     <Link to="/calendar" className="nav-link">Calendar</Link>
                     <Link to="/profile" className="nav-link">Profile</Link>
                     <Link to="/rooms" className="nav-link">Rooms</Link>
+                    <Link to="/personal" className="nav-link">Personal</Link>
                     <button onClick={logout} className="btn btn-secondary">Logout</button>
                 </nav>
             </div>
@@ -493,6 +495,7 @@ const AppContent = () => {
                         }/>
                         <Route path="/reset-password" element={isAuthenticated ? <PasswordReset/> : <Login/>}/>
                         <Route path="/update-personal" element={isAuthenticated ? <Personal/> : <Login/>}/>
+                        <Route path="/personal" element={isAuthenticated ? <Budget/> : <Login/>}/>
                         <Route path="/login" element={<Login/>}/>
                         <Route path="/verify" element={<VerifyHandler/>}/>
                         <Route path="/register" element={<Register/>}/>
