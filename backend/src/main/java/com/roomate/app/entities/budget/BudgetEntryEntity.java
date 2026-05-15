@@ -9,7 +9,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Maps to the budget_entries table — the same table n8n writes receipt/expense data to.
+ * Maps to the budget_entries table — the same table n8n writes receipt/expense
+ * data to.
  * The backend can also insert manual entries here.
  */
 @Getter
@@ -47,7 +48,7 @@ public class BudgetEntryEntity {
     }
 
     public BudgetEntryEntity(String userId, BigDecimal amount, String category,
-                             String description, String status) {
+            String description, String status) {
         this.userId = userId;
         this.amount = amount;
         this.category = category;
