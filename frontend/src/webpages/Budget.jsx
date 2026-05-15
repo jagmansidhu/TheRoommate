@@ -141,7 +141,23 @@ const Budget = () => {
     };
 
     // Load Data
-    const loadBudgetData = useCallback(async () => {
+    const loadBudgetData = useCallback(async (forceFetch = false) => {
+        const cacheKey = `budget-${filterYear}-${filterMonth}`;
+        const cached = localStorage.getItem(cacheKey);
+
+        if (cached && !forceFetch) {
+            try {
+                const data = JSON.parse(cached);
+                setStats(data.stats);
+                setEntries(data.entries);
+                setBudgetInput(data.stats.monthlyBudget.toString());
+                setLoadingData(false);
+                return;
+            } catch (e) {
+                console.error("Cache parse error", e);
+            }
+        }
+
         setLoadingData(true);
         try {
             const [statsRes, entriesRes] = await Promise.all([
@@ -151,6 +167,7 @@ const Budget = () => {
             setStats(statsRes.data);
             setEntries(entriesRes.data);
             setBudgetInput(statsRes.data.monthlyBudget.toString());
+            localStorage.setItem(cacheKey, JSON.stringify({ stats: statsRes.data, entries: entriesRes.data }));
         } catch (err) {
             console.error('Failed to load budget data', err);
             showToast('error', 'Failed to load budget data');
@@ -214,7 +231,7 @@ const Budget = () => {
             setFiles([]);
             
             // Reload data after a short delay to let webhook process
-            setTimeout(loadBudgetData, 3000);
+            setTimeout(() => loadBudgetData(true), 3000);
         } catch (err) {
             showToast('error', 'Upload failed. Please try again.');
         } finally {
@@ -227,7 +244,7 @@ const Budget = () => {
         try {
             await apiClient.put('/api/budget/settings', { monthlyBudget: parseFloat(budgetInput) });
             setEditingBudget(false);
-            loadBudgetData();
+            loadBudgetData(true);
             showToast('success', 'Budget updated');
         } catch (err) {
             showToast('error', 'Failed to update budget');
@@ -244,7 +261,7 @@ const Budget = () => {
             });
             setShowManualEntry(false);
             setNewEntry({ amount: '', category: 'Other', description: '', status: '', paymentDate: '' });
-            loadBudgetData();
+            loadBudgetData(true);
             showToast('success', 'Entry added');
         } catch (err) {
             showToast('error', 'Failed to add entry');
@@ -254,7 +271,7 @@ const Budget = () => {
     const updateCategory = async (id, category) => {
         try {
             await apiClient.put(`/api/budget/entries/${id}/category`, { category });
-            loadBudgetData();
+            loadBudgetData(true);
         } catch (err) {
             showToast('error', 'Failed to update category');
         }
@@ -264,7 +281,7 @@ const Budget = () => {
         if (!window.confirm('Delete this entry?')) return;
         try {
             await apiClient.delete(`/api/budget/entries/${id}`);
-            loadBudgetData();
+            loadBudgetData(true);
             showToast('success', 'Entry deleted');
         } catch (err) {
             showToast('error', 'Failed to delete entry');
