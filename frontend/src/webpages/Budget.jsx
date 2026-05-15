@@ -514,7 +514,13 @@ const Budget = () => {
                                         {entries.map(entry => (
                                             <tr key={entry.id}>
                                                 <td className="date-cell">
-                                                    {new Date(entry.paymentDate || entry.submittedAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
+                                                    {entry.paymentDate ? (
+                                                        new Date(entry.paymentDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})
+                                                    ) : (
+                                                        <span style={{fontSize: '0.85em', color: 'var(--lp-grey)'}}>
+                                                            Added: {new Date(entry.submittedAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td>
                                                     <div className="entry-desc">
