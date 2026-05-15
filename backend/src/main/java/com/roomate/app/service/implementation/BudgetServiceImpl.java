@@ -8,6 +8,7 @@ import com.roomate.app.entities.budget.BudgetEntryEntity;
 import com.roomate.app.entities.budget.UserBudgetEntity;
 import com.roomate.app.exceptions.UserApiError;
 import com.roomate.app.repository.budget.BudgetEntryRepository;
+import com.roomate.app.repository.budget.ReceiptStorageRepository;
 import com.roomate.app.repository.budget.UserBudgetRepository;
 import com.roomate.app.service.BudgetService;
 import org.springframework.stereotype.Service;
@@ -28,19 +29,29 @@ public class BudgetServiceImpl implements BudgetService {
 
     private final BudgetEntryRepository budgetEntryRepository;
     private final UserBudgetRepository userBudgetRepository;
+    private final ReceiptStorageRepository receiptStorageRepository;
 
-    public BudgetServiceImpl(BudgetEntryRepository budgetEntryRepository, UserBudgetRepository userBudgetRepository) {
+    public BudgetServiceImpl(BudgetEntryRepository budgetEntryRepository, 
+                             UserBudgetRepository userBudgetRepository,
+                             ReceiptStorageRepository receiptStorageRepository) {
         this.budgetEntryRepository = budgetEntryRepository;
         this.userBudgetRepository = userBudgetRepository;
+        this.receiptStorageRepository = receiptStorageRepository;
     }
 
     private BudgetEntryDto mapToDto(BudgetEntryEntity entity) {
+        String s3Url = receiptStorageRepository.findByReceiptId(entity.getId())
+                .map(storage -> storage.getFileUrl())
+                .orElse(null);
+
         return new BudgetEntryDto(
                 entity.getId(),
                 entity.getAmount(),
                 entity.getCategory(),
                 entity.getDescription(),
                 entity.getStatus(),
+                s3Url,
+                entity.getPaymentDate(),
                 entity.getSubmittedAt()
         );
     }
@@ -109,7 +120,8 @@ public class BudgetServiceImpl implements BudgetService {
                 request.amount,
                 request.category != null ? request.category : "Other",
                 request.description,
-                request.status
+                request.status,
+                request.paymentDate != null ? request.paymentDate : Instant.now()
         );
         BudgetEntryEntity saved = budgetEntryRepository.save(entity);
         return mapToDto(saved);

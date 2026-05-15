@@ -73,6 +73,36 @@ const PlusIcon = () => (
 );
 
 /* ── Component ───────────────────────────── */
+const ExpandableDescription = ({ text }) => {
+    const [expanded, setExpanded] = useState(false);
+    
+    if (!text) return null;
+    
+    if (text.length <= 40) {
+        return <span>{text}</span>;
+    }
+    
+    return (
+        <span>
+            {expanded ? text : `${text.substring(0, 40)}...`}
+            <button 
+                onClick={() => setExpanded(!expanded)} 
+                style={{
+                    background: 'none', 
+                    border: 'none', 
+                    color: 'var(--lp-blue)', 
+                    fontSize: '12px', 
+                    cursor: 'pointer', 
+                    padding: '0 0 0 5px',
+                    textDecoration: 'underline'
+                }}
+            >
+                {expanded ? 'Show less' : 'See more'}
+            </button>
+        </span>
+    );
+};
+
 const Budget = () => {
     // File upload state
     const [files, setFiles]       = useState([]);
@@ -101,7 +131,8 @@ const Budget = () => {
         amount: '',
         category: 'Other',
         description: '',
-        status: ''
+        status: '',
+        paymentDate: ''
     });
 
     const showToast = (type, message) => {
@@ -208,10 +239,11 @@ const Budget = () => {
         try {
             await apiClient.post('/api/budget/entries', {
                 ...newEntry,
-                amount: parseFloat(newEntry.amount)
+                amount: parseFloat(newEntry.amount),
+                paymentDate: newEntry.paymentDate ? new Date(newEntry.paymentDate).toISOString() : null
             });
             setShowManualEntry(false);
-            setNewEntry({ amount: '', category: 'Other', description: '', status: '' });
+            setNewEntry({ amount: '', category: 'Other', description: '', status: '', paymentDate: '' });
             loadBudgetData();
             showToast('success', 'Entry added');
         } catch (err) {
@@ -446,6 +478,15 @@ const Budget = () => {
                                         onChange={e => setNewEntry({...newEntry, status: e.target.value})}
                                     />
                                 </div>
+                                <div className="form-group">
+                                    <label>Payment Date (Optional)</label>
+                                    <input 
+                                        type="date"
+                                        className="form-input"
+                                        value={newEntry.paymentDate}
+                                        onChange={e => setNewEntry({...newEntry, paymentDate: e.target.value})}
+                                    />
+                                </div>
                                 <div className="form-actions">
                                     <button type="button" className="btn btn-secondary" onClick={() => setShowManualEntry(false)}>Cancel</button>
                                     <button type="submit" className="btn btn-primary">Save Entry</button>
@@ -473,10 +514,17 @@ const Budget = () => {
                                         {entries.map(entry => (
                                             <tr key={entry.id}>
                                                 <td className="date-cell">
-                                                    {new Date(entry.submittedAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
+                                                    {new Date(entry.paymentDate || entry.submittedAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
                                                 </td>
                                                 <td>
-                                                    <div className="entry-desc">{entry.description}</div>
+                                                    <div className="entry-desc">
+                                                        <ExpandableDescription text={entry.description} />
+                                                        {entry.s3Url && (
+                                                            <a href={entry.s3Url} target="_blank" rel="noopener noreferrer" style={{marginLeft: '8px', fontSize: '12px', color: 'var(--lp-blue)', textDecoration: 'underline'}}>
+                                                                [View Receipt]
+                                                            </a>
+                                                        )}
+                                                    </div>
                                                     <div className="entry-status">{entry.status}</div>
                                                 </td>
                                                 <td>

@@ -38,6 +38,9 @@ public class BudgetEntryEntity {
 
     private String status;
 
+    @Column(name = "payment_date")
+    private Instant paymentDate;
+
     @Column(name = "submitted_at", nullable = false)
     private Instant submittedAt;
 
@@ -48,12 +51,13 @@ public class BudgetEntryEntity {
     }
 
     public BudgetEntryEntity(String userId, BigDecimal amount, String category,
-            String description, String status) {
+            String description, String status, Instant paymentDate) {
         this.userId = userId;
         this.amount = amount;
         this.category = category;
         this.description = description;
         this.status = status;
+        this.paymentDate = paymentDate;
         this.submittedAt = Instant.now();
         this.updatedAt = Instant.now();
     }

@@ -7,4 +7,5 @@ public class CreateBudgetEntryRequest {
     public String category;
     public String description;
     public String status;
+    public java.time.Instant paymentDate;
 }
