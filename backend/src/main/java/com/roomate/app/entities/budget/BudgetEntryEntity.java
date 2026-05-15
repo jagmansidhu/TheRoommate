@@ -33,7 +33,7 @@ public class BudgetEntryEntity {
     @Column(nullable = false)
     private String category;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "text")
     private String description;
 
     private String status;
