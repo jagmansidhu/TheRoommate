@@ -293,138 +293,142 @@ const Budget = () => {
                 </div>
             )}
 
-            <div className="budget-dashboard">
-                {/* ── Left Column: Upload & Stats ── */}
-                <div className="budget-col-left">
+            <div className="budget-dashboard-vertical">
+                {/* ── Top Row: Upload & Stats ── */}
+                <div className="budget-top-row">
                     
-                    {/* Compact Upload Card */}
-                    <div className="upload-card compact">
-                        <h2 className="upload-card-title">Add Documents</h2>
-                        <div
-                            className={`upload-zone compact-zone${dragging ? ' dragging' : ''}`}
-                            onDragOver={onDragOver}
-                            onDragLeave={onDragLeave}
-                            onDrop={onDrop}
-                            onClick={() => inputRef.current?.click()}
-                            role="button"
-                            tabIndex={0}
-                        >
-                            <input
-                                ref={inputRef}
-                                type="file"
-                                id="budget-file-input"
-                                multiple
-                                accept={ACCEPTED_EXT}
-                                onChange={onInputChange}
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                            <div className="upload-zone-icon"><UploadIcon /></div>
-                            <div className="upload-zone-label">
-                                <strong>{dragging ? 'Drop files' : 'Drag & drop'}</strong>
-                                <span>or click to browse</span>
-                            </div>
-                        </div>
-
-                        {files.length > 0 && (
-                            <div className="file-list compact">
-                                {files.map((file, idx) => (
-                                    <div className="file-item" key={idx}>
-                                        <div className="file-item-info">
-                                            <div className="file-item-name">{file.name}</div>
-                                            <div className="file-item-size">{formatBytes(file.size)}</div>
-                                        </div>
-                                        <button className="file-item-remove" onClick={() => removeFile(idx)} disabled={uploading}>
-                                            <RemoveIcon />
-                                        </button>
-                                    </div>
-                                ))}
-                                <button className="btn btn-primary btn-sm mt-3" onClick={handleUpload} disabled={uploading} style={{width: '100%'}}>
-                                    {uploading ? 'Uploading…' : 'Upload & Analyze'}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Stats Overview */}
-                    {stats && (
-                        <div className="budget-stats-card">
-                            <div className="stats-header">
-                                <h2 className="upload-card-title">Overview</h2>
-                                <div className="month-selector">
-                                    <select value={filterMonth} onChange={(e) => setFilterMonth(parseInt(e.target.value))}>
-                                        {Array.from({length: 12}, (_, i) => (
-                                            <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('default', { month: 'short' })}</option>
-                                        ))}
-                                    </select>
-                                    <select value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))}>
-                                        {[currentDate.getFullYear() - 1, currentDate.getFullYear(), currentDate.getFullYear() + 1].map(y => (
-                                            <option key={y} value={y}>{y}</option>
-                                        ))}
-                                    </select>
+                    {/* Add Documents Card */}
+                    <div className="budget-top-col">
+                        <div className="upload-card compact">
+                            <h2 className="upload-card-title">Add Documents</h2>
+                            <div
+                                className={`upload-zone compact-zone${dragging ? ' dragging' : ''}`}
+                                onDragOver={onDragOver}
+                                onDragLeave={onDragLeave}
+                                onDrop={onDrop}
+                                onClick={() => inputRef.current?.click()}
+                                role="button"
+                                tabIndex={0}
+                            >
+                                <input
+                                    ref={inputRef}
+                                    type="file"
+                                    id="budget-file-input"
+                                    multiple
+                                    accept={ACCEPTED_EXT}
+                                    onChange={onInputChange}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                                <div className="upload-zone-icon"><UploadIcon /></div>
+                                <div className="upload-zone-label">
+                                    <strong>{dragging ? 'Drop files' : 'Drag & drop'}</strong>
+                                    <span>or click to browse</span>
                                 </div>
                             </div>
 
-                            <div className="budget-target">
-                                <div className="budget-target-header">
-                                    <span>Monthly Budget</span>
-                                    {editingBudget ? (
-                                        <div className="budget-edit-form">
-                                            <span className="currency-symbol">$</span>
-                                            <input 
-                                                type="number" 
-                                                value={budgetInput} 
-                                                onChange={(e) => setBudgetInput(e.target.value)}
-                                                className="form-input budget-input"
-                                            />
-                                            <button onClick={updateBudgetSetting} className="btn btn-sm btn-primary">Save</button>
-                                            <button onClick={() => setEditingBudget(false)} className="btn btn-sm btn-secondary">Cancel</button>
-                                        </div>
-                                    ) : (
-                                        <div className="budget-target-value">
-                                            {formatCurrency(stats.monthlyBudget)}
-                                            <button onClick={() => setEditingBudget(true)} className="icon-btn" aria-label="Edit budget"><EditIcon /></button>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="budget-progress-container">
-                                    <div className="budget-progress-bar">
-                                        <div 
-                                            className="budget-progress-fill" 
-                                            style={{
-                                                width: `${stats.monthlyBudget > 0 ? Math.min(100, (stats.totalSpent / stats.monthlyBudget) * 100) : 0}%`,
-                                                backgroundColor: getProgressColor(stats.totalSpent, stats.monthlyBudget)
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="budget-progress-labels">
-                                        <span>{formatCurrency(stats.totalSpent)} spent</span>
-                                        <span>{formatCurrency(stats.remainingBudget)} left</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {Object.keys(stats.spentByCategory || {}).length > 0 && (
-                                <div className="category-breakdown">
-                                    <h3>By Category</h3>
-                                    <div className="category-list">
-                                        {Object.entries(stats.spentByCategory)
-                                            .sort(([,a], [,b]) => b - a)
-                                            .map(([cat, amount]) => (
-                                            <div className="category-row" key={cat}>
-                                                <span className="category-name">{cat}</span>
-                                                <span className="category-amount">{formatCurrency(amount)}</span>
+                            {files.length > 0 && (
+                                <div className="file-list compact">
+                                    {files.map((file, idx) => (
+                                        <div className="file-item" key={idx}>
+                                            <div className="file-item-info">
+                                                <div className="file-item-name">{file.name}</div>
+                                                <div className="file-item-size">{formatBytes(file.size)}</div>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <button className="file-item-remove" onClick={() => removeFile(idx)} disabled={uploading}>
+                                                <RemoveIcon />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button className="btn btn-primary btn-sm mt-3" onClick={handleUpload} disabled={uploading} style={{width: '100%'}}>
+                                        {uploading ? 'Uploading…' : 'Upload & Analyze'}
+                                    </button>
                                 </div>
                             )}
                         </div>
-                    )}
+                    </div>
+
+                    {/* Stats Overview */}
+                    <div className="budget-top-col">
+                        {stats && (
+                            <div className="budget-stats-card">
+                                <div className="stats-header">
+                                    <h2 className="upload-card-title">Overview</h2>
+                                    <div className="month-selector">
+                                        <select value={filterMonth} onChange={(e) => setFilterMonth(parseInt(e.target.value))}>
+                                            {Array.from({length: 12}, (_, i) => (
+                                                <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('default', { month: 'short' })}</option>
+                                            ))}
+                                        </select>
+                                        <select value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))}>
+                                            {[currentDate.getFullYear() - 1, currentDate.getFullYear(), currentDate.getFullYear() + 1].map(y => (
+                                                <option key={y} value={y}>{y}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="budget-target">
+                                    <div className="budget-target-header">
+                                        <span>Monthly Budget</span>
+                                        {editingBudget ? (
+                                            <div className="budget-edit-form">
+                                                <span className="currency-symbol">$</span>
+                                                <input 
+                                                    type="number" 
+                                                    value={budgetInput} 
+                                                    onChange={(e) => setBudgetInput(e.target.value)}
+                                                    className="form-input budget-input"
+                                                />
+                                                <button onClick={updateBudgetSetting} className="btn btn-sm btn-primary">Save</button>
+                                                <button onClick={() => setEditingBudget(false)} className="btn btn-sm btn-secondary">Cancel</button>
+                                            </div>
+                                        ) : (
+                                            <div className="budget-target-value">
+                                                {formatCurrency(stats.monthlyBudget)}
+                                                <button onClick={() => setEditingBudget(true)} className="icon-btn" aria-label="Edit budget"><EditIcon /></button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="budget-progress-container">
+                                        <div className="budget-progress-bar">
+                                            <div 
+                                                className="budget-progress-fill" 
+                                                style={{
+                                                    width: `${stats.monthlyBudget > 0 ? Math.min(100, (stats.totalSpent / stats.monthlyBudget) * 100) : 0}%`,
+                                                    backgroundColor: getProgressColor(stats.totalSpent, stats.monthlyBudget)
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="budget-progress-labels">
+                                            <span>{formatCurrency(stats.totalSpent)} spent</span>
+                                            <span>{formatCurrency(stats.remainingBudget)} left</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {Object.keys(stats.spentByCategory || {}).length > 0 && (
+                                    <div className="category-breakdown">
+                                        <h3>By Category</h3>
+                                        <div className="category-list">
+                                            {Object.entries(stats.spentByCategory)
+                                                .sort(([,a], [,b]) => b - a)
+                                                .map(([cat, amount]) => (
+                                                <div className="category-row" key={cat}>
+                                                    <span className="category-name">{cat}</span>
+                                                    <span className="category-amount">{formatCurrency(amount)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* ── Right Column: Entries ── */}
-                <div className="budget-col-right">
+                {/* ── Bottom Row: Entries ── */}
+                <div className="budget-bottom-row">
                     <div className="entries-card">
                         <div className="entries-header">
                             <h2 className="upload-card-title mb-0">Recent Entries</h2>
@@ -514,13 +518,7 @@ const Budget = () => {
                                         {entries.map(entry => (
                                             <tr key={entry.id}>
                                                 <td className="date-cell">
-                                                    {entry.paymentDate ? (
-                                                        new Date(entry.paymentDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})
-                                                    ) : (
-                                                        <span style={{fontSize: '0.85em', color: 'var(--lp-grey)'}}>
-                                                            Added: {new Date(entry.submittedAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
-                                                        </span>
-                                                    )}
+                                                    {new Date(entry.paymentDate || entry.submittedAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
                                                 </td>
                                                 <td>
                                                     <div className="entry-desc">

@@ -337,31 +337,38 @@
 }
 
 /* ── Budget Dashboard Layout ───────────────── */
-.budget-dashboard {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-}
-
-.budget-col-left {
-  flex: 0 0 320px;
+.budget-dashboard-vertical {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-.budget-col-right {
+.budget-top-row {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.budget-top-col {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure child cards stretch fully */
+.budget-top-col > .upload-card,
+.budget-top-col > .budget-stats-card {
+  flex: 1;
+}
+
+.budget-bottom-row {
+  width: 100%;
 }
 
 @media (max-width: 900px) {
-  .budget-dashboard {
+  .budget-top-row {
     flex-direction: column;
-  }
-  .budget-col-left, .budget-col-right {
-    flex: none;
-    width: 100%;
   }
 }
 
