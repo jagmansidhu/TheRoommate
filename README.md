@@ -1,8 +1,12 @@
+
 ## TheRoommate
 Being with roommates can be hard, especially when you are handling everything. Reminding your roommates to do chores or pay utilities month after month can get tiring.
 TheRoommate is here to solve all these problems and more. You are able to setup meetings with roommates, send automatic emails, automatically set up chore and utility reminders all in one app. 
 
 This app also comes with landlords in mind, where landlords will be able to communicate with roommates in real time and be able to remind the roommates of anything. In the future we will be adding a landlord section for all financial tracking and a secure place to store all documennts/correspondence tied to each room allowing for full tracking of all properties!
+
+### Current Production Architecture
+<img width="1256" height="770" alt="Screenshot 2026-05-24 at 16 11 02" src="https://github.com/user-attachments/assets/d9679cb7-8556-4426-b420-0461e754e27d" />
 
 ### The Flow 
 The image below includes the current flow of our website, current features, what needs updating and what we have planned to build in the future.
