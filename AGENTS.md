@@ -1,40 +1,47 @@
 # AGENTS
 
+Canonical AI coding guidance for this repository. Keep this file as the source of truth; `CLAUDE.md` points here.
+
 ## Scope
-- Monorepo with Spring Boot backend (`backend`), CRA React frontend (`frontend`), and deployment assets (`deploy`).
-- Primary API boundary is backend REST under `/user/**` (auth/public-ish) and `/api/**` (authenticated) in `backend/src/main/java/com/roomate/app/config/security/SecurityConfig.java`.
+- Monorepo with Spring Boot backend (`backend`), CRA frontend (`frontend`), and deployment assets (`deploy`).
+- API boundary: `/user/**` (auth/public-ish) vs `/api/**` (authenticated) in `backend/src/main/java/com/roomate/app/config/security/SecurityConfig.java`.
 
-## Architecture Snapshot
-- Backend layering is consistent: `controller -> service -> repository -> entities`; start at `backend/src/main/java/com/roomate/app/StartOneApplication.java`.
-- Core room domain uses `RoomEntity` + `RoomMemberEntity` (`backend/src/main/java/com/roomate/app/entities/room`) and `RoomServiceImplt` orchestration (`backend/src/main/java/com/roomate/app/service/implementation/RoomServiceImplt.java`).
-- Room lifecycle constraints are coded server-side: max 3 rooms per user, max 6 members per room, role-gated membership actions (`RoomServiceImplt`).
-- Frontend app state is context-heavy in `frontend/src/App.jsx`: auth, current user, and shared app data are fetched once and cached; feature pages are expected to mutate cache helpers instead of refetching indiscriminately.
-- HTTP calls should go through `frontend/src/apiClient.js` (`withCredentials: true`, `REACT_APP_BASE_API_URL`), matching cookie-based JWT behavior.
+## Big-Picture Architecture
+- Backend layering is stable: `controller -> service -> repository -> entities`; app entry is `backend/src/main/java/com/roomate/app/StartOneApplication.java`.
+- Core room domain is orchestrated in `backend/src/main/java/com/roomate/app/service/implementation/RoomServiceImplt.java` with `RoomEntity` and `RoomMemberEntity`.
+- Room rules are enforced server-side (not UI): max 3 rooms/user, max 6 members/room, role-gated membership actions.
+- Frontend state is centralized in `frontend/src/App.jsx`; pages are expected to mutate cached app data helpers rather than refetching broadly.
+- Use `frontend/src/apiClient.js` for HTTP (`withCredentials: true`, base URL from `REACT_APP_BASE_API_URL`).
 
-## Auth + Request Flow
-- Login writes both response token and `jwt` HttpOnly cookie (`/user/login` in `backend/src/main/java/com/roomate/app/controller/AuthController.java`).
-- `JwtAuthenticationFilter` accepts either `Authorization: Bearer ...` or `jwt` cookie (`backend/src/main/java/com/roomate/app/config/security/JwtAuthenticationFilter.java`).
-- Frontend boot auth check is `/user/status`; user profile fetch is `/api/get-user`; profile completion check is `/api/profile-status` (`frontend/src/App.jsx`).
-- `useProfileCompletionRedirect` currently uses Auth0 hooks (`frontend/src/component/userProfileRedirection.jsx`), while backend auth is JWT-cookie based; treat this area as mixed/legacy behavior.
+## Auth and Request Flow
+- `/user/login` (`AuthController`) returns token and sets HttpOnly `jwt` cookie.
+- `JwtAuthenticationFilter` accepts either `Authorization: Bearer <token>` or `jwt` cookie.
+- Frontend boot path is `/user/status` -> `/api/get-user` -> `/api/profile-status` (see `frontend/src/App.jsx`).
+- `frontend/src/component/userProfileRedirection.jsx` still uses Auth0 hooks; treat this as mixed/legacy auth context.
 
 ## Developer Workflows
-- Backend CI runs in `backend` with JDK 21 and `mvn -B package` (`.github/workflows/maven.yml`).
-- Local backend stack with Postgres + Redis is defined in `backend/docker-compose.yml` (API on `8085`, DB mapped to host `5433`).
-- Production-like compose is `deploy/docker-compose.production.yml` with env contract in `deploy/env.example`; deployment guide is `deploy/README.md`.
-- Frontend is Create React App (`frontend/package.json` scripts: `start`, `build`, `test`); API base URL must be set at build time for Docker (`frontend/Dockerfile`).
-- Backend tests use profile `test` + H2 (`backend/src/test/resources/application-test.yml`) and are organized as unit/integration/E2E under `backend/src/test/java/com/roomate/app`.
+- Backend local: `cd backend && mvn spring-boot:run` (requires Postgres + Redis).
+- Backend docker stack: `cd backend && docker compose up` (API 8085, Postgres mapped to 5433).
+- Backend tests: `cd backend && mvn test` (H2 + `test` profile from `backend/src/test/resources/application-test.yml`).
+- Frontend local: `cd frontend && npm start`; build: `npm run build`; tests: `npm test`.
+- Production-like local run: `cd deploy && cp env.example .env && docker compose -f docker-compose.production.yml up --build`.
 
 ## Project-Specific Conventions
-- Service implementation naming is not fully uniform (`*Implt`, `*Impl`, `UserServiceImplementation`); match existing class names instead of normalizing during feature work.
-- Controllers often return `ResponseEntity` with broad `try/catch` and map domain errors via `UserApiError` (example: `RoomController`).
-- DTO-first API payloads are standard in controllers (`backend/src/main/java/com/roomate/app/dto`); keep entities out of external contracts unless an endpoint already returns entity types.
-- Frontend role checks use shared constants in `frontend/src/constants/roles.jsx`; prefer these over string literals.
-- AppData context in `frontend/src/App.jsx` distinguishes eager loads (rooms/chores/utilities) from lazy events; preserve this pattern when adding pages.
+- Service implementation names are intentionally inconsistent (`*Implt`, `*Impl`, `UserServiceImplementation`); match existing naming in touched area.
+- Controllers commonly use broad `try/catch` and return `ResponseEntity`; domain errors are often mapped via `UserApiError`.
+- Prefer DTO-first contracts in `backend/src/main/java/com/roomate/app/dto`; avoid exposing entities unless an endpoint already does.
+- Frontend role checks should use `frontend/src/constants/roles.jsx` constants, not raw role strings.
+- Preserve eager vs lazy app-data loading behavior in `frontend/src/App.jsx` when adding UI data fetches.
 
 ## Integrations and Operational Notes
-- Rate limiting uses Bucket4j + Redis and intentionally fails open when Redis is unavailable (`backend/src/main/java/com/roomate/app/config/security/RateLimitingFilter.java`, `backend/src/main/java/com/roomate/app/config/RedisRateLimitConfig.java`).
-- Email flows require SMTP vars (`EMAIL_*`) and are used for room invites + verification (`RoomInviteMailSender`, `UserServiceImplementation`).
-- WebSocket chat is scaffolded but currently inactive: backend config is fully commented (`backend/src/main/java/com/roomate/app/websocket/WebSocketConfig.java`), frontend `Message` page is placeholder (`frontend/src/webpages/Message.jsx`).
-- Data seeding (`backend/src/main/java/com/roomate/app/config/DataSeeder.java`) inserts a test user/room on startup when not already present; account for this when debugging duplicated local data.
-- JPA is currently `ddl-auto: update` in main config (`backend/src/main/resources/application.yml`) with Flyway disabled; schema drift is possible across environments.
+- Rate limiting is Bucket4j + Redis and intentionally fail-open when Redis is down (`RateLimitingFilter`, `RedisRateLimitConfig`).
+- Email invite/verification relies on SMTP env vars (`EMAIL_*`) via `RoomInviteMailSender` and `UserServiceImplementation`.
+- WebSocket chat is scaffolded but inactive (`backend/src/main/java/com/roomate/app/websocket/WebSocketConfig.java` is commented; `frontend/src/webpages/Message.jsx` is placeholder).
+- `DataSeeder` may auto-insert local test user/room data; account for this when debugging duplicate-looking data.
+- JPA is `ddl-auto: update` and Flyway is disabled, so schema drift between environments is possible.
+
+## Environment Variables (high-impact)
+- Backend required: `POSTGRESQL_*`, `JWT_KEY` (>=32 chars), `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_ID`, `EMAIL_PASSWORD`.
+- Backend optional: `ACTIVE_PROFILE` (`prod`/`dev`), `CONTAINER_PORT` (default `8085`).
+- Frontend build-time: `REACT_APP_BASE_API_URL`.
 
