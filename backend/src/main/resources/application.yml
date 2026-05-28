@@ -103,3 +103,9 @@ management:
       enabled: true
     readinessState:
       enabled: true
+
+budget:
+  datasource:
+    url: jdbc:postgresql://${BUDGET_DB_HOST}:${BUDGET_DB_PORT}/${BUDGET_DB_NAME}
+    username: ${BUDGET_DB_USERNAME}
+    password: ${BUDGET_DB_PASSWORD}

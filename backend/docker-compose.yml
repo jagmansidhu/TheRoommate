@@ -26,6 +26,12 @@ services:
       - POSTGRESQL_DATABASE=daroomate
       - POSTGRESQL_USERNAME=postgres
       - POSTGRESQL_PASSWORD=password
+      # ── Budget Database ──
+      - BUDGET_DB_HOST=budgetdb
+      - BUDGET_DB_PORT=5432
+      - BUDGET_DB_NAME=daroomate_budget
+      - BUDGET_DB_USERNAME=postgres
+      - BUDGET_DB_PASSWORD=password
       # ── Application ──
       - ACTIVE_PROFILE=dev
       - CONTAINER_PORT=${BACKEND_PORT:-8085}
@@ -77,6 +83,25 @@ services:
     networks:
       - roomate-network
 
+  budgetdb:
+    container_name: roomate-budget-db
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: daroomate_budget
+    ports:
+      - "5434:5432"
+    volumes:
+      - budget_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - roomate-network
+
   redis:
     container_name: roomate-redis
     image: redis:7-alpine
@@ -92,6 +117,7 @@ services:
 
 volumes:
   postgres_data:
+  budget_postgres_data:
 
 networks:
   roomate-network:
