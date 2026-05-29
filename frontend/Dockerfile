@@ -30,7 +30,6 @@ RUN rm -rf /etc/nginx/conf.d/*
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built app from build stage
-COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build .
 
 
@@ -39,5 +38,5 @@ RUN chown -R appuser:appgroup /usr/share/nginx/html /var/cache/nginx /var/log/ng
     chown appuser:appgroup /var/run/nginx.pid
 
 USER appuser
-EXPOSE 8080
+EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

@@ -53,7 +53,8 @@ JWT_KEY=<your-jwt-secret-min-32-chars>
 ACTIVE_PROFILE=prod
 CONTAINER_PORT=${{PORT}}
 
-# Email (SMTP)
+# Email (SMTP) - Optional
+# If not configured, email notifications will be disabled (no-op)
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_ID=<your-email>
@@ -99,10 +100,10 @@ Railway automatically deploys when you push to your repository. You can also tri
 | `JWT_KEY`             | Yes      | JWT signing secret (32+ chars) | `your-super-secret-key-here-32chars` |
 | `ACTIVE_PROFILE`      | No       | Spring profile                 | `prod`                               |
 | `CONTAINER_PORT`      | No       | Server port (default: 8085)    | `8085`                               |
-| `EMAIL_HOST`          | Yes      | SMTP host                      | `smtp.gmail.com`                     |
-| `EMAIL_PORT`          | Yes      | SMTP port                      | `587`                                |
-| `EMAIL_ID`            | Yes      | SMTP username                  | `app@example.com`                    |
-| `EMAIL_PASSWORD`      | Yes      | SMTP password/app password     | `****`                               |
+| `EMAIL_HOST`          | No       | SMTP host (optional)           | `smtp.gmail.com`                     |
+| `EMAIL_PORT`          | No       | SMTP port (optional; def: 25)  | `587`                                |
+| `EMAIL_ID`            | No       | SMTP username (optional)       | `app@example.com`                    |
+| `EMAIL_PASSWORD`      | No       | SMTP password (optional)       | `****`                               |
 
 ### Frontend Variables
 
