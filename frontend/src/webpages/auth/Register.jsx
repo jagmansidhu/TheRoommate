@@ -1,7 +1,6 @@
 import apiClient from '../../apiClient';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import '../../styling/Components.css';
 
 const Register = () => {

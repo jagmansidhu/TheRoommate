@@ -1,12 +1,10 @@
 import apiClient from '../apiClient';
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useUser, useAppData } from '../App';
 import '../styling/Calendar.css';
 
 const Calendar = () => {
     const { user: userData } = useUser();
-    const userEmail = userData?.email || userData?.username || null;
     const {
         rooms,
         userChores: chores,

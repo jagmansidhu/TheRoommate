@@ -214,14 +214,10 @@ const Budget = () => {
         const formData = new FormData();
         files.forEach(f => formData.append('files[]', f, f.name));
 
-        const jwt = localStorage.getItem('token');
-        if (!jwt) console.warn('No JWT token found — webhook may return 401');
-        const headers = jwt ? { Authorization: `Bearer ${jwt}` } : {};
 
         try {
             const res = await fetch(WEBHOOK_URL, {
                 method: 'POST',
-                headers,
                 body: formData,
             });
 
