@@ -29,7 +29,6 @@ RUN rm -rf /etc/nginx/conf.d/* && rm -f /etc/nginx/nginx.conf
 
 # Create custom nginx.conf for non-root user
 RUN echo 'pid /tmp/nginx.pid;' > /etc/nginx/nginx.conf && \
-    echo 'user appuser appgroup;' >> /etc/nginx/nginx.conf && \
     echo 'worker_processes auto;' >> /etc/nginx/nginx.conf && \
     echo 'error_log /tmp/nginx_error.log warn;' >> /etc/nginx/nginx.conf && \
     echo 'events { worker_connections 1024; }' >> /etc/nginx/nginx.conf && \
@@ -50,4 +49,4 @@ RUN mkdir -p /var/run/nginx /var/cache/nginx /var/log/nginx /tmp && \
 
 USER appuser
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh", "-c", "envsubst '${PORT}' < /etc/nginx/conf.d/default.conf > /tmp/default.conf && mv /tmp/default.conf /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
