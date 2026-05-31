@@ -132,12 +132,6 @@ public class AuthController {
             }
         }
 
-        if (token == null || token.isEmpty()) {
-            String authHeader = request.getHeader("Authorization");
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                token = authHeader.substring(7);
-            }
-        }
 
         if (token == null || token.isEmpty() || !token.contains(".")) {
             return ResponseEntity.status(401).body("Invalid or missing token");

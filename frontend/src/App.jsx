@@ -79,10 +79,7 @@ const AuthProvider = ({children}) => {
         checkAuthStatus();
     }, []);
 
-    const login = (token) => {
-        if (token) {
-            localStorage.setItem('token', token);
-        }
+    const login = () => {
         localStorage.setItem('appAuth', 'true');
         setIsAuthenticated(true);
     };
@@ -94,7 +91,7 @@ const AuthProvider = ({children}) => {
             console.error('Logout failed', err);
         }
         
-        ['token', 'appAuth', 'appUser', 'appRooms', 'appChores', 'appUtilities', 'appEvents', 'appRoomData'].forEach(k => localStorage.removeItem(k));
+        ['appAuth', 'appUser', 'appRooms', 'appChores', 'appUtilities', 'appEvents', 'appRoomData'].forEach(k => localStorage.removeItem(k));
         setIsAuthenticated(false);
         window.location.href = '/';
     };

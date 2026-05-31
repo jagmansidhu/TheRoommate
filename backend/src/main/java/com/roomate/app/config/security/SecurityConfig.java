@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -27,12 +28,14 @@ public class SecurityConfig {
             RateLimitingFilter rateLimitingFilter)
             throws Exception {
         http
-                // .csrf(csrf -> csrf
-                // .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                // .ignoringRequestMatchers("/user/login", "/user/register","/user/logout",
-                // "/user/status")
-                // )
-                .csrf(csrf -> csrf.disable())
+                // CSRF Protection: Double-submit cookie pattern
+                // Token stored in XSRF-TOKEN cookie and validated against X-CSRF-TOKEN header
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        // Exclude login/register/status from CSRF (they're unauthenticated public endpoints)
+                        .ignoringRequestMatchers("/user/login", "/user/register", "/user/logout", "/user/status", "/user/verify")
+                        .ignoringRequestMatchers("/actuator/**", "/ws/**")
+                )
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exceptionHandling -> exceptionHandling

@@ -1,7 +1,6 @@
 import apiClient from '../../apiClient';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../../App';
 import '../../styling/Components.css';
 
@@ -25,7 +24,7 @@ const Login = () => {
             );
 
             if (response.status === 200) {
-                login(response.data.token);
+                login();
                 navigate('/dashboard');
             } else {
                 setError('Invalid login credentials');

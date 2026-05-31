@@ -15,8 +15,14 @@ Canonical AI coding guidance for this repository. Keep this file as the source o
 
 ## Auth and Request Flow
 - `/user/login` (`AuthController`) returns token and sets HttpOnly `jwt` cookie.
-- `JwtAuthenticationFilter` accepts either `Authorization: Bearer <token>` or `jwt` cookie.
+- `JwtAuthenticationFilter` validates JWT from `jwt` cookie only (stateless, no bearer fallback).
+- **CSRF Protection**: Enabled via double-submit cookie pattern (`CookieCsrfTokenRepository`).
+  - Token stored in public `XSRF-TOKEN` cookie, sent via `X-CSRF-TOKEN` header on state-changing requests.
+  - See `CSRF_PROTECTION.md` for implementation details.
+  - Excluded endpoints: `/user/login`, `/user/register`, `/user/logout`, `/user/status`, `/user/verify`.
 - Frontend boot path is `/user/status` -> `/api/get-user` -> `/api/profile-status` (see `frontend/src/App.jsx`).
+  - `/user/status` GET triggers CSRF token generation on client.
+- `apiClient.js` automatically adds CSRF token to POST/PUT/DELETE/PATCH requests via interceptor.
 - `frontend/src/component/userProfileRedirection.jsx` still uses Auth0 hooks; treat this as mixed/legacy auth context.
 
 ## Developer Workflows
@@ -24,7 +30,7 @@ Canonical AI coding guidance for this repository. Keep this file as the source o
 - Backend docker stack: `cd backend && docker compose up` (API 8085, Postgres mapped to 5433).
 - Backend tests: `cd backend && mvn test` (H2 + `test` profile from `backend/src/test/resources/application-test.yml`).
 - Frontend local: `cd frontend && npm start`; build: `npm run build`; tests: `npm test`.
-- Production-like local run: `cd deploy && cp env.example .env && docker compose -f docker-compose.production.yml up --build`.
+- Production: deployed via Railway using `frontend/railway.json` and `backend/railway.json` (each pointing to their own Dockerfile).
 
 ## Project-Specific Conventions
 - Service implementation names are intentionally inconsistent (`*Implt`, `*Impl`, `UserServiceImplementation`); match existing naming in touched area.
@@ -34,7 +40,8 @@ Canonical AI coding guidance for this repository. Keep this file as the source o
 - Preserve eager vs lazy app-data loading behavior in `frontend/src/App.jsx` when adding UI data fetches.
 
 ## Integrations and Operational Notes
-- Rate limiting is Bucket4j + Redis and intentionally fail-open when Redis is down (`RateLimitingFilter`, `RedisRateLimitConfig`).
+- **Security**: CSRF protection enabled via double-submit cookie pattern (see `CSRF_PROTECTION.md`); rate limiting is Bucket4j + Redis (fail-open when Redis down).
+- Rate limiting is `RateLimitingFilter`, `RedisRateLimitConfig`; intentionally fail-open when Redis is down.
 - Email invite/verification relies on SMTP env vars (`EMAIL_*`) via `RoomInviteMailSender` and `UserServiceImplementation`.
 - WebSocket chat is scaffolded but inactive (`backend/src/main/java/com/roomate/app/websocket/WebSocketConfig.java` is commented; `frontend/src/webpages/Message.jsx` is placeholder).
 - `DataSeeder` may auto-insert local test user/room data; account for this when debugging duplicate-looking data.

@@ -35,18 +35,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //            System.out.println("No cookies found in request.");
 //        }
 
-
-        final String authHeader = request.getHeader("Authorization");
-        final String token;
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-        } else {
-            token = getJwtFromCookies(request);
-            if (token == null) {
-                chain.doFilter(request, response);
-                return;
-            }
+        final String token = getJwtFromCookies(request);
+        if (token == null) {
+            chain.doFilter(request, response);
+            return;
         }
 
         final String username = jwtService.extractUsername(token);

@@ -16,10 +16,6 @@ import DeleteConfirmModal from './modals/DeleteConfirmModal';
 const RoomDetailsPage = ({
                              onClose, room, onLeaveRoom, onDeleteRoom,
                          }) => {
-    const normalizeUtility = (utility) => ({
-        ...utility,
-        isCompleted: utility?.isCompleted ?? utility?.completed ?? false,
-    });
 
     const isUtilityCompleted = (utility) => Boolean(utility?.isCompleted ?? utility?.completed);
 
