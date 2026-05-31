@@ -30,7 +30,7 @@ Canonical AI coding guidance for this repository. Keep this file as the source o
 - Backend docker stack: `cd backend && docker compose up` (API 8085, Postgres mapped to 5433).
 - Backend tests: `cd backend && mvn test` (H2 + `test` profile from `backend/src/test/resources/application-test.yml`).
 - Frontend local: `cd frontend && npm start`; build: `npm run build`; tests: `npm test`.
-- Production-like local run: `cd deploy && cp env.example .env && docker compose -f docker-compose.production.yml up --build`.
+- Production: deployed via Railway using `frontend/railway.json` and `backend/railway.json` (each pointing to their own Dockerfile).
 
 ## Project-Specific Conventions
 - Service implementation names are intentionally inconsistent (`*Implt`, `*Impl`, `UserServiceImplementation`); match existing naming in touched area.
