@@ -210,6 +210,11 @@ const Budget = () => {
         setUploading(true);
         setToast(null);
 
+        if (!WEBHOOK_URL) {
+            showToast('error', 'Receipt upload is not configured. Contact your administrator.');
+            return;
+        }
+
         const formData = new FormData();
         files.forEach(f => formData.append('files[]', f, f.name));
 
