@@ -216,9 +216,45 @@ const Budget = () => {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
 
-            showToast('success', `${files.length} file(s) uploaded! It may take a minute for entries to appear.`);
+            showToast('success', `${files.length} file(s) uploaded! Waiting for entries to appear…`);
             setFiles([]);
-            setTimeout(() => loadBudgetData(true), 3000);
+
+            // Clear the cache immediately so polls always hit the API
+            const cacheKey = `budget-${filterYear}-${filterMonth}`;
+            localStorage.removeItem(cacheKey);
+
+            // Poll every 5s for up to 90s waiting for n8n to finish processing
+            const prevCount = entries.length;
+            let attempts = 0;
+            const maxAttempts = 18; // 18 × 5s = 90s
+
+            const poll = setInterval(async () => {
+                attempts++;
+                try {
+                    const entriesRes = await apiClient.get(
+                        `/api/budget/entries?year=${filterYear}&month=${filterMonth}`
+                    );
+                    const newEntries = entriesRes.data;
+                    if (newEntries.length > prevCount) {
+                        // New entries appeared — now fetch stats and update everything
+                        const statsRes = await apiClient.get(
+                            `/api/budget/stats?year=${filterYear}&month=${filterMonth}`
+                        );
+                        setStats(statsRes.data);
+                        setEntries(newEntries);
+                        setBudgetInput(statsRes.data.monthlyBudget.toString());
+                        localStorage.setItem(cacheKey, JSON.stringify({ stats: statsRes.data, entries: newEntries }));
+                        showToast('success', 'New entries added from your receipt!');
+                        clearInterval(poll);
+                    } else if (attempts >= maxAttempts) {
+                        showToast('error', 'Processing is taking longer than expected. Please refresh in a moment.');
+                        clearInterval(poll);
+                    }
+                } catch {
+                    clearInterval(poll);
+                }
+            }, 5000);
+
         } catch (err) {
             const msg = err?.response?.data || 'Upload failed. Please try again.';
             showToast('error', typeof msg === 'string' ? msg : 'Upload failed. Please try again.');
