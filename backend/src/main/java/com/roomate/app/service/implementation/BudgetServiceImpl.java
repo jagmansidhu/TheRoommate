@@ -199,6 +199,10 @@ public class BudgetServiceImpl implements BudgetService {
         }
 
         try {
+            // Append userId as a query param — n8n reads it as {{ $json.query.userId }}
+            String url = n8nWebhookUrl + (n8nWebhookUrl.contains("?") ? "&" : "?")
+                    + "userId=" + java.net.URLEncoder.encode(email, java.nio.charset.StandardCharsets.UTF_8);
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
             if (StringUtils.hasText(n8nWebhookToken)) {
@@ -206,8 +210,6 @@ public class BudgetServiceImpl implements BudgetService {
             }
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            // User identity — derived from verified JWT, cannot be spoofed by the client
-            body.add("userId", email);
 
             for (MultipartFile file : files) {
                 byte[] bytes = file.getBytes();
@@ -220,7 +222,8 @@ public class BudgetServiceImpl implements BudgetService {
             }
 
             HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(n8nWebhookUrl, request, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+
 
             if (!response.getStatusCode().is2xxSuccessful()) {
                 throw new UserApiError("n8n webhook returned status: " + response.getStatusCode());
