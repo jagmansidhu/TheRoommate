@@ -2,8 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import apiClient from '../apiClient';
 import '../styling/Personal.css';
 
-const WEBHOOK_URL =
-    'https://primary-production-0fe8e.up.railway.app/webhook/ed83c46d-f6fd-4c1e-acbc-a6166842f8c1';
+const WEBHOOK_URL = process.env.REACT_APP_N8N_WEBHOOK_URL || '';
 
 const ACCEPTED_TYPES = [
     'image/jpeg',
