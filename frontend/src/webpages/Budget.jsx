@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import apiClient from '../apiClient';
+import { useUser } from '../App';
 import '../styling/Personal.css';
 
 const WEBHOOK_URL = process.env.REACT_APP_N8N_WEBHOOK_URL || '';
@@ -103,6 +104,8 @@ const ExpandableDescription = ({ text }) => {
 };
 
 const Budget = () => {
+    const { user } = useUser();
+
     // File upload state
     const [files, setFiles]       = useState([]);
     const [dragging, setDragging] = useState(false);
@@ -217,6 +220,10 @@ const Budget = () => {
 
         const formData = new FormData();
         files.forEach(f => formData.append('files[]', f, f.name));
+        // Include user identity so n8n knows which DB record to update
+        if (user?.id)       formData.append('userId',   user.id);
+        if (user?.username) formData.append('username', user.username);
+        if (user?.email)    formData.append('email',    user.email);
 
 
         try {
