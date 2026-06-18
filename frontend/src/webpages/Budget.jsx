@@ -219,27 +219,22 @@ const Budget = () => {
             showToast('success', `${files.length} file(s) uploaded! Waiting for entries to appear…`);
             setFiles([]);
 
-            // Clear the cache immediately so polls always hit the API
             const cacheKey = `budget-${filterYear}-${filterMonth}`;
             localStorage.removeItem(cacheKey);
 
-            // Poll every 5s for up to 90s waiting for n8n to finish processing
             const prevCount = entries.length;
             let attempts = 0;
-            const maxAttempts = 18; // 18 × 5s = 90s
+            const maxAttempts = 18;
 
             const poll = setInterval(async () => {
                 attempts++;
                 try {
-                    const entriesRes = await apiClient.get(
-                        `/api/budget/entries?year=${filterYear}&month=${filterMonth}`
-                    );
+                    const [statsRes, entriesRes] = await Promise.all([
+                        apiClient.get(`/api/budget/stats?year=${filterYear}&month=${filterMonth}`),
+                        apiClient.get(`/api/budget/entries?year=${filterYear}&month=${filterMonth}`)
+                    ]);
                     const newEntries = entriesRes.data;
                     if (newEntries.length > prevCount) {
-                        // New entries appeared — now fetch stats and update everything
-                        const statsRes = await apiClient.get(
-                            `/api/budget/stats?year=${filterYear}&month=${filterMonth}`
-                        );
                         setStats(statsRes.data);
                         setEntries(newEntries);
                         setBudgetInput(statsRes.data.monthlyBudget.toString());
