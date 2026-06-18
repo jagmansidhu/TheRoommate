@@ -21,6 +21,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -199,9 +200,11 @@ public class BudgetServiceImpl implements BudgetService {
         }
 
         try {
-            // Append userId as a query param — n8n reads it as {{ $json.query.userId }}
-            String url = n8nWebhookUrl + (n8nWebhookUrl.contains("?") ? "&" : "?")
-                    + "userId=" + java.net.URLEncoder.encode(email, java.nio.charset.StandardCharsets.UTF_8);
+            // Build URL with userId as query param — UriComponentsBuilder handles encoding correctly
+            String url = UriComponentsBuilder.fromUriString(n8nWebhookUrl)
+                    .queryParam("userId", email)
+                    .build()
+                    .toUriString();
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
