@@ -4,6 +4,7 @@ import com.roomate.app.dto.BudgetEntryDto;
 import com.roomate.app.dto.BudgetSettingsDto;
 import com.roomate.app.dto.BudgetStatsDto;
 import com.roomate.app.dto.CreateBudgetEntryRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,4 +18,5 @@ public interface BudgetService {
     void deleteEntry(UUID entryId, String email);
     BudgetSettingsDto getBudgetSettings(String email);
     void setBudgetSettings(String email, BudgetSettingsDto settings);
+    void uploadReceipts(String email, List<MultipartFile> files);
 }

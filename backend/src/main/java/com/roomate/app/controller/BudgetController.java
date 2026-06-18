@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -119,6 +120,21 @@ public class BudgetController {
             String email = userDetails.getUsername();
             budgetService.setBudgetSettings(email, request);
             return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<Void> uploadReceipts(
+            @RequestParam("files[]") List<MultipartFile> files,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            String email = userDetails.getUsername();
+            budgetService.uploadReceipts(email, files);
+            return ResponseEntity.ok().build();
+        } catch (UserApiError e) {
+            return ResponseEntity.badRequest().build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }

@@ -109,3 +109,8 @@ budget:
     url: jdbc:postgresql://${BUDGET_DB_HOST}:${BUDGET_DB_PORT}/${BUDGET_DB_NAME}
     username: ${BUDGET_DB_USERNAME}
     password: ${BUDGET_DB_PASSWORD}
+
+n8n:
+  webhook:
+    url: ${N8N_WEBHOOK_URL:}
+    token: ${N8N_WEBHOOK_TOKEN:}

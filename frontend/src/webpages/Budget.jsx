@@ -1,9 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import apiClient from '../apiClient';
-import { useUser } from '../App';
 import '../styling/Personal.css';
-
-const WEBHOOK_URL = process.env.REACT_APP_N8N_WEBHOOK_URL || '';
 
 const ACCEPTED_TYPES = [
     'image/jpeg',
@@ -104,8 +101,6 @@ const ExpandableDescription = ({ text }) => {
 };
 
 const Budget = () => {
-    const { user } = useUser();
-
     // File upload state
     const [files, setFiles]       = useState([]);
     const [dragging, setDragging] = useState(false);
@@ -213,34 +208,20 @@ const Budget = () => {
         setUploading(true);
         setToast(null);
 
-        if (!WEBHOOK_URL) {
-            showToast('error', 'Receipt upload is not configured. Contact your administrator.');
-            return;
-        }
-
         const formData = new FormData();
         files.forEach(f => formData.append('files[]', f, f.name));
-        // Include user identity so n8n knows which DB record to update
-        if (user?.id)       formData.append('userId',   user.id);
-        if (user?.username) formData.append('username', user.username);
-        if (user?.email)    formData.append('email',    user.email);
-
 
         try {
-            const res = await fetch(WEBHOOK_URL, {
-                method: 'POST',
-                body: formData,
+            await apiClient.post('/api/budget/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
-
-            if (!res.ok) throw new Error(`Server responded with status ${res.status}`);
 
             showToast('success', `${files.length} file(s) uploaded! It may take a minute for entries to appear.`);
             setFiles([]);
-            
-            // Reload data after a short delay to let webhook process
             setTimeout(() => loadBudgetData(true), 3000);
         } catch (err) {
-            showToast('error', 'Upload failed. Please try again.');
+            const msg = err?.response?.data || 'Upload failed. Please try again.';
+            showToast('error', typeof msg === 'string' ? msg : 'Upload failed. Please try again.');
         } finally {
             setUploading(false);
         }

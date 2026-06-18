@@ -11,8 +11,16 @@ import com.roomate.app.repository.budget.BudgetEntryRepository;
 import com.roomate.app.repository.budget.ReceiptStorageRepository;
 import com.roomate.app.repository.budget.UserBudgetRepository;
 import com.roomate.app.service.BudgetService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -27,11 +35,18 @@ import java.util.stream.Collectors;
 @Service
 public class BudgetServiceImpl implements BudgetService {
 
+    @Value("${n8n.webhook.url:}")
+    private String n8nWebhookUrl;
+
+    @Value("${n8n.webhook.token:}")
+    private String n8nWebhookToken;
+
     private final BudgetEntryRepository budgetEntryRepository;
     private final UserBudgetRepository userBudgetRepository;
     private final ReceiptStorageRepository receiptStorageRepository;
+    private final RestTemplate restTemplate = new RestTemplate();
 
-    public BudgetServiceImpl(BudgetEntryRepository budgetEntryRepository, 
+    public BudgetServiceImpl(BudgetEntryRepository budgetEntryRepository,
                              UserBudgetRepository userBudgetRepository,
                              ReceiptStorageRepository receiptStorageRepository) {
         this.budgetEntryRepository = budgetEntryRepository;
@@ -172,5 +187,48 @@ public class BudgetServiceImpl implements BudgetService {
         
         entity.setMonthlyBudget(settings.monthlyBudget);
         userBudgetRepository.save(entity);
+    }
+
+    @Override
+    public void uploadReceipts(String email, List<MultipartFile> files) {
+        if (!StringUtils.hasText(n8nWebhookUrl)) {
+            throw new UserApiError("Receipt upload is not configured on the server.");
+        }
+        if (files == null || files.isEmpty()) {
+            throw new UserApiError("No files provided.");
+        }
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+            if (StringUtils.hasText(n8nWebhookToken)) {
+                headers.set("X-Webhook-Token", n8nWebhookToken);
+            }
+
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            // User identity — derived from verified JWT, cannot be spoofed by the client
+            body.add("userId", email);
+
+            for (MultipartFile file : files) {
+                byte[] bytes = file.getBytes();
+                String filename = file.getOriginalFilename();
+                ByteArrayResource resource = new ByteArrayResource(bytes) {
+                    @Override
+                    public String getFilename() { return filename; }
+                };
+                body.add("files[]", resource);
+            }
+
+            HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(n8nWebhookUrl, request, String.class);
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new UserApiError("n8n webhook returned status: " + response.getStatusCode());
+            }
+        } catch (UserApiError e) {
+            throw e;
+        } catch (Exception e) {
+            throw new UserApiError("Failed to forward receipts to processing service: " + e.getMessage());
+        }
     }
 }
