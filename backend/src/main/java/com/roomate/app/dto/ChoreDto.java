@@ -1,9 +1,10 @@
 package com.roomate.app.dto;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class ChoreDto {
+public class ChoreDto implements Serializable {
     public UUID id;
     public String choreName;
     public int frequency;

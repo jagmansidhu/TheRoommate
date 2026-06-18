@@ -4,11 +4,12 @@ import com.roomate.app.entities.UtilityEntity;
 import com.roomate.app.entities.ChoreFrequencyUnitEnum;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
-public class UtilityDto {
+public class UtilityDto implements Serializable {
     private UUID id;
     private String utilityName;
     private Double utilityPrice;
