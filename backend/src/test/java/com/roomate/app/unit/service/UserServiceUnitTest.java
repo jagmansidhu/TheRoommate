@@ -1,10 +1,11 @@
-package com.roomate.app.service;
+package com.roomate.app.unit.service;
 
 import com.roomate.app.dto.RegisterDto;
 import com.roomate.app.dto.UserDTOS.UpdateProfileDto;
 import com.roomate.app.entities.UserEntity;
 import com.roomate.app.repository.UserRepository;
 import com.roomate.app.repository.VerificationTokenRepository;
+import com.roomate.app.service.JWTService;
 import com.roomate.app.service.implementation.UserServiceImplementation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

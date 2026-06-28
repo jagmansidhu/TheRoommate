@@ -1,4 +1,4 @@
-package com.roomate.app.controller;
+package com.roomate.app.integration.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.roomate.app.dto.CreateRoomRequest;

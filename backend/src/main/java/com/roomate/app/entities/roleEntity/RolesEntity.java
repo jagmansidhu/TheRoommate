@@ -20,7 +20,4 @@ public class RolesEntity {
     @Column(unique = true)
     private String name;
 
-    public RolesEntity(String roleRoommate) {
-        this.name = roleRoommate;
-    }
 }

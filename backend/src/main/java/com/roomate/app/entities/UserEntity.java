@@ -26,39 +26,23 @@ public class UserEntity implements UserDetails {
     private Long id;
     private String firstName;
     private String lastName;
-    @NotNull
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String email;
-    @Column(nullable = true)
+    @Column(nullable = false)
     private String password;
     private String phone;
 
     @Column(nullable = false)
     private boolean enabled = true; // TODO: Set back to false to re-enable email verification
 
-    // @OneToOne(cascade = CascadeType.ALL)
-    // @JoinColumn(name = "addressId", referencedColumnName = "id")
-    // @JsonIgnore
-    // private AddressEntity address;
     // TODO Remove EAGER loading and add dto to user/login
     @ManyToMany(fetch = FetchType.EAGER)
     @JsonIgnore
     private Set<RolesEntity> roles = new HashSet<>();
-    // @OneToMany(mappedBy = "requester", cascade = {CascadeType.PERSIST,
-    // CascadeType.MERGE},
-    // orphanRemoval = true, fetch = FetchType.LAZY)
-    // @JsonIgnore
-    // private Set<FriendEntity> sentFriendRequests = new HashSet<>();
-    // @OneToMany(mappedBy = "addressee", cascade = {CascadeType.PERSIST,
-    // CascadeType.MERGE},
-    // orphanRemoval = true, fetch = FetchType.LAZY)
-    // @JsonIgnore
-    // private Set<FriendEntity> receivedFriendRequests = new HashSet<>();
 
-    public UserEntity() {
-    }
+    public UserEntity() {}
 
-    public UserEntity(String authId, String firstName, String lastName, String email, String phone) {
+    public UserEntity(String firstName, String lastName, String email, String phone) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -70,10 +54,9 @@ public class UserEntity implements UserDetails {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.phone = phone;
     }
 
-    public UserEntity(String authId, String email, String firstName, String lastName) {
+    public UserEntity(String email, String firstName, String lastName) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -85,7 +68,7 @@ public class UserEntity implements UserDetails {
         this.phone = phoneNumber;
     }
 
-    public UserEntity(String authId, String email) {
+    public UserEntity(String email) {
         this.email = email;
     }
 
@@ -130,21 +113,6 @@ public class UserEntity implements UserDetails {
     @Override
     public String getUsername() {
         return email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
     }
 
     @Override

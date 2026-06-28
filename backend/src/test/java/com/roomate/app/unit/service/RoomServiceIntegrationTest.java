@@ -1,4 +1,4 @@
-package com.roomate.app.service;
+package com.roomate.app.unit.service;
 
 import com.roomate.app.dto.CreateRoomRequest;
 import com.roomate.app.dto.RoomDto;

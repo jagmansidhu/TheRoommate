@@ -1,8 +1,9 @@
-package com.roomate.app.service;
+package com.roomate.app.unit.service;
 
 import com.roomate.app.dto.RegisterDto;
 import com.roomate.app.entities.UserEntity;
 import com.roomate.app.repository.UserRepository;
+import com.roomate.app.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

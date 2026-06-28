@@ -1,4 +1,4 @@
-package com.roomate.app.service;
+package com.roomate.app.unit.service;
 
 import com.roomate.app.dto.CreateRoomRequest;
 import com.roomate.app.dto.RoomDto;
@@ -32,19 +32,6 @@ class RoomServiceUnitTest {
     private UserRepository userRepository;
     @Mock
     private RoomRepository roomRepository;
-    @Mock
-    private RoomMemberRepository roomMemberRepository;
-    @Mock
-    private EventRepository eventRepository;
-    @Mock
-    private UtilityRepository utilityRepository;
-    @Mock
-    private ChoreRepository choreRepository;
-    @Mock
-    private GroceryListRepository groceryListRepository;
-    @Mock
-    private LedgerEntryRepository ledgerEntryRepository;
-
 
     @InjectMocks
     private RoomServiceImplt roomService;
