@@ -261,9 +261,9 @@ a:hover {
 }
 
 /* ==========================================
-   Button Styles
+   Button Styles (living-paper .btn primitive)
+   Opt-in via .btn — do not style bare <button>
    ========================================== */
-button,
 .btn {
   display: inline-flex;
   align-items: center;
@@ -276,42 +276,78 @@ button,
   text-transform: uppercase;
   line-height: 1;
   padding: 10px 22px;
-  border: none;
+  border: 1.5px solid transparent;
   border-radius: 4px;
   cursor: pointer;
-  transition: none;
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
   white-space: nowrap;
 }
 
-/* Primary Button */
-.btn-primary {
-  background-color: var(--lp-orange);
-  color: white;
-  border: 1.5px solid var(--lp-orange);
+.btn:focus-visible {
+  outline: 2px solid var(--lp-orange);
+  outline-offset: 2px;
 }
 
-/* Secondary Button */
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Primary — burnt-sienna fill */
+.btn-primary {
+  background-color: var(--lp-orange);
+  color: #fff;
+  border-color: var(--lp-orange);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--lp-ink);
+  border-color: var(--lp-ink);
+  color: #fff;
+}
+
+/* Secondary — parchment + ink border (quiet fill) */
 .btn-secondary {
   background-color: var(--lp-parchment);
   color: var(--lp-ink-soft);
-  border: 1.5px solid var(--lp-border);
+  border-color: var(--lp-border);
 }
 
-/* Ghost Button */
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--lp-cream);
+  border-color: var(--lp-ink);
+  color: var(--lp-ink);
+}
+
+/* Ghost — bordered transparent */
 .btn-ghost {
   background-color: transparent;
   color: var(--lp-ink-soft);
-  border: 1.5px solid var(--lp-border);
+  border-color: var(--lp-border);
 }
 
-/* Danger Button */
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--lp-parchment);
+  color: var(--lp-ink);
+  border-color: var(--lp-ink);
+}
+
+/* Danger — outline sienna */
 .btn-danger {
   background-color: transparent;
   color: var(--lp-orange);
-  border: 1.5px solid var(--lp-orange);
+  border-color: var(--lp-orange);
 }
 
-/* Button Sizes */
+.btn-danger:hover:not(:disabled) {
+  background-color: var(--lp-orange);
+  color: #fff;
+}
+
+/* Sizes */
 .btn-sm {
   font-size: 0.7rem;
   padding: 7px 14px;
@@ -322,12 +358,42 @@ button,
   padding: 13px 28px;
 }
 
-/* Icon Button */
-.btn-icon {
-  padding: 8px;
-  border-radius: 4px;
-  text-transform: none;
-  letter-spacing: 0;
+/* Underline text CTA (landing Sign in) — not a filled .btn */
+.btn-link {
+  font-family: var(--f-label);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--lp-ink-soft);
+  text-decoration: none;
+  padding: 0 0 2px;
+  background: none;
+  border: none;
+  border-bottom: 1.5px solid var(--lp-border);
+  border-radius: 0;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.btn-link:hover {
+  color: var(--lp-ink);
+  border-bottom-color: var(--lp-ink);
+}
+
+.btn-link:focus-visible {
+  outline: 2px solid var(--lp-orange);
+  outline-offset: 2px;
+}
+
+/* Cream/muted underline on dark bands (landing CTA) */
+.btn-on-dark {
+  color: rgba(245, 240, 232, 0.65);
+  border-bottom-color: rgba(245, 240, 232, 0.25);
+}
+
+.btn-on-dark:hover {
+  color: rgba(245, 240, 232, 0.95);
+  border-bottom-color: rgba(245, 240, 232, 0.7);
 }
 
 /* ==========================================

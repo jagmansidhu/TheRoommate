@@ -87,7 +87,7 @@ const Login = () => {
 
                     <button 
                         type="submit" 
-                        className="btn btn-primary btn-lg w-full auth-submit"
+                        className="btn btn-primary btn-lg w-full"
                         disabled={isLoading}
                     >
                         {isLoading ? (

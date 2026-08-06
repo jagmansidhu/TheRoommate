@@ -305,7 +305,7 @@ const RoomDetailsPage = ({
     const getRoleLabel = (role) => {
         if (role === ROLES.HEAD_ROOMMATE) return 'Owner';
         if (role === ROLES.ASSISTANT) return 'Manager';
-        return 'Resident';
+        return 'Member';
     };
 
     const memberCount = room.members?.length || 0;
@@ -333,7 +333,7 @@ const RoomDetailsPage = ({
                         {room.name?.[0]?.toUpperCase()}
                     </div>
                     <div className="rd-header-text">
-                        <div className="rd-header-eyebrow">Shared Housing · {myRole}</div>
+                        <div className="rd-header-eyebrow">Your room · {myRole}</div>
                         <h1 className="rd-room-name">{room.name}</h1>
                         {room.address && (
                             <p className="rd-room-address">
@@ -350,43 +350,13 @@ const RoomDetailsPage = ({
                     <div className="rd-header-occ">
                         <div className="rd-header-occ-text">
                             <span className="rd-header-occ-count">{memberCount} <span className="rd-header-occ-max">of 6</span></span>
-                            <span className="rd-header-occ-label">Occupied</span>
+                            <span className="rd-header-occ-label">Members</span>
                         </div>
                         <div className="rd-header-occ-bar">
                             <div className="rd-header-occ-fill" style={{ width: `${occupancy}%` }} />
                         </div>
                     </div>
                     <code className="rd-room-code-badge">{room.roomCode}</code>
-                </div>
-            </div>
-
-            {/* ── Stat Strip ── */}
-            <div className="rd-stat-strip">
-                <div className="rd-stat-cell">
-                    <span className="rd-stat-num">{memberCount}<span className="rd-stat-denom">/6</span></span>
-                    <span className="rd-stat-lbl">Members</span>
-                </div>
-                <div className="rd-stat-sep" />
-                <div className="rd-stat-cell">
-                    <span className="rd-stat-num">{Object.values(choresByDate).reduce((s, arr) => s + arr.length, 0)}</span>
-                    <span className="rd-stat-lbl">Chores</span>
-                </div>
-                <div className="rd-stat-sep" />
-                <div className="rd-stat-cell">
-                    <span className="rd-stat-num">{Object.keys(choresByDate).length}</span>
-                    <span className="rd-stat-lbl">Due Next 4 Weeks</span>
-                </div>
-                <div className="rd-stat-sep" />
-                <div className="rd-stat-cell">
-                    <span className="rd-stat-num">{monthlyUtilities.length}</span>
-                    <span className="rd-stat-lbl">Utilities</span>
-                </div>
-                <div className="rd-stat-sep" />
-                <div className="rd-stat-cell">
-                    <span className="rd-stat-num">
-                        ${monthlyUtilities.reduce((s, u) => s + (u.utilityPrice || 0), 0).toFixed(0)}
-                    </span>
-                    <span className="rd-stat-lbl">Your Next 4 Weeks</span>
                 </div>
             </div>
 

@@ -70,13 +70,13 @@ const Home = () => {
                     </p>
 
                     <div className="hero-actions">
-                        <Link to="/register" className="btn-primary-lp" id="hero-cta-register">
+                        <Link to="/register" className="btn btn-primary btn-lg" id="hero-cta-register">
                             Get Started
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                                 <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                         </Link>
-                        <Link to="/login" className="btn-ghost-lp" id="hero-cta-login">
+                        <Link to="/login" className="btn-link" id="hero-cta-login">
                             Sign in
                         </Link>
                     </div>
@@ -237,13 +237,13 @@ const Home = () => {
                     </h2>
                     <p>Start managing your shared space the smart way.</p>
                     <div className="cta-actions">
-                        <Link to="/register" className="btn-cta-primary" id="cta-register-btn">
+                        <Link to="/register" className="btn btn-primary btn-lg" id="cta-register-btn">
                             Create Free Account
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                                 <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                         </Link>
-                        <Link to="/login" className="btn-cta-ghost" id="cta-login-btn">
+                        <Link to="/login" className="btn-link btn-on-dark" id="cta-login-btn">
                             Already have an account?
                         </Link>
                     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import apiClient from "../apiClient";
 
 const VerifyHandler = () => {
     const navigate = useNavigate();
@@ -19,7 +19,7 @@ const VerifyHandler = () => {
 
         const verifyEmail = async () => {
             try {
-                const res = await axios.get(`/api/verify?token=${token}`);
+                const res = await apiClient.get(`/user/verify`, { params: { token } });
                 if (res.data === true) {
                     setStatus("success");
                 } else {
@@ -38,7 +38,7 @@ const VerifyHandler = () => {
 
     const handleResend = async () => {
         try {
-            await axios.post(`/api/user/resend-verification`, {}, { withCredentials: true });
+            await apiClient.post(`/user/resend-verification`);
             alert("Verification email sent!");
         } catch (err) {
             console.error("Resend failed", err);
