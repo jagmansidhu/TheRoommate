@@ -1,6 +1,6 @@
 import apiClient from './apiClient';
 import React, {createContext, useCallback, useContext, useEffect, useRef, useState} from 'react';
-import {BrowserRouter as Router, Link, Route, Routes} from 'react-router-dom';
+import {BrowserRouter as Router, Link, Route, Routes, useLocation} from 'react-router-dom';
 import Login from './webpages/auth/Login';
 import Register from './webpages/auth/Register';
 import Dashboard from './webpages/Dashboard';
@@ -443,12 +443,14 @@ const LoggedInNavbar = () => {
 
 const AppContent = () => {
     const {isAuthenticated, isLoading} = useAuth();
+    const location = useLocation();
     const [isOnboarding, setIsOnboarding] = useState(false);
     const hideNavbarPaths = ['/complete-profile'];
 
     // Public paths that don't need auth — render immediately without waiting for the backend.
     const publicPaths = ['/', '/login', '/register', '/verify'];
-    const isPublicPath = publicPaths.includes(window.location.pathname);
+    const isPublicPath = publicPaths.includes(location.pathname);
+    const isLanding = !isAuthenticated && location.pathname === '/';
 
     // Only block render on authenticated routes — avoids a blank screen on the home page
     // while waiting for the /user/status round-trip to the backend.
@@ -461,8 +463,8 @@ const AppContent = () => {
         );
     }
 
-    const shouldHideNavbar = hideNavbarPaths.includes(window.location.pathname) || isOnboarding;
-    const showLoggedOutNavbar = window.location.pathname === '/verify';
+    const shouldHideNavbar = hideNavbarPaths.includes(location.pathname) || isOnboarding;
+    const showLoggedOutNavbar = location.pathname === '/verify';
 
     return (
         <OnboardingContext.Provider value={{isOnboarding, setIsOnboarding}}>
@@ -470,7 +472,7 @@ const AppContent = () => {
             {!shouldHideNavbar && (showLoggedOutNavbar ? <LoggedOutNavbar/> : (isAuthenticated ? <LoggedInNavbar/> :
                 <LoggedOutNavbar/>))}
             <main className="main-content">
-                <div className="content-wrapper">
+                <div className={`content-wrapper${isLanding ? ' content-wrapper--landing' : ''}`}>
                     <Routes>
                         <Route path="/" element={
                             isAuthenticated ? <Dashboard/> : <Home/>

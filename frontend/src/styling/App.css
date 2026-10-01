@@ -28,6 +28,12 @@
   padding: var(--spacing-6);
 }
 
+.content-wrapper--landing {
+  max-width: none;
+  padding: 0;
+  width: 100%;
+}
+
 /* ==========================================
    Header / Navbar
    ========================================== */
@@ -214,6 +220,10 @@
 
   .content-wrapper {
     padding: var(--spacing-4);
+  }
+
+  .content-wrapper--landing {
+    padding: 0;
   }
 }
 
