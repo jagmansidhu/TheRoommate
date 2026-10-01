@@ -1,27 +1,32 @@
-# Dev-only image: runs mvn spring-boot:run with source mounted as a volume.
-# Rebuilds are only needed when pom.xml changes.
-FROM eclipse-temurin:21-jdk-alpine
+# ──────────────────────────────────────────────────────────────
+# Dev-only image — source is volume-mounted, not copied.
+# Rebuild only needed when pom.xml or mvnw changes.
+#
+# Layer cache strategy (top = slowest-changing, bottom = fastest-changing):
+#   1. Base image + bash  — changes only on JDK security releases
+#   2. Maven wrapper      — changes only on wrapper upgrades
+#   3. pom.xml + offline  — changes only when deps change
+#   (source is mounted at runtime — no COPY src/ needed)
+# ──────────────────────────────────────────────────────────────
+FROM eclipse-temurin:21.0.7_6-jdk-alpine
 WORKDIR /app
 
-# Install bash (needed by mvnw on Alpine)
+# [SLOW] System dep — rarely changes
 RUN apk add --no-cache bash
 
-# Copy Maven wrapper + pom first for dependency layer caching
+# [SLOW] Maven wrapper — rarely changes
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 RUN chmod +x mvnw
 
-# Pre-download all dependencies (cached until pom.xml changes)
+# [SLOW] Dependency download — only re-runs when pom.xml changes
 RUN ./mvnw dependency:go-offline -B
 
-# Source code is volume-mounted at runtime — not copied here.
-# This means editing .java files on the host triggers DevTools auto-restart
-# inside the container without rebuilding the image.
+# Source code is volume-mounted at runtime (see docker-compose.yml).
+# Editing .java files on the host triggers DevTools auto-restart (~3-5s).
 
 EXPOSE 8085
 
-# spring-boot:run with DevTools active.
-# -Dspring-boot.run.jvmArguments enables remote restart trigger.
 ENTRYPOINT ["./mvnw", "spring-boot:run", \
     "-Dspring-boot.run.profiles=dev", \
     "-Dspring-boot.run.jvmArguments=-Dspring.devtools.restart.enabled=true -Dspring.devtools.restart.pollInterval=2s -Dspring.devtools.restart.quietPeriod=1s"]

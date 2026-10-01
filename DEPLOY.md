@@ -80,7 +80,8 @@ npm start
 
 ## 2 — Local: Docker stack (mirrors production)
 
-The `backend/docker-compose.yml` spins up the API, two Postgres instances, and Redis.
+The [`backend/docker-compose.yml`](backend/docker-compose.yml) spins up the API, two Postgres instances, and Redis.
+The compose file lives in `backend/` — **you must `cd backend` first**, it will not work from the repo root.
 Source code is **volume-mounted** so Spring Boot DevTools auto-restarts on `.java` changes (~3–5 s, no image rebuild).
 
 ```bash

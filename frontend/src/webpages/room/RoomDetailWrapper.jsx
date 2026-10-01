@@ -57,7 +57,7 @@ const RoomDetailsPageWrapper = () => {
             }
         };
         leaveRoom();
-    }, [navigate, roomId, removeRoom]);
+    }, [navigate, roomId, removeRoom, invalidateRoomData]);
 
     const handleDeleteRoom = useCallback(() => {
         const deleteRoom = async () => {
@@ -74,7 +74,7 @@ const RoomDetailsPageWrapper = () => {
         };
         deleteRoom();
 
-    }, [navigate, roomId, removeRoom]);
+    }, [navigate, roomId, removeRoom, invalidateRoomData]);
 
     if (loading) return <div>Loading room details...</div>;
 

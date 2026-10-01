@@ -1,12 +1,12 @@
 # Build stage
-FROM node:20-alpine AS build
+FROM node:20.19-alpine AS build
 WORKDIR /app
 
 # Copy package files first for better layer caching
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY public/ public/
@@ -23,7 +23,7 @@ ENV REACT_APP_N8N_WEBHOOK_URL=$REACT_APP_N8N_WEBHOOK_URL
 RUN npm run build
 
 # Production stage
-FROM nginx:alpine
+FROM nginx:1.27-alpine
 RUN addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup
 WORKDIR /usr/share/nginx/html
 

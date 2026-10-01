@@ -168,9 +168,6 @@ const Home = () => {
                     <Link to="/register" className="btn btn-primary btn-lg" id="hero-cta-register">
                         Get started
                     </Link>
-                    <Link to="/login" className="btn-link" id="hero-cta-login">
-                        Sign in
-                    </Link>
                 </div>
             </section>
 
