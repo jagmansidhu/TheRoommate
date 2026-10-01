@@ -52,6 +52,8 @@ services:
     depends_on:
       postgresdb:
         condition: service_healthy
+      budgetdb:
+        condition: service_healthy
       redis:
         condition: service_started
     restart: unless-stopped
@@ -66,7 +68,7 @@ services:
 
   postgresdb:
     container_name: roomate-db
-    image: postgres:17
+    image: postgres:17.5
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -85,7 +87,7 @@ services:
 
   budgetdb:
     container_name: roomate-budget-db
-    image: postgres:17
+    image: postgres:17.5
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -104,7 +106,7 @@ services:
 
   redis:
     container_name: roomate-redis
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     ports:
       - "6379:6379"
     healthcheck:
