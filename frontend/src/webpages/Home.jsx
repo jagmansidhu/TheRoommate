@@ -1,272 +1,311 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../styling/Home.css';
 
-
-const MARQUEE_ITEMS = [
-    'Chore rotation', '·', 'Shared groceries', '·',
-    'Bill splitting', '·', 'Room invites', '·',
-    'Shared calendar', '·', 'Smart reminders', '·',
-    'Chore rotation', '·', 'Shared groceries', '·',
-    'Bill splitting', '·', 'Room invites', '·',
-    'Shared calendar', '·', 'Smart reminders', '·',
+const TOUR_TABS = [
+    {
+        id: 'room',
+        label: 'Room',
+        src: '/landing/tour-room.webp',
+        width: 2240,
+        height: 1770,
+        alt: 'Oak Street room: members Maya, Jordan, and Sam; internet, electric, and water splits; chores on a dated timeline.',
+        caption: 'Oak Street — members, a join code, bills split, chores on a timeline.',
+    },
+    {
+        id: 'today',
+        label: 'Today',
+        src: '/landing/tour-today.webp',
+        width: 2240,
+        height: 1416,
+        alt: 'Dashboard for Maya: one chore due today, upcoming internet and electric bills, water marked paid.',
+        caption: 'Open the app and see what you owe the house today.',
+    },
+    {
+        id: 'calendar',
+        label: 'Calendar',
+        src: '/landing/tour-calendar.webp',
+        width: 2240,
+        height: 1916,
+        alt: 'August 2026 house calendar with a meeting, chores, a guest weekend, and utility due dates.',
+        caption: 'House events, chores, and bills on one month.',
+    },
+    {
+        id: 'budget',
+        label: 'Budget',
+        src: '/landing/tour-budget.webp',
+        width: 2240,
+        height: 1822,
+        alt: 'Personal budget with receipt drop zone, $1,200 monthly target, and grocery and utility entries.',
+        caption: 'Your spending and receipt uploads. Splitting a receipt to the room is still coming.',
+    },
 ];
 
-const STEPS = [
+const LIVE_FEATURES = [
     {
-        num: '01', icon: '🏠',
-        title: 'Create your room',
-        desc: 'Set up your shared space in under a minute. Name it, and you\'re live.',
+        id: 'rooms',
+        kicker: 'Rooms',
+        title: 'A digital house, with a door code',
+        copy: 'Create a room, join with a code, see occupancy and roles. Three rooms per person, six people per room.',
+        src: '/landing/live-rooms.webp',
+        width: 2240,
+        height: 1070,
+        alt: 'My Rooms list showing Oak Street (owner, 3 of 6) and Cedar House (member, 1 of 6), each with a join code.',
     },
     {
-        num: '02', icon: '🤝',
-        title: 'Invite your crew',
-        desc: 'Send a room code. Roommates join instantly — no extra accounts.',
+        id: 'room',
+        kicker: 'Room',
+        title: 'Chores rotate. Bills split.',
+        copy: 'Assign recurring chores, split utilities by equal or custom share, invite by email. Owner, manager, member.',
+        src: '/landing/tour-room.webp',
+        width: 2240,
+        height: 1770,
+        alt: 'Oak Street room details with members, utility splits, and upcoming chores.',
     },
     {
-        num: '03', icon: '⚡',
-        title: 'Live in sync',
-        desc: 'Chores, bills, groceries — all real-time, all in one place.',
+        id: 'today',
+        kicker: 'Today',
+        title: 'What is due, on one screen',
+        copy: 'The dashboard lists chores due today and bills in the next four weeks. Check them off when they are done.',
+        src: '/landing/tour-today.webp',
+        width: 2240,
+        height: 1416,
+        alt: 'Dashboard with chores due today and upcoming bills.',
+    },
+    {
+        id: 'calendar',
+        kicker: 'Calendar',
+        title: 'The house month, not a group chat',
+        copy: 'Put a house meeting or a guest weekend next to the chores and bills already on the calendar.',
+        src: '/landing/tour-calendar.webp',
+        width: 2240,
+        height: 1916,
+        alt: 'Shared calendar for August 2026 with events, chores, and bills.',
+    },
+    {
+        id: 'budget',
+        kicker: 'Budget',
+        title: 'Your receipts, your ledger',
+        copy: 'Track personal spending and drop in a receipt photo. This is yours — not the house split (yet).',
+        src: '/landing/tour-budget.webp',
+        width: 2240,
+        height: 1822,
+        alt: 'Personal budget overview, receipt upload, and recent grocery entries.',
+    },
+];
+
+const COMING_FEATURES = [
+    {
+        title: 'Shared grocery lists',
+        copy: 'The API can store a house list. There is no grocery screen in the app yet.',
+    },
+    {
+        title: 'Room chat',
+        copy: 'Realtime chat is scaffolded and not routed. Keep using the thread you already have.',
+    },
+    {
+        title: 'Friends',
+        copy: 'Not built. You join a room with a code or an invite email, not a friend graph.',
+    },
+    {
+        title: 'Landlord documents',
+        copy: 'A later product. This app is for the people who live in the house.',
+    },
+    {
+        title: 'Receipt split to the room',
+        copy: 'Receipts already land in personal budget. Sending a share to roommates is next.',
     },
 ];
 
 const Home = () => {
-    const observerRef = useRef(null);
+    const [activeId, setActiveId] = useState(TOUR_TABS[0].id);
+    const tabRefs = useRef({});
+
+    const activeIndex = TOUR_TABS.findIndex((tab) => tab.id === activeId);
 
     useEffect(() => {
-        observerRef.current = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) entry.target.classList.add('visible');
-                });
-            },
-            { threshold: 0.08, rootMargin: '0px 0px -48px 0px' }
-        );
-        document.querySelectorAll('.reveal').forEach((el) => observerRef.current.observe(el));
-        return () => observerRef.current?.disconnect();
+        TOUR_TABS.slice(1).forEach((tab) => {
+            const img = new Image();
+            img.src = tab.src;
+        });
     }, []);
+
+    const selectTab = (id, moveFocus = false) => {
+        setActiveId(id);
+        if (moveFocus) {
+            tabRefs.current[id]?.focus();
+        }
+    };
+
+    const onTabKeyDown = (event) => {
+        const last = TOUR_TABS.length - 1;
+        let nextIndex = activeIndex;
+
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+            nextIndex = (activeIndex + 1) % TOUR_TABS.length;
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+            nextIndex = (activeIndex - 1 + TOUR_TABS.length) % TOUR_TABS.length;
+        } else if (event.key === 'Home') {
+            nextIndex = 0;
+        } else if (event.key === 'End') {
+            nextIndex = last;
+        } else {
+            return;
+        }
+
+        event.preventDefault();
+        selectTab(TOUR_TABS[nextIndex].id, true);
+    };
 
     return (
         <div className="landing-page">
+            <section className="hero-band">
+                <div className="hero-copy">
+                    <h1 className="hero-brand">TheRoommate</h1>
+                    <p className="hero-line">Chores, bills, and the house calendar. One place.</p>
+                </div>
+                <div className="hero-actions">
+                    <Link to="/register" className="btn btn-primary btn-lg" id="hero-cta-register">
+                        Get started
+                    </Link>
+                </div>
+            </section>
 
-            {/* ── HERO ── */}
-            <section className="hero-section">
+            <section className="tour-section" id="tour" aria-label="Product tour">
+                <div
+                    className="tour-tabs"
+                    role="tablist"
+                    aria-label="Product surfaces"
+                    onKeyDown={onTabKeyDown}
+                >
+                    {TOUR_TABS.map((tab) => {
+                        const selected = tab.id === activeId;
+                        return (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                role="tab"
+                                id={`tour-tab-${tab.id}`}
+                                aria-selected={selected}
+                                aria-controls={`tour-panel-${tab.id}`}
+                                tabIndex={selected ? 0 : -1}
+                                className={`tour-tab${selected ? ' is-active' : ''}`}
+                                ref={(el) => { tabRefs.current[tab.id] = el; }}
+                                onClick={() => selectTab(tab.id)}
+                            >
+                                {tab.label}
+                            </button>
+                        );
+                    })}
+                </div>
 
-                {/* Text column */}
-                <div className="hero-text-col">
-                    <span className="hero-eyebrow">
-                        <span className="eyebrow-line" />
-                        Shared living, sorted
-                    </span>
+                {TOUR_TABS.map((tab) => {
+                    const selected = tab.id === activeId;
+                    return (
+                        <div
+                            key={tab.id}
+                            role="tabpanel"
+                            id={`tour-panel-${tab.id}`}
+                            aria-labelledby={`tour-tab-${tab.id}`}
+                            hidden={!selected}
+                            className="tour-panel"
+                        >
+                            {selected && (
+                                <>
+                                    <div className="tour-stage">
+                                        <img
+                                            key={tab.id}
+                                            className="tour-shot"
+                                            src={tab.src}
+                                            alt={tab.alt}
+                                            width={tab.width}
+                                            height={tab.height}
+                                            fetchPriority="high"
+                                        />
+                                    </div>
+                                    <p className="tour-caption">{tab.caption}</p>
+                                </>
+                            )}
+                        </div>
+                    );
+                })}
+            </section>
 
-                    <h1 className="hero-title">
-                        <span className="hero-title-normal">Your home,</span>
-                        <span className="hero-accent">finally in sync.</span>
-                    </h1>
+            <section className="live-section" id="live">
+                <header className="section-head">
+                    <span className="section-kicker">Live now</span>
+                    <h2 className="section-title">What you can use today</h2>
+                </header>
+                {LIVE_FEATURES.map((feature, index) => (
+                    <article
+                        key={feature.id}
+                        className={`live-row${index % 2 === 1 ? ' live-row--flip' : ''}`}
+                    >
+                        <div className="live-shot">
+                            <img
+                                src={feature.src}
+                                alt={feature.alt}
+                                width={feature.width}
+                                height={feature.height}
+                                loading="lazy"
+                            />
+                        </div>
+                        <div className="live-copy">
+                            <span className="live-kicker">{feature.kicker}</span>
+                            <h3>{feature.title}</h3>
+                            <p>{feature.copy}</p>
+                        </div>
+                    </article>
+                ))}
+            </section>
 
-                    <p className="hero-sub">
-                        Chores, bills, groceries — handled together.
-                        TheRoommate turns shared living from stressful to seamless.
-                    </p>
+            <section className="coming-section" id="coming">
+                <header className="section-head">
+                    <span className="section-kicker">Coming next</span>
+                    <h2 className="section-title">On the list. Not in the app.</h2>
+                </header>
+                <div className="coming-grid">
+                    {COMING_FEATURES.map((item) => (
+                        <article key={item.title} className="coming-card">
+                            <span className="coming-tag">Coming</span>
+                            <h3>{item.title}</h3>
+                            <p>{item.copy}</p>
+                        </article>
+                    ))}
+                </div>
+            </section>
 
-                    <div className="hero-actions">
-                        <Link to="/register" className="btn-primary-lp" id="hero-cta-register">
-                            Get Started
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+            <section className="cta-band">
+                <div className="cta-inner">
+                    <h2>Create a room. Invite with a code or an email.</h2>
+                    <p>Free to start. No landlord portal hiding behind the signup.</p>
+                    <div className="cta-actions">
+                        <Link to="/register" className="btn btn-primary btn-lg" id="cta-register-btn">
+                            Get started
                         </Link>
-                        <Link to="/login" className="btn-ghost-lp" id="hero-cta-login">
+                        <Link to="/login" className="btn-link" id="cta-login-btn">
                             Sign in
                         </Link>
                     </div>
                 </div>
-
             </section>
 
-            {/* ── MARQUEE STRIP ── */}
-            <div className="marquee-strip" aria-hidden="true">
-                <div className="marquee-track">
-                    {MARQUEE_ITEMS.map((item, i) => (
-                        <span key={i} className={item === '·' ? 'marquee-dot' : ''}>
-                            {item}
-                        </span>
-                    ))}
-                    {/* Duplicate for seamless loop */}
-                    {MARQUEE_ITEMS.map((item, i) => (
-                        <span key={`b-${i}`} className={item === '·' ? 'marquee-dot' : ''}>
-                            {item}
-                        </span>
-                    ))}
-                </div>
-            </div>
-
-            {/* ── FEATURES BENTO ── */}
-            <section className="features-section" id="features">
-
-                <div className="features-header">
-                    <div>
-                        <span className="section-kicker">What we built</span>
-                        <h2 className="section-heading">
-                            Built for the way<br />
-                            you <em>actually</em> live
-                        </h2>
-                    </div>
-                    <p className="features-header-right">
-                        Six tools woven into one shared space.
-                        No switching apps, no group chats,
-                        no passive-aggressive sticky notes.
-                    </p>
-                </div>
-
-                <div className="features-bento">
-
-                    {/* Chores — big */}
-                    <div className="bento-card bento-card--big">
-                        <span className="bento-icon">🗂️</span>
-                        <h3>Chore Schedules</h3>
-                        <p>Rotating assignments that auto-update. Everyone knows their job.</p>
-                        <div className="chore-preview">
-                            <div className="cp-row">
-                                <span className="cp-avatar">A</span>
-                                <span>Vacuum living room</span>
-                                <span className="cp-done">✓</span>
-                            </div>
-                            <div className="cp-row">
-                                <span className="cp-avatar" style={{ background: '#C94A1A' }}>M</span>
-                                <span>Do the dishes</span>
-                                <span className="cp-done">✓</span>
-                            </div>
-                            <div className="cp-row">
-                                <span className="cp-avatar" style={{ background: '#1E3B2A' }}>S</span>
-                                <span>Take out trash</span>
-                                <span className="cp-pending">○</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Expenses — tall */}
-                    <div className="bento-card bento-card--tall">
-                        <span className="bento-icon">💰</span>
-                        <h3>Expense Splitting</h3>
-                        <p>Fair ledgers, clear balances. No math required.</p>
-                        <div className="expense-bars">
-                            {[
-                                { name: 'Rent',      pct: 75, color: '#1E3B2A' },
-                                { name: 'Utilities', pct: 45, color: '#C94A1A' },
-                                { name: 'Internet',  pct: 30, color: '#8A7E72' },
-                            ].map(b => (
-                                <div className="ebar" key={b.name}>
-                                    <span>{b.name}</span>
-                                    <div className="ebar-track">
-                                        <div className="ebar-fill" style={{ width: `${b.pct}%`, background: b.color }} />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Grocery */}
-                    <div className="bento-card bento-card--small">
-                        <span className="bento-icon">🛒</span>
-                        <h3>Shared Groceries</h3>
-                        <p>One list, everyone adds. Zero duplicate oat milk.</p>
-                    </div>
-
-                    {/* Calendar */}
-                    <div className="bento-card bento-card--small">
-                        <span className="bento-icon">📅</span>
-                        <h3>Shared Calendar</h3>
-                        <p>House events, guests, maintenance — always synced.</p>
-                    </div>
-
-                    {/* Rooms — wide */}
-                    <div className="bento-card bento-card--wide">
-                        <span className="bento-icon">🏠</span>
-                        <h3>Room Management</h3>
-                        <p>Create a digital home for your space. Invite with a code — no friction.</p>
-                        <div className="invite-demo">
-                            <span className="invite-code">ROOM-4829</span>
-                            <span className="invite-tag">Copy invite</span>
-                        </div>
-                    </div>
-
-                    {/* Reminders */}
-                    <div className="bento-card bento-card--mini">
-                        <span className="bento-icon">🔔</span>
-                        <h3>Reminders</h3>
-                        <p>Gentle nudges so nothing slips through the cracks.</p>
-                    </div>
-
-                </div>
-            </section>
-
-            {/* ── HOW IT WORKS ── */}
-            <section className="hiw-section" id="how-it-works">
-                <div className="hiw-inner">
-
-                    <div className="hiw-header reveal">
-                        <span className="section-kicker">How it works</span>
-                        <h2 className="section-heading">
-                            Three steps<br />to <em>harmony</em>
-                        </h2>
-                    </div>
-
-                    <div className="hiw-steps">
-                        {STEPS.map((step, i) => (
-                            <div className="hiw-step reveal" key={step.num} style={{ '--i': i }}>
-                                <div className="hiw-step-num">{step.num}</div>
-                                <div className="hiw-step-icon">{step.icon}</div>
-                                <h3>{step.title}</h3>
-                                <p>{step.desc}</p>
-                            </div>
-                        ))}
-                    </div>
-
-
-                </div>
-            </section>
-
-            {/* ── CTA ── */}
-            <section className="cta-section">
-                <div className="cta-inner reveal">
-                    <span className="cta-kicker">Start today — it's free</span>
-                    <h2>
-                        Ready for a<br />
-                        <em>better way</em> to live?
-                    </h2>
-                    <p>Start managing your shared space the smart way.</p>
-                    <div className="cta-actions">
-                        <Link to="/register" className="btn-cta-primary" id="cta-register-btn">
-                            Create Free Account
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                        </Link>
-                        <Link to="/login" className="btn-cta-ghost" id="cta-login-btn">
-                            Already have an account?
-                        </Link>
-                    </div>
-                </div>
-            </section>
-
-            {/* ── FOOTER ── */}
             <footer className="landing-footer">
                 <div className="footer-inner">
                     <div>
                         <span className="footer-logo">TheRoommate</span>
-                        <p className="footer-tagline">Making shared living simple.</p>
+                        <p className="footer-tagline">Chores, bills, the house calendar.</p>
                     </div>
                     <nav className="footer-nav">
-                        <a href="#features">Features</a>
-                        <a href="#how-it-works">How it Works</a>
-                        <Link to="/register">Get Started</Link>
-                        <Link to="/login">Sign In</Link>
+                        <a href="#tour">Tour</a>
+                        <a href="#live">Live now</a>
+                        <a href="#coming">Coming next</a>
+                        <Link to="/register">Get started</Link>
+                        <Link to="/login">Sign in</Link>
                     </nav>
                     <span className="footer-copy">© 2026 TheRoommate</span>
                 </div>
             </footer>
-
         </div>
     );
 };

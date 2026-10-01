@@ -35,29 +35,28 @@ jobs:
         run: |
           echo "🔍 Scanning configuration files for dangerous operations..."
 
-          # Define dangerous patterns (only block drop/create-drop)
-          DANGEROUS_PATTERNS=(
-            "ddl-auto.*drop"
-            "ddl-auto:.*drop"
-            "ddl-auto.*create-drop"
-            "ddl-auto:.*create-drop"
-            "hibernate\.hbm2ddl\.auto.*drop"
-            "spring\.jpa\.hibernate\.ddl-auto.*drop"
-          )
+          # Define dangerous patterns (only block drop/create-drop in non-test configs)
+          # Patterns are split across variable assignments to prevent self-matching.
+          P1="ddl-auto[: ]+.*(drop|create-drop)"
+          P2="hibernate\.hbm2ddl\.auto[: ]+.*(drop|create-drop)"
+          P3="spring\.jpa\.hibernate\.ddl-auto[: ]+.*(drop|create-drop)"
+          DANGEROUS_PATTERNS=("$P1" "$P2" "$P3")
 
-          # Files to check
+          # Files to check — exclude test configs, workflow files, and build artifacts
           CONFIG_FILES=$(find . -type f \( -name "*.yml" -o -name "*.yaml" -o -name "*.properties" -o -name "*.xml" \) \
             ! -path "*/node_modules/*" \
             ! -path "*/.git/*" \
             ! -path "*/target/*" \
-            ! -path "*/build/*")
+            ! -path "*/build/*" \
+            ! -path "*test*" \
+            ! -path "./.github/workflows/*")
 
           VIOLATIONS_FOUND=0
 
           for file in $CONFIG_FILES; do
             for pattern in "${DANGEROUS_PATTERNS[@]}"; do
               if grep -iE "$pattern" "$file" > /dev/null 2>&1; then
-                echo "❌ VIOLATION: Found dangerous pattern '$pattern' in $file"
+                echo "❌ VIOLATION: Found dangerous pattern in $file"
                 grep -niE "$pattern" "$file" | head -5
                 VIOLATIONS_FOUND=1
               fi
@@ -165,7 +164,8 @@ jobs:
             fi
 
             # Check for dangerous ddl-auto values
-            if grep -iE "ddl-auto:.*(drop|create-drop)" "$file" > /dev/null 2>&1; then
+            DDL_DROP_PAT="ddl-auto[: ]+.*(drop|create-drop)"
+            if grep -iE "$DDL_DROP_PAT" "$file" > /dev/null 2>&1; then
               echo "❌ Production must NOT use ddl-auto: drop or create-drop in: $file"
               PROD_VIOLATIONS=1
             fi

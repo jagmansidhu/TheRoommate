@@ -1,36 +1,47 @@
-# Build stage
-FROM node:20-alpine AS build
+# ──────────────────────────────────────────────────────────────
+# Production image — multi-stage build.
+#
+# Layer cache strategy (top = slowest-changing, bottom = fastest-changing):
+#   1. Base image           — changes only on Node LTS security releases
+#   2. package*.json        — changes only when deps added/removed
+#   3. npm install          — re-runs only when packages change
+#   4. src/ + public/       — changes on every commit  ← cache busts here
+#   5. ARG/ENV (URLs)       — changes on env reconfiguration (AFTER src copy
+#                             so a URL change doesn't bust the npm install layer)
+#   6. npm run build        — re-runs when src or URLs change
+# ──────────────────────────────────────────────────────────────
+
+# ── Stage 1: build ──────────────────────────────────────────
+FROM node:20.19-alpine AS build
 WORKDIR /app
 
-# Copy package files first for better layer caching
+# [SLOW] Package manifest — only changes when deps are added/removed
 COPY package*.json ./
+RUN npm install --legacy-peer-deps
 
-# Install dependencies
-RUN npm install
-
-# Copy source code
+# [FAST] Source — changes on every commit; intentionally after npm install
 COPY public/ public/
 COPY src/ src/
 
-# Build argument for API URL (must be set at build time for React)
+# [VARIABLE] Build-time env vars — placed AFTER source copy so a URL change
+# does NOT bust the npm install cache layer above.
 ARG REACT_APP_BASE_API_URL
 ENV REACT_APP_BASE_API_URL=$REACT_APP_BASE_API_URL
 
 ARG REACT_APP_N8N_WEBHOOK_URL
 ENV REACT_APP_N8N_WEBHOOK_URL=$REACT_APP_N8N_WEBHOOK_URL
 
-# Build the production bundle
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
-RUN addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup
+# ── Stage 2: runtime ────────────────────────────────────────
+FROM nginx:1.27-alpine
 WORKDIR /usr/share/nginx/html
 
-# Remove default nginx static files and config
+# [SLOW] Non-root user + nginx config — never changes
+RUN addgroup -g 1001 -S appgroup && adduser -u 1001 -S appuser -G appgroup
+
 RUN rm -rf /etc/nginx/conf.d/* && rm -f /etc/nginx/nginx.conf
 
-# Create custom nginx.conf for non-root user
 RUN echo 'pid /tmp/nginx.pid;' > /etc/nginx/nginx.conf && \
     echo 'worker_processes auto;' >> /etc/nginx/nginx.conf && \
     echo 'error_log /tmp/nginx_error.log warn;' >> /etc/nginx/nginx.conf && \
@@ -41,16 +52,15 @@ RUN echo 'pid /tmp/nginx.pid;' > /etc/nginx/nginx.conf && \
     echo '  include /etc/nginx/conf.d/*.conf;' >> /etc/nginx/nginx.conf && \
     echo '}' >> /etc/nginx/nginx.conf
 
-# Copy custom nginx config for this application
+# [SLOW] nginx site config — rarely changes
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy built app from build stage
-COPY --from=build /app/build .
-
-# Create necessary directories and set permissions for non-root user
 RUN mkdir -p /var/run/nginx /var/cache/nginx /var/log/nginx /tmp && \
     chown -R appuser:appgroup /usr/share/nginx/html /var/cache/nginx /var/log/nginx /etc/nginx/conf.d /var/run/nginx /tmp && \
     chmod -R 755 /var/run/nginx /var/cache/nginx /var/log/nginx /tmp
+
+# [FAST] Built React bundle — changes on every commit
+COPY --from=build /app/build .
 
 USER appuser
 EXPOSE 80

@@ -44,7 +44,7 @@ Use these as the visual source of truth when aligning other surfaces. Do not inv
 
 | ID | Priority | Area | Title | Status |
 |----|----------|------|-------|--------|
-| FF-01 | P0 | Buttons | Consolidate button systems to one living-paper `.btn` | Open |
+| FF-01 | P0 | Buttons | Consolidate button systems to one living-paper `.btn` | Done (`design/ff-01-btn-consolidate`) |
 | FF-02 | P0 | Landing | Add full-bleed product imagery to landing hero | Open |
 | FF-03 | P0 | Landing | Make TheRoommate brand hero-level in first viewport | Partial (`design/landing-future-plans`) |
 | FF-04 | P0 | Tokens | Finish living-paper token consolidation (remove Inter/blue leftovers) | Partial (`design/tokens-orange-living-paper`) |
@@ -65,6 +65,7 @@ Use these as the visual source of truth when aligning other surfaces. Do not inv
 
 These were called fixed in the audit session or live on design branches. Re-verify after merges:
 
+- Button systems consolidated on `design/ff-01-btn-consolidate` (FF-01 Done).
 - Brand string standardization started on `design/brand-theroommate` (current tree still has `DaRoommate` / `TheRoomate` leftovers; tracked in FF-09).
 - Typographic hero brand on `design/landing-future-plans` (tracked as Partial in FF-03).
 - Living-paper token restore on `design/tokens-orange-living-paper` (tracked as Partial in FF-04).
@@ -74,11 +75,10 @@ These were called fixed in the audit session or live on design branches. Re-veri
 
 ## Top priorities (start here)
 
-1. **FF-01 Buttons** — four systems block every other consistency pass.
-2. **FF-04 Tokens** — Inter/`--primary-*` blue leftovers keep fighting living-paper pages.
-3. **FF-05 Page consistency** — Onboarding + Room details + Dashboard toward Rooms/Landing.
-4. **FF-03 + FF-02 Landing** — brand-level hero, then real imagery / full-bleed shell.
-5. **FF-09 Copy** — quick trust wins (`TheRoommate`, roommate voice, name greeting).
+1. **FF-04 Tokens** — Inter/`--primary-*` blue leftovers keep fighting living-paper pages.
+2. **FF-05 Page consistency** — Onboarding + Room details + Dashboard toward Rooms/Landing.
+3. **FF-03 + FF-02 Landing** — brand-level hero, then real imagery / full-bleed shell.
+4. **FF-09 Copy** — quick trust wins (`TheRoommate`, roommate voice, name greeting).
 
 ---
 
@@ -86,10 +86,10 @@ These were called fixed in the audit session or live on design branches. Re-veri
 
 - **Priority:** P0
 - **Area:** Buttons
-- **Status:** Open
+- **Status:** Done (`design/ff-01-btn-consolidate`)
 - **Related files:** `src/index.css`, `src/styling/Home.css`, `src/styling/Rooms.css`, `src/styling/Components.css`, `src/styling/Calendar.css`, `src/styling/Dashboard.css`, `src/webpages/Home.jsx`, `src/webpages/room/Rooms.jsx`, `src/webpages/auth/Login.jsx`, `src/webpages/auth/Register.jsx`, modals under `src/webpages/room/modals/`, `src/component/Calendar.jsx`
 
-### Problem / current state
+### Problem / current state (historical)
 
 Four parallel systems plus specialized controls:
 
@@ -100,7 +100,7 @@ Four parallel systems plus specialized controls:
 | Rooms `.pm-btn` + modifiers | `Rooms.css` | `Rooms.jsx` header/empty-state |
 | Auth overrides | `Components.css` | Login/Register via `.auth-submit` + `.auth-form .btn-primary` (`!important`) |
 
-Same action looks different by page. Hover / `:focus-visible` / `:disabled` are incomplete. Naming trap: Rooms `.pm-btn-ghost` is a parchment secondary box; landing `.btn-ghost-lp` is an underline text link.
+Same action looked different by page. Hover / `:focus-visible` / `:disabled` were incomplete. Naming trap: Rooms `.pm-btn-ghost` was a parchment secondary box; landing `.btn-ghost-lp` was an underline text link.
 
 ### Proposed fix (concrete plan)
 
@@ -146,23 +146,13 @@ Target specs:
 
 **Keep out of phase 1:** `.nav-btn`, `.close-btn`, `.rd-back-btn` / `.rd-leave-btn`, `.pm-card-action-btn`, `.quick-action-btn`, `.password-toggle`, `.onboarding-skip`, `.modal-close`.
 
-**Phased plan:**
-
-1. **Phase 0 — Re-verify** — re-grep definitions/usages; files may have drifted.
-2. **Phase 1 — Tokens + base** — strengthen `.btn` in `index.css` only; add `.btn-link` / `.btn-on-dark`; stop bare-`button` chrome if needed. Visual check Rooms, Login, one modal, Calendar.
-3. **Phase 2 — Replace aliases** — Rooms → (modals spot-check) → Home → Auth last → Calendar. Delete CSS after JSX renames.
-4. **Phase 3 — Delete dead rules** — unused `.btn-icon` / `.pm-btn-danger` / landing aliases / Calendar duplicates.
-5. **Phase 4 — Acceptance** — pages listed below; no `!important` in button type/color; grep clean of old families.
-
-**Risks:** auth `!important` wars; Calendar header selector; landing ghost ≠ app ghost; bare `button` base rule; dark CTA band contrast; onboarding `.btn { pointer-events: none }` layout-only rule must stay.
-
 ### Acceptance criteria
 
-- [ ] One living-paper `.btn` primitive used for standard actions app-wide
-- [ ] Grep clean: no `.pm-btn`, `.btn-primary-lp`, `.btn-ghost-lp`, `.btn-cta-`, `.auth-submit` button styling
-- [ ] Consistent hover / `:focus-visible` / `:disabled`
-- [ ] No `!important` in button typography/color rules
-- [ ] Visual pass: Landing hero + CTA band, Rooms header, Login/Register, one room modal (primary/secondary/danger), Calendar create + delete, Budget sm actions
+- [x] One living-paper `.btn` primitive used for standard actions app-wide
+- [x] Grep clean: no `.pm-btn`, `.btn-primary-lp`, `.btn-ghost-lp`, `.btn-cta-`, `.auth-submit` button styling
+- [x] Consistent hover / `:focus-visible` / `:disabled`
+- [x] No `!important` in button typography/color rules
+- [ ] Visual pass: Landing hero + CTA band, Rooms header, Login/Register, one room modal (primary/secondary/danger), Calendar create + delete, Budget sm actions (pending manual check)
 
 ---
 

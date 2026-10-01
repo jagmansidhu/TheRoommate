@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════
-   DaRoomate · Rooms (Property Manager)
+   TheRoommate · Rooms
    Living-Paper Aesthetic
 ══════════════════════════════════════════════ */
 
@@ -68,43 +68,19 @@
   font-variation-settings: 'opsz' 48;
 }
 
+.pm-subtitle {
+  font-family: var(--f-body);
+  font-size: 0.82rem;
+  color: var(--lp-ink-muted);
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
 .pm-header-actions {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
-}
-
-/* ── Buttons ── */
-.pm-btn {
-  font-family: var(--f-label);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  padding: 10px 22px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: none;
-  line-height: 1;
-}
-
-.pm-btn-primary {
-  background: var(--lp-orange);
-  color: #fff;
-  border: 1.5px solid var(--lp-orange);
-}
-
-.pm-btn-ghost {
-  background: var(--lp-parchment);
-  color: var(--lp-ink-soft);
-  border: 1.5px solid var(--lp-border);
-}
-
-.pm-btn-danger {
-  background: transparent;
-  color: var(--lp-orange);
-  border: 1.5px solid var(--lp-orange);
 }
 
 /* ── Alert ── */
@@ -133,53 +109,6 @@
   line-height: 1;
   padding: 0 4px;
   flex-shrink: 0;
-}
-
-/* ── Stats Row ── */
-.pm-stats-row {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  margin-bottom: 32px;
-  background: var(--lp-card);
-  border: 1.5px solid var(--lp-border);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.pm-stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px 16px;
-}
-
-.pm-stat-sep {
-  width: 1px;
-  height: 48px;
-  background: var(--lp-rule);
-  flex-shrink: 0;
-}
-
-.pm-stat-value {
-  font-family: var(--f-display);
-  font-size: 2rem;
-  font-weight: 700;
-  font-style: italic;
-  color: var(--lp-ink);
-  line-height: 1;
-  font-variation-settings: 'opsz' 40;
-}
-
-.pm-stat-label {
-  font-family: var(--f-label);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--lp-ink-muted);
-  margin-top: 4px;
 }
 
 /* ── Empty State ── */
@@ -252,6 +181,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 /* Slight rotation per card — pinboard feel */
@@ -326,7 +256,7 @@
 
 .pm-role-tag.owner   { background: rgba(201,74,26,0.1);  color: var(--lp-orange); }
 .pm-role-tag.manager { background: rgba(30,59,42,0.1);   color: var(--lp-green);  }
-.pm-role-tag.resident{ background: var(--lp-parchment);  color: var(--lp-ink-muted); border: 1px solid var(--lp-border); }
+.pm-role-tag.member  { background: var(--lp-parchment);  color: var(--lp-ink-muted); border: 1px solid var(--lp-border); }
 
 /* Card divider */
 .pm-card-divider {
@@ -443,26 +373,23 @@
 .pm-card-footer-actions {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.pm-card-action-btn {
-  font-family: var(--f-label);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  padding: 5px 12px;
-  background: var(--lp-card);
-  color: var(--lp-ink-soft);
-  border: 1.5px solid var(--lp-border);
-  border-radius: 3px;
-  cursor: pointer;
+/* ── Card hover / focus ── */
+.pm-card:hover,
+.pm-card:focus-visible {
+  border-color: var(--lp-orange);
+  box-shadow: 3px 3px 0 var(--lp-orange);
+  outline: none;
 }
 
-.pm-card-action-primary {
-  background: var(--lp-ink);
-  color: var(--lp-cream);
-  border-color: var(--lp-ink);
+.pm-card:nth-child(odd):hover,
+.pm-card:nth-child(odd):focus-visible,
+.pm-card:nth-child(even):hover,
+.pm-card:nth-child(even):focus-visible {
+  transform: rotate(0deg) translateY(-2px);
 }
 
 /* ── Responsive ── */
@@ -471,5 +398,25 @@
   .pm-card { transform: none !important; }
   .pm-header { align-items: flex-start; flex-direction: column; }
   .pm-header-actions { width: 100%; }
-  .pm-btn { flex: 1; text-align: center; }
+  .pm-header-actions .btn,
+  .pm-empty-actions .btn { flex: 1; text-align: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-container {
+    animation: none;
+  }
+
+  .pm-card,
+  .pm-card:nth-child(odd),
+  .pm-card:nth-child(even),
+  .pm-card:hover,
+  .pm-card:focus-visible {
+    transform: none !important;
+    transition: none;
+  }
+
+  .pm-card-occ-fill {
+    transition: none;
+  }
 }

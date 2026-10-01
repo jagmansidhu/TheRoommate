@@ -12,7 +12,7 @@ import { useAppData } from '../../App';
 const getRoleLabel = (role) => {
     if (role === ROLES.HEAD_ROOMMATE) return 'Owner';
     if (role === ROLES.ASSISTANT) return 'Manager';
-    return 'Resident';
+    return 'Member';
 };
 
 const getMemberInitials = (member) => {
@@ -69,14 +69,20 @@ const Rooms = () => {
             {/* ── Page Header ── */}
             <div className="pm-header">
                 <div>
-                    <p className="pm-eyebrow">Property Portfolio</p>
+                    <p className="pm-eyebrow">Shared living</p>
                     <h1 className="pm-title">My Rooms</h1>
+                    {rooms.length > 0 && (
+                        <p className="pm-subtitle">
+                            {rooms.length} room{rooms.length === 1 ? '' : 's'} · {totalMembers} member{totalMembers === 1 ? '' : 's'}
+                            {rooms.length < 3 ? ` · ${3 - rooms.length} slot${3 - rooms.length === 1 ? '' : 's'} left` : ''}
+                        </p>
+                    )}
                 </div>
                 <div className="pm-header-actions">
-                    <button className="pm-btn pm-btn-ghost" onClick={() => setShowJoinModal(true)}>
+                    <button className="btn btn-secondary" onClick={() => setShowJoinModal(true)}>
                         Join with Code
                     </button>
-                    <button className="pm-btn pm-btn-primary" onClick={() => setShowCreateModal(true)}>
+                    <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
                         + New Room
                     </button>
                 </div>
@@ -86,26 +92,6 @@ const Rooms = () => {
                 <div className="pm-alert">
                     {error}
                     <button className="pm-alert-close" onClick={() => setError(null)}>×</button>
-                </div>
-            )}
-
-            {/* ── Stats Row ── */}
-            {rooms.length > 0 && (
-                <div className="pm-stats-row">
-                    <div className="pm-stat">
-                        <span className="pm-stat-value">{rooms.length}</span>
-                        <span className="pm-stat-label">Rooms</span>
-                    </div>
-                    <div className="pm-stat-sep" />
-                    <div className="pm-stat">
-                        <span className="pm-stat-value">{totalMembers}</span>
-                        <span className="pm-stat-label">Residents</span>
-                    </div>
-                    <div className="pm-stat-sep" />
-                    <div className="pm-stat">
-                        <span className="pm-stat-value">{3 - rooms.length}</span>
-                        <span className="pm-stat-label">Available Slots</span>
-                    </div>
                 </div>
             )}
 
@@ -121,8 +107,8 @@ const Rooms = () => {
                     <h2 className="pm-empty-title">No rooms yet</h2>
                     <p className="pm-empty-body">Create a room or join an existing one with a room code.</p>
                     <div className="pm-empty-actions">
-                        <button className="pm-btn pm-btn-primary" onClick={() => setShowCreateModal(true)}>Create Room</button>
-                        <button className="pm-btn pm-btn-ghost" onClick={() => setShowJoinModal(true)}>Join with Code</button>
+                        <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>Create Room</button>
+                        <button className="btn btn-secondary" onClick={() => setShowJoinModal(true)}>Join with Code</button>
                     </div>
                 </div>
             ) : (
@@ -155,7 +141,7 @@ const Rooms = () => {
                                             <p className="pm-card-address">{room.address}</p>
                                         )}
                                     </div>
-                                    <span className={`pm-role-tag ${isHead ? 'owner' : isAssistant ? 'manager' : 'resident'}`}>
+                                    <span className={`pm-role-tag ${isHead ? 'owner' : isAssistant ? 'manager' : 'member'}`}>
                                         {getRoleLabel(role)}
                                     </span>
                                 </div>
@@ -205,17 +191,19 @@ const Rooms = () => {
                                     <div className="pm-card-footer-actions">
                                         {(isHead || isAssistant) && (
                                             <button
-                                                className="pm-card-action-btn"
+                                                type="button"
+                                                className="btn btn-secondary btn-sm"
                                                 onClick={() => openRoleManagement(room)}
                                             >
                                                 Manage Roles
                                             </button>
                                         )}
                                         <button
-                                            className="pm-card-action-btn pm-card-action-primary"
+                                            type="button"
+                                            className="btn btn-primary btn-sm"
                                             onClick={() => openRoomDetails(room)}
                                         >
-                                            Open →
+                                            Open
                                         </button>
                                     </div>
                                 </div>

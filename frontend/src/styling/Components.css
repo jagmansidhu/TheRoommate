@@ -104,20 +104,7 @@
   font-style: italic;
 }
 
-.auth-submit,
-.auth-form .btn-primary {
-  font-family: var(--f-label) !important;
-  font-size: 0.82rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.08em !important;
-  text-transform: uppercase !important;
-  padding: 13px 28px !important;
-  background: var(--lp-orange) !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 4px !important;
-  cursor: pointer;
-  width: 100%;
+.auth-form .btn {
   margin-top: 4px;
 }
 
