@@ -29,16 +29,19 @@ public class RoomServiceImplt implements RoomService {
     private final RoomRepository roomRepository;
     private final RoomMemberRepository roomMemberRepository;
     private final EventRepository eventRepository;
+    private final UtilityRepository utilityRepository;
     @Autowired
     private RoomInviteMailSender mailSender;
 
     public RoomServiceImplt(UserRepository userRepository, RoomRepository roomRepository,
             RoomMemberRepository roomMemberRepository,
-            EventRepository eventRepository) {
+            EventRepository eventRepository,
+            UtilityRepository utilityRepository) {
         this.userRepository = userRepository;
         this.roomRepository = roomRepository;
         this.roomMemberRepository = roomMemberRepository;
         this.eventRepository = eventRepository;
+        this.utilityRepository = utilityRepository;
     }
 
     @Override
