@@ -152,20 +152,45 @@ const UserProvider = ({children}) => {
 };
 
 // ---------------------------------------------------------------------------
+// Cache TTL — stale data older than this is silently re-fetched on next load.
+// Prevents multi-user rooms from seeing stale chores/utilities after 60 seconds.
+const CACHE_TTL_MS = 60_000;
+
+const readCache = (key) => {
+    try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        const { data, cachedAt } = JSON.parse(raw);
+        if (Date.now() - cachedAt > CACHE_TTL_MS) return null; // stale
+        return data;
+    } catch {
+        return null;
+    }
+};
+
+const writeCache = (key, data) => {
+    try {
+        localStorage.setItem(key, JSON.stringify({ data, cachedAt: Date.now() }));
+    } catch {
+        // localStorage can throw in private mode — fail silently
+    }
+};
+
+const clearCache = (...keys) => keys.forEach(k => localStorage.removeItem(k));
+
+// ---------------------------------------------------------------------------
 // AppDataProvider
 // Caches shared app data so pages don't re-fetch on every navigation.
+// All caches have a 60-second TTL — stale data is re-fetched transparently.
 //
 const AppDataProvider = ({children}) => {
     const {isAuthenticated, isLoading} = useAuth();
 
-    const [rooms, setRooms] = useState(() => {
-        const cached = localStorage.getItem('appRooms');
-        return cached ? JSON.parse(cached) : [];
-    });
+    const [rooms, setRooms] = useState(() => readCache('appRooms') ?? []);
     const [roomsLoading, setRoomsLoading] = useState(false);
 
     useEffect(() => {
-        if (isAuthenticated) localStorage.setItem('appRooms', JSON.stringify(rooms));
+        if (isAuthenticated) writeCache('appRooms', rooms);
     }, [rooms, isAuthenticated]);
 
     const fetchRooms = useCallback(async () => {
@@ -184,14 +209,11 @@ const AppDataProvider = ({children}) => {
     const removeRoom       = useCallback(id => setRooms(prev => prev.filter(r => r.id !== id)), []);
     const updateRoom       = useCallback(r  => setRooms(prev => prev.map(x => x.id === r.id ? r : x)), []);
 
-    const [userChores, setUserChores] = useState(() => {
-        const cached = localStorage.getItem('appChores');
-        return cached ? JSON.parse(cached) : [];
-    });
+    const [userChores, setUserChores] = useState(() => readCache('appChores') ?? []);
     const [userChoresLoading, setUserChoresLoading] = useState(false);
 
     useEffect(() => {
-        if (isAuthenticated) localStorage.setItem('appChores', JSON.stringify(userChores));
+        if (isAuthenticated) writeCache('appChores', userChores);
     }, [userChores, isAuthenticated]);
 
     const fetchUserChores = useCallback(async () => {
@@ -213,14 +235,11 @@ const AppDataProvider = ({children}) => {
     }, []);
 
     // --- user utilities ---
-    const [userUtilities, setUserUtilities] = useState(() => {
-        const cached = localStorage.getItem('appUtilities');
-        return cached ? JSON.parse(cached) : [];
-    });
+    const [userUtilities, setUserUtilities] = useState(() => readCache('appUtilities') ?? []);
     const [userUtilitiesLoading, setUserUtilitiesLoading] = useState(false);
 
     useEffect(() => {
-        if (isAuthenticated) localStorage.setItem('appUtilities', JSON.stringify(userUtilities));
+        if (isAuthenticated) writeCache('appUtilities', userUtilities);
     }, [userUtilities, isAuthenticated]);
 
     const normalizeUtility = useCallback((utility) => ({
@@ -254,25 +273,28 @@ const AppDataProvider = ({children}) => {
     }, []);
 
     // --- per-room data cache (lazy) ---
-    // Shape: { [roomId]: { chores, utilities, userUtilities, memberId } }
-    const [roomData, setRoomDataState] = useState(() => {
-        const cached = localStorage.getItem('appRoomData');
-        return cached ? JSON.parse(cached) : {};
-    });
+    // Shape: { [roomId]: { chores, utilities, userUtilities, memberId, cachedAt } }
+    const [roomData, setRoomDataState] = useState(() => readCache('appRoomData') ?? {});
 
     useEffect(() => {
-        if (isAuthenticated) localStorage.setItem('appRoomData', JSON.stringify(roomData));
+        if (isAuthenticated) writeCache('appRoomData', roomData);
     }, [roomData, isAuthenticated]);
 
-    // Read cached data for a room (returns null if not yet loaded)
-    const getRoomData = useCallback((roomId) => roomData[roomId] || null, [roomData]);
+    // Read cached data for a room — returns null if not loaded or stale
+    const getRoomData = useCallback((roomId) => {
+        const entry = roomData[roomId];
+        if (!entry) return null;
+        if (Date.now() - (entry.cachedAt ?? 0) > CACHE_TTL_MS) return null; // stale
+        return entry;
+    }, [roomData]);
 
     // Write room data into cache after a fetch or mutation
     const setRoomData = useCallback((roomId, data) => {
-        setRoomDataState(prev => ({ ...prev, [roomId]: data }));
+        setRoomDataState(prev => ({ ...prev, [roomId]: { ...data, cachedAt: Date.now() } }));
     }, []);
 
     // Merge a partial patch into existing room cache (e.g. after a mutation)
+    // Preserves the original cachedAt so TTL runs from the last full fetch.
     const patchRoomData = useCallback((roomId, patch) => {
         setRoomDataState(prev => ({
             ...prev,
@@ -290,9 +312,10 @@ const AppDataProvider = ({children}) => {
     }, []);
 
     // Fetch and cache all three room-scoped payloads in one Promise.all.
-    // Safe to call on every mount — skips network if already cached.
+    // Safe to call on every mount — skips network if cache is still fresh.
     const loadRoomData = useCallback(async (roomId, memberId) => {
-        if (roomData[roomId]) return; // already cached
+        const cached = roomData[roomId];
+        if (cached && Date.now() - (cached.cachedAt ?? 0) < CACHE_TTL_MS) return; // still fresh
         try {
             const [choresRes, utilitiesRes, userUtilitiesRes] = await Promise.all([
                 apiClient.get(`/api/chores/${roomId}`),
@@ -330,15 +353,12 @@ const AppDataProvider = ({children}) => {
         }
     }, [setRoomData]);
 
-    const [events, setEvents] = useState(() => {
-        const cached = localStorage.getItem('appEvents');
-        return cached ? JSON.parse(cached) : [];
-    });
+    const [events, setEvents] = useState(() => readCache('appEvents') ?? []);
     const [eventsLoading, setEventsLoading] = useState(false);
-    const eventsLoadedRef = useRef(!!localStorage.getItem('appEvents') && localStorage.getItem('appEvents') !== '[]');
+    const eventsLoadedRef = useRef(!!readCache('appEvents')?.length);
 
     useEffect(() => {
-        if (isAuthenticated) localStorage.setItem('appEvents', JSON.stringify(events));
+        if (isAuthenticated) writeCache('appEvents', events);
     }, [events, isAuthenticated]);
 
     const fetchEvents = useCallback(async () => {
@@ -380,6 +400,7 @@ const AppDataProvider = ({children}) => {
             setEvents([]);
             setRoomDataState({});
             eventsLoadedRef.current = false;
+            clearCache('appRooms','appChores','appUtilities','appEvents','appRoomData');
         }
     }, [isAuthenticated, isLoading, fetchRooms, fetchUserChores, fetchUserUtilities]);
 

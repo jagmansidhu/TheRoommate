@@ -31,14 +31,6 @@ public class RoomServiceImplt implements RoomService {
     private final EventRepository eventRepository;
     @Autowired
     private RoomInviteMailSender mailSender;
-    @Autowired
-    private UtilityRepository utilityRepository;
-    @Autowired
-    private ChoreRepository choreRepository;
-    @Autowired
-    private GroceryListRepository groceryListRepository;
-    @Autowired
-    private LedgerEntryRepository ledgerEntryRepository;
 
     public RoomServiceImplt(UserRepository userRepository, RoomRepository roomRepository,
             RoomMemberRepository roomMemberRepository,
@@ -202,19 +194,12 @@ public class RoomServiceImplt implements RoomService {
             throw new UserApiError("Not authorized to delete room.");
         }
 
-        utilityRepository.deleteAllByRoomId(roomId);
-
-        choreRepository.deleteAllByRoomId(roomId);
-
-        eventRepository.deleteAllByRoomId(roomId);
-
-        groceryListRepository.deleteAllByRoomId(roomId);
-        ledgerEntryRepository.deleteAllByRoomId(roomId);
-
-        roomMemberRepository.deleteAllByRoomId(roomId);
-
+        // CascadeType.ALL + orphanRemoval on RoomEntity handles all child deletions
+        // (chores, utilities, events, grocery lists, ledger entries, members) automatically.
         roomRepository.deleteById(roomId);
+        logger.info("Room {} deleted by {} — all child data cascade-deleted", roomId, requesterEmail);
     }
+
 
     @Override
     @Transactional

@@ -1,5 +1,10 @@
 package com.roomate.app.entities.room;
 
+import com.roomate.app.entities.ChoreEntity;
+import com.roomate.app.entities.UtilityEntity;
+import com.roomate.app.entities.EventEntity;
+import com.roomate.app.entities.grocery.GroceryListEntity;
+import com.roomate.app.entities.ledger.LedgerEntryEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -44,8 +49,25 @@ public class RoomEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // Members — cascade handled explicitly in service (leave/remove has its own logic)
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<RoomMemberEntity> members = new ArrayList<>();
+
+    // Child data — all cascade-delete when room is deleted
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ChoreEntity> chores = new ArrayList<>();
+
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<UtilityEntity> utilities = new ArrayList<>();
+
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<EventEntity> events = new ArrayList<>();
+
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<GroceryListEntity> groceryLists = new ArrayList<>();
+
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<LedgerEntryEntity> ledgerEntries = new ArrayList<>();
 
 
     public RoomEntity() {
