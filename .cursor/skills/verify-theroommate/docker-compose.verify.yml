@@ -1,0 +1,21 @@
+# Verification scaffolding for verify-theroommate.
+# Published ports and container names stay off the everyday `docker compose up` stack.
+services:
+  api:
+    container_name: theroommate-verify-api
+    ports: !override
+      - "18085:8085"
+    environment:
+      CORS_ALLOWED_ORIGINS: http://localhost:3100,http://127.0.0.1:3100
+  postgresdb:
+    container_name: theroommate-verify-db
+    ports: !override
+      - "15433:5432"
+  budgetdb:
+    container_name: theroommate-verify-budget-db
+    ports: !override
+      - "15434:5432"
+  redis:
+    container_name: theroommate-verify-redis
+    ports: !override
+      - "16379:6379"
