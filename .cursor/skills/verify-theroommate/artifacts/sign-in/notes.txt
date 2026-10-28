@@ -1,0 +1,16 @@
+feature id: sign-in-submit
+entry point: /login
+account: test1@example.com
+
+Sign-in with a wrong password stayed on /login and showed
+"Invalid email or password. Please try again."
+
+Sign-in with the seeded password left /login and opened /dashboard.
+The rendered page was onboarding ("Welcome to DaRoommate"), not
+"Dashboard" / "Welcome back, test1@example.com" / Active Rooms 1.
+The browser requested /user/login and /api/get-user. It did not
+request /api/rooms. appRooms was stored as an object with data [].
+
+GET /api/rooms with the login cookie still returns University House.
+The seed is present. The client skipped the fetch. See the sign-in
+Gotchas. This run does not verify sign-in-submit's room count.

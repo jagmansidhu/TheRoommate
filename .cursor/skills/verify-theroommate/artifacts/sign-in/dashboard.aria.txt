@@ -1,0 +1,17 @@
+feature: sign-in-submit
+entry: /login
+url: http://localhost:3100/dashboard
+document title: TheRoommate
+result: failed the Active Rooms check
+
+The password sign-in returned and the browser moved to /dashboard.
+The page is onboarding, not the dashboard counts.
+No request was made to /api/rooms.
+localStorage appRooms was {"data":[],"cachedAt":...}.
+
+- heading "Welcome to DaRoommate"
+- button "Get Started"
+- button "Enter Code"
+- button "Skip for now, I'll do this later"
+- heading "Create a Room"
+- heading "Join a Room"
