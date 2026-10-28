@@ -97,6 +97,11 @@ public class LedgerServiceImpl implements LedgerService {
         for (AssignSplitsDto.SplitAssignment assignment : dto.getAssignments()) {
             RoomMemberEntity member = roomMemberRepository.findById(assignment.getMemberId())
                     .orElseThrow(() -> new UserApiError("Member not found: " + assignment.getMemberId()));
+            if (!member.getRoom().getId().equals(entry.getRoom().getId())
+                    || assignment.getAmount() == null
+                    || assignment.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new UserApiError("Split member must be in the room and the amount must be positive");
+            }
 
             LedgerSplitEntity split = new LedgerSplitEntity(entry, member, assignment.getAmount());
             split.setNotes(assignment.getNotes());
@@ -184,6 +189,10 @@ public class LedgerServiceImpl implements LedgerService {
 
         if (!isOwnPayment && !isHeadRoommate) {
             throw new UserApiError("You can only record your own payments");
+        }
+
+        if (dto.getAmount().compareTo(split.getRemainingBalance()) > 0) {
+            throw new UserApiError("Payment amount exceeds the remaining balance");
         }
 
         split.recordPayment(dto.getAmount());

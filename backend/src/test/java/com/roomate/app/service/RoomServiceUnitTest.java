@@ -1,12 +1,14 @@
 package com.roomate.app.service;
 
 import com.roomate.app.dto.CreateRoomRequest;
+import com.roomate.app.dto.InviteUserRequest;
 import com.roomate.app.dto.RoomDto;
 import com.roomate.app.entities.UserEntity;
 import com.roomate.app.entities.room.RoomEntity;
 import com.roomate.app.entities.room.RoomMemberEntity;
 import com.roomate.app.entities.room.RoomMemberEnum;
 import com.roomate.app.exceptions.UserApiError;
+import com.roomate.app.mailer.RoomInviteMailSender;
 import com.roomate.app.repository.*;
 import com.roomate.app.service.implementation.RoomServiceImplt;
 
@@ -44,6 +46,12 @@ class RoomServiceUnitTest {
     private GroceryListRepository groceryListRepository;
     @Mock
     private LedgerEntryRepository ledgerEntryRepository;
+    @Mock
+    private LedgerSplitRepository ledgerSplitRepository;
+    @Mock
+    private GroceryItemRepository groceryItemRepository;
+    @Mock
+    private RoomInviteMailSender mailSender;
 
 
     @InjectMocks
@@ -68,6 +76,7 @@ class RoomServiceUnitTest {
         req.setDescription("Description");
 
         when(userRepository.getUserByEmail("head@example.com")).thenReturn(mockUser);
+        when(userRepository.lockUserRow(mockUser.getId())).thenReturn(mockUser.getId());
         when(roomRepository.countRoomsByUserId(mockUser.getId())).thenReturn(0);
         when(roomRepository.save(any(RoomEntity.class))).thenAnswer(i -> {
             RoomEntity r = i.getArgument(0);
@@ -89,6 +98,7 @@ class RoomServiceUnitTest {
         CreateRoomRequest req = new CreateRoomRequest();
         
         when(userRepository.getUserByEmail("head@example.com")).thenReturn(mockUser);
+        when(userRepository.lockUserRow(mockUser.getId())).thenReturn(mockUser.getId());
         when(roomRepository.countRoomsByUserId(mockUser.getId())).thenReturn(3);
 
         UserApiError ex = assertThrows(UserApiError.class, () -> roomService.createRoom(req, "head@example.com"));
@@ -111,7 +121,9 @@ class RoomServiceUnitTest {
         room.getMembers().add(new RoomMemberEntity(room, mockUser, RoomMemberEnum.HEAD_ROOMMATE));
 
         when(userRepository.getUserByEmail("joiner@example.com")).thenReturn(joiner);
+        when(userRepository.lockUserRow(joiner.getId())).thenReturn(joiner.getId());
         when(roomRepository.countRoomsByUserId(joiner.getId())).thenReturn(0);
+        when(roomRepository.lockByRoomCode(joinCode)).thenReturn(room.getId());
         when(roomRepository.findByRoomCode(joinCode)).thenReturn(Optional.of(room));
         when(roomRepository.save(any(RoomEntity.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -120,5 +132,23 @@ class RoomServiceUnitTest {
         assertNotNull(result);
         assertEquals(2, result.getMembers().size()); // 1 original + 1 joiner
         verify(roomRepository, times(1)).save(room);
+    }
+
+    @Test
+    void inviteFromNonMemberIsRejected() {
+        UUID roomId = UUID.randomUUID();
+        InviteUserRequest request = new InviteUserRequest();
+        request.setRoomId(roomId.toString());
+        request.setEmail("invitee@example.com");
+
+        RoomEntity room = new RoomEntity();
+        room.setId(roomId);
+
+        when(roomRepository.findById(roomId)).thenReturn(Optional.of(room));
+        when(roomMemberRepository.findByRoomIdAndUserEmail(roomId, "head@example.com"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(UserApiError.class, () -> roomService.inviteUserToRoom(request, "head@example.com"));
+        verify(mailSender, never()).sendMail(any(), any(), any());
     }
 }

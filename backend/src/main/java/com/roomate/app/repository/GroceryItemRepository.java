@@ -2,6 +2,7 @@ package com.roomate.app.repository;
 
 import com.roomate.app.entities.grocery.GroceryItemEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -47,4 +48,12 @@ public interface GroceryItemRepository extends JpaRepository<GroceryItemEntity, 
      */
     @Query("SELECT DISTINCT g.category FROM GroceryItemEntity g WHERE g.groceryList.id = :listId AND g.category IS NOT NULL")
     List<String> findDistinctCategoriesByListId(@Param("listId") UUID listId);
+
+    @Modifying
+    @Query("UPDATE GroceryItemEntity g SET g.addedBy = NULL WHERE g.addedBy.id = :memberId")
+    void clearAddedByMember(@Param("memberId") UUID memberId);
+
+    @Modifying
+    @Query("UPDATE GroceryItemEntity g SET g.purchasedBy = NULL WHERE g.purchasedBy.id = :memberId")
+    void clearPurchasedByMember(@Param("memberId") UUID memberId);
 }

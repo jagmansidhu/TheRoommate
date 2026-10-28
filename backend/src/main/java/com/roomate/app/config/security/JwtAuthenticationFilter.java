@@ -1,6 +1,7 @@
 package com.roomate.app.config.security;
 
 import com.roomate.app.service.JWTService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,28 +42,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        final String username = jwtService.extractUsername(token);
+        try {
+            final String username = jwtService.extractUsername(token);
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            if (jwtService.isTokenValid(token)) {
-                java.util.List<String> roles = jwtService.extractRoles(token);
-                if (roles != null) {
-                    java.util.List<org.springframework.security.core.authority.SimpleGrantedAuthority> authorities = 
-                            roles.stream().map(org.springframework.security.core.authority.SimpleGrantedAuthority::new).toList();
-                    org.springframework.security.core.userdetails.User principal = 
-                            new org.springframework.security.core.userdetails.User(username, "", authorities);
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(principal, null, authorities);
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                } else {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                if (jwtService.isTokenValid(token)) {
+                    java.util.List<String> roles = jwtService.extractRoles(token);
+                    if (roles != null) {
+                        java.util.List<org.springframework.security.core.authority.SimpleGrantedAuthority> authorities =
+                                roles.stream().map(org.springframework.security.core.authority.SimpleGrantedAuthority::new).toList();
+                        org.springframework.security.core.userdetails.User principal =
+                                new org.springframework.security.core.userdetails.User(username, "", authorities);
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(principal, null, authorities);
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    } else {
+                        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
                 }
             }
+        } catch (JwtException | IllegalArgumentException ex) {
+            // A bad cookie must not abort login. This filter runs before exception translation.
         }
         chain.doFilter(request, response);
     }

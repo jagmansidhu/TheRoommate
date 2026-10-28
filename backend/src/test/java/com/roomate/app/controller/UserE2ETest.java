@@ -2,17 +2,24 @@ package com.roomate.app.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.roomate.app.dto.RegisterDto;
+import com.roomate.app.dto.UserDTOS.UpdateProfileDto;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -26,6 +33,12 @@ class UserE2ETest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Test
+    void statusResponseSetsCsrfCookie() throws Exception {
+        mockMvc.perform(get("/user/status"))
+                .andExpect(cookie().exists("XSRF-TOKEN"));
+    }
 
     @Test
     void testRegisterUserEndpoint() throws Exception {
@@ -62,5 +75,46 @@ class UserE2ETest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("User with this email already exists."));
+    }
+
+    @Test
+    @WithMockUser(username = "profilejson@example.com")
+    void profileJsonHasNoPassword() throws Exception {
+        String email = "profilejson@example.com";
+        String submittedPassword = "NewSecret9!pass";
+
+        RegisterDto register = new RegisterDto();
+        register.setEmail(email);
+        register.setFirstName("Profile");
+        register.setLastName("Json");
+        register.setPassword("strongPassword123!");
+
+        mockMvc.perform(post("/user/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(register)))
+                .andExpect(status().isOk());
+
+        UpdateProfileDto update = new UpdateProfileDto();
+        update.setPassword(submittedPassword);
+
+        assertProfileOmitsPassword(put("/user/updateProfile"), update, submittedPassword);
+        assertProfileOmitsPassword(put("/api/profile/update_profile"), update, submittedPassword);
+    }
+
+    private void assertProfileOmitsPassword(MockHttpServletRequestBuilder request,
+                                            UpdateProfileDto body,
+                                            String submittedPassword) throws Exception {
+        mockMvc.perform(withCsrf(request
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(content().string(not(containsString(submittedPassword))))
+                .andExpect(jsonPath("$.email").exists());
+    }
+
+    private MockHttpServletRequestBuilder withCsrf(MockHttpServletRequestBuilder request) throws Exception {
+        Cookie token = mockMvc.perform(get("/user/status")).andReturn().getResponse().getCookie("XSRF-TOKEN");
+        return request.cookie(token).header("X-CSRF-TOKEN", token.getValue());
     }
 }

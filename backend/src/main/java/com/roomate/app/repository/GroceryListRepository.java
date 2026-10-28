@@ -42,4 +42,8 @@ public interface GroceryListRepository extends JpaRepository<GroceryListEntity, 
     @Modifying
     @Query("DELETE FROM GroceryListEntity g WHERE g.room.id = :roomId")
     void deleteAllByRoomId(@Param("roomId") UUID roomId);
+
+    @Modifying
+    @Query("UPDATE GroceryListEntity g SET g.createdBy = NULL WHERE g.createdBy.id = :memberId")
+    void clearCreatedByMember(@Param("memberId") UUID memberId);
 }

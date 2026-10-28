@@ -36,6 +36,8 @@ import java.util.stream.Collectors;
 @Service
 public class BudgetServiceImpl implements BudgetService {
 
+    private static final ZoneId BUDGET_ZONE = ZoneId.of("UTC");
+
     @Value("${n8n.webhook.url:}")
     private String n8nWebhookUrl;
 
@@ -80,14 +82,22 @@ public class BudgetServiceImpl implements BudgetService {
                 .collect(Collectors.toList());
     }
 
+    private List<BudgetEntryEntity> entriesSubmittedInMonth(String email, int year, int month) {
+        if (year <= 0 || month <= 0) {
+            ZonedDateTime now = ZonedDateTime.now(BUDGET_ZONE);
+            year = now.getYear();
+            month = now.getMonthValue();
+        }
+        ZonedDateTime startOfMonth = ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, BUDGET_ZONE);
+        ZonedDateTime endOfMonth = startOfMonth.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59);
+        return budgetEntryRepository.findByUserIdAndSubmittedAtBetweenOrderBySubmittedAtDesc(
+                email, startOfMonth.toInstant(), endOfMonth.toInstant());
+    }
+
     @Override
     @Transactional("budgetTransactionManager")
     public List<BudgetEntryDto> getEntriesByMonth(String email, int year, int month) {
-        ZonedDateTime startOfMonth = ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, ZoneId.systemDefault());
-        ZonedDateTime endOfMonth = startOfMonth.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59);
-
-        return budgetEntryRepository.findByUserIdAndSubmittedAtBetweenOrderBySubmittedAtDesc(
-                        email, startOfMonth.toInstant(), endOfMonth.toInstant()).stream()
+        return entriesSubmittedInMonth(email, year, month).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
@@ -95,19 +105,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Override
     @Transactional("budgetTransactionManager")
     public BudgetStatsDto getStats(String email, int year, int month) {
-        List<BudgetEntryEntity> entries;
-        if (year > 0 && month > 0) {
-            ZonedDateTime startOfMonth = ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, ZoneId.systemDefault());
-            ZonedDateTime endOfMonth = startOfMonth.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59);
-            entries = budgetEntryRepository.findByUserIdAndSubmittedAtBetweenOrderBySubmittedAtDesc(
-                    email, startOfMonth.toInstant(), endOfMonth.toInstant());
-        } else {
-             // Default to current month if not specified
-             ZonedDateTime startOfMonth = ZonedDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-             ZonedDateTime endOfMonth = startOfMonth.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59);
-             entries = budgetEntryRepository.findByUserIdAndSubmittedAtBetweenOrderBySubmittedAtDesc(
-                     email, startOfMonth.toInstant(), endOfMonth.toInstant());
-        }
+        List<BudgetEntryEntity> entries = entriesSubmittedInMonth(email, year, month);
 
         BigDecimal totalSpent = entries.stream()
                 .map(BudgetEntryEntity::getAmount)

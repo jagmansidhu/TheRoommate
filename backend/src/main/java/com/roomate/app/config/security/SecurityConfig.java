@@ -10,6 +10,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -26,8 +30,20 @@ public class SecurityConfig {
             JwtAuthenticationFilter jwtAuthenticationFilter,
             RateLimitingFilter rateLimitingFilter)
             throws Exception {
+        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        csrfTokenRepository.setHeaderName("X-CSRF-TOKEN");
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(csrfTokenRepository)
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                        .ignoringRequestMatchers("/user/login", "/user/register", "/user/verify"))
+                .addFilterAfter((request, response, chain) -> {
+                    CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+                    if (csrfToken != null) {
+                        csrfToken.getToken();
+                    }
+                    chain.doFilter(request, response);
+                }, CsrfFilter.class)
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exceptionHandling -> exceptionHandling
@@ -36,7 +52,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/user/register", "/user/login", "/user/status", "/user/verify").permitAll()
                         .requestMatchers("/public_resource").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
 
@@ -49,7 +64,6 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        ;
 
         return http.build();
     }

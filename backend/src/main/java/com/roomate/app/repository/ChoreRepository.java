@@ -47,6 +47,11 @@ public interface ChoreRepository extends JpaRepository<ChoreEntity, Long> {
 
     @Modifying
     @Transactional
+    @Query("DELETE FROM ChoreEntity c WHERE c.assignedToMember.id = :memberId")
+    void deleteByAssignedMemberId(@Param("memberId") UUID memberId);
+
+    @Modifying
+    @Transactional
     @Query("UPDATE ChoreEntity c SET c.assignedToMember.id = :memberId WHERE c.id IN :choreIds")
     void bulkUpdateAssignedMember(@Param("choreIds") List<UUID> choreIds, @Param("memberId") UUID memberId);
 }

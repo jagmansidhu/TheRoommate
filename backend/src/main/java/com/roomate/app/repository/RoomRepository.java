@@ -18,6 +18,10 @@ public interface RoomRepository extends JpaRepository<RoomEntity, UUID> {
 
     Optional<RoomEntity> findByRoomCode(String roomCode);
 
+    // H2 rejects the pessimistic-write clause this dialect emits.
+    @Query(value = "SELECT \"id\" FROM \"room\" WHERE \"room_code\" = :roomCode FOR UPDATE", nativeQuery = true)
+    Object lockByRoomCode(@Param("roomCode") String roomCode);
+
     boolean existsByRoomCode(String roomCode);
 
     RoomEntity getRoomEntityByRoomCode(String roomCode);

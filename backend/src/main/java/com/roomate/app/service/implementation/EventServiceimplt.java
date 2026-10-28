@@ -7,10 +7,13 @@ import com.roomate.app.entities.EventEntity;
 import com.roomate.app.entities.UserEntity;
 import com.roomate.app.entities.room.RoomEntity;
 import com.roomate.app.exceptions.EventAPIException;
+import com.roomate.app.exceptions.UserApiError;
 import com.roomate.app.repository.EventRepository;
+import com.roomate.app.repository.RoomMemberRepository;
 import com.roomate.app.repository.RoomRepository;
 import com.roomate.app.repository.UserRepository;
 import com.roomate.app.service.EventService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -24,11 +27,14 @@ public class EventServiceimplt implements EventService {
     private final UserRepository userRepository;
     private final RoomRepository roomRepository;
     private final EventRepository eventRepository;
+    private final RoomMemberRepository roomMemberRepository;
 
-    public EventServiceimplt(EventRepository eventRepository, UserRepository userRepository, RoomRepository roomRepository) {
+    public EventServiceimplt(EventRepository eventRepository, UserRepository userRepository, RoomRepository roomRepository,
+            RoomMemberRepository roomMemberRepository) {
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
         this.roomRepository = roomRepository;
+        this.roomMemberRepository = roomMemberRepository;
     }
 
     @Override
@@ -47,12 +53,16 @@ public class EventServiceimplt implements EventService {
     @Override
     @Transactional
     public void createEventForRoom(EventDto eventDto,UUID roomid, String email) {
+        RoomEntity room = roomRepository.getRoomEntityById(roomid)
+                .orElseThrow(() -> new EntityNotFoundException("Room not found"));
+        roomMemberRepository.findByRoomIdAndUserEmail(room.getId(), email)
+                .orElseThrow(() -> new UserApiError("You are not a member of this room"));
         EventEntity eventEntity = new EventEntity();
         eventEntity.setTitle(eventDto.getTitle());
         eventEntity.setDescription(eventDto.getDescription());
         eventEntity.setStartTime(eventDto.getStartTime());
         eventEntity.setEndTime(eventDto.getEndTime());
-        eventEntity.setRoom(roomRepository.getRoomEntityById(roomid).orElse(null));
+        eventEntity.setRoom(room);
         eventEntity.setUser(userRepository.getUserByEmail(email));
         eventEntity.setCreated(LocalDateTime.now());
         eventEntity.setUpdated(null);

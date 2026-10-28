@@ -25,29 +25,33 @@ public class ChoreController {
     @PostMapping("/room/{roomId}")
     public ResponseEntity<List<ChoreDto>> createChores(@PathVariable UUID roomId,
             @RequestBody List<ChoreCreateDto> choreDTOs) {
-
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
         List<ChoreDto> allChores = choreDTOs.stream()
-                .flatMap(dto -> choreService.distributeChores(roomId, dto).stream()).collect(Collectors.toList());
+                .flatMap(dto -> choreService.distributeChores(roomId, dto, email).stream()).collect(Collectors.toList());
 
         return ResponseEntity.ok(allChores);
     }
 
     @PostMapping("/room/{roomId}/redistribute")
     public ResponseEntity<Void> redistributeChores(@PathVariable UUID roomId) {
-        choreService.redistributeChores(roomId);
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        choreService.redistributeChores(roomId, email);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{roomId}")
     public ResponseEntity<List<ChoreDto>> getRoomChores(@PathVariable UUID roomId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        choreService.validateRoomMembership(roomId, email);
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS).cachePrivate())
                 .body(choreService.getChoresByRoomId(roomId));
     }
 
     @GetMapping("/upcoming")
-    public ResponseEntity<List<ChoreDto>> getUpcomingChores(@RequestParam String id) {
-        List<ChoreDto> chores = choreService.getChoresByUserId(id);
+    public ResponseEntity<List<ChoreDto>> getUpcomingChores() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<ChoreDto> chores = choreService.getChoresByUserId(email);
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS).cachePrivate())
                 .body(chores);
@@ -63,7 +67,8 @@ public class ChoreController {
 
     @DeleteMapping("/{choreId}")
     public ResponseEntity<Void> deleteChore(@PathVariable UUID choreId) {
-        choreService.deleteChore(choreId);
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        choreService.deleteChore(choreId, email);
         return ResponseEntity.noContent().build();
     }
 
@@ -82,7 +87,8 @@ public class ChoreController {
 
     @DeleteMapping("/room/{roomId}/type/{choreName}")
     public ResponseEntity<Void> deleteChoresByType(@PathVariable UUID roomId, @PathVariable String choreName) {
-        choreService.deleteChoresByType(roomId, choreName);
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        choreService.deleteChoresByType(roomId, choreName, email);
         return ResponseEntity.noContent().build();
     }
 }
