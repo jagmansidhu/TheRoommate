@@ -22,8 +22,9 @@ const CreateRoomModal = ({show, onClose, onCreateRoom}) => {
             setNewRoom({name: '', address: '', description: ''});
             onClose();
         } catch (err) {
-            console.error('Error creating room:', err);
-            setError('Failed to create room. Please try again.');
+            const data = err.response?.data;
+            const msg = typeof data === 'string' ? data : data?.message;
+            setError(msg || 'Failed to create room. Please try again.');
         } finally {
             setLoading(false);
         }

@@ -387,12 +387,9 @@ const AppDataProvider = ({children}) => {
     // --- eager load on login, reset on logout ---
     useEffect(() => {
         if (isAuthenticated && !isLoading) {
-            const cr = localStorage.getItem('appRooms');
-            const cc = localStorage.getItem('appChores');
-            const cu = localStorage.getItem('appUtilities');
-            if (!cr || cr === '[]') fetchRooms();
-            if (!cc || cc === '[]') fetchUserChores();
-            if (!cu || cu === '[]') fetchUserUtilities();
+            if (!readCache('appRooms')?.length) fetchRooms();
+            if (!readCache('appChores')?.length) fetchUserChores();
+            if (!readCache('appUtilities')?.length) fetchUserUtilities();
         } else if (!isAuthenticated && !isLoading) {
             setRooms([]);
             setUserChores([]);
