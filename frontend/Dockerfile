@@ -6,9 +6,10 @@
 #   2. package*.json        — changes only when deps added/removed
 #   3. npm install          — re-runs only when packages change
 #   4. src/ + public/       — changes on every commit  ← cache busts here
-#   5. ARG/ENV (URLs)       — changes on env reconfiguration (AFTER src copy
+#   5. ARG/ENV (n8n URL)    — changes on env reconfiguration (AFTER src copy
 #                             so a URL change doesn't bust the npm install layer)
-#   6. npm run build        — re-runs when src or URLs change
+#   6. npm run build        — re-runs when src or the n8n URL changes
+# The API URL is not baked into the bundle. nginx reads it at container start.
 # ──────────────────────────────────────────────────────────────
 
 # ── Stage 1: build ──────────────────────────────────────────
@@ -23,13 +24,11 @@ RUN npm install --legacy-peer-deps
 COPY public/ public/
 COPY src/ src/
 
-# [VARIABLE] Build-time env vars — placed AFTER source copy so a URL change
-# does NOT bust the npm install cache layer above.
-ARG REACT_APP_BASE_API_URL
-ENV REACT_APP_BASE_API_URL=$REACT_APP_BASE_API_URL
-
+# [VARIABLE] The API URL is a runtime proxy target, not a browser origin.
+# An empty base URL makes the bundle call this host. nginx forwards /api and /user.
 ARG REACT_APP_N8N_WEBHOOK_URL
 ENV REACT_APP_N8N_WEBHOOK_URL=$REACT_APP_N8N_WEBHOOK_URL
+ENV REACT_APP_BASE_API_URL=
 
 RUN npm run build
 
@@ -64,4 +63,4 @@ COPY --from=build /app/build .
 
 USER appuser
 EXPOSE 80
-CMD ["/bin/sh", "-c", "export PORT=${PORT:-80} && envsubst '$PORT' < /etc/nginx/conf.d/default.conf > /tmp/default.conf && mv /tmp/default.conf /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "export PORT=${PORT:-80} && export REACT_APP_BASE_API_URL=${REACT_APP_BASE_API_URL%/} && envsubst '$PORT $REACT_APP_BASE_API_URL' < /etc/nginx/conf.d/default.conf > /tmp/default.conf && mv /tmp/default.conf /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]

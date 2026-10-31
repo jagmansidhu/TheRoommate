@@ -131,9 +131,9 @@ Deploy is triggered by pushing to the linked Git branch (typically `main`).
 ### Frontend deployment
 
 1. Add a second Railway service pointing to `frontend/`.
-2. Set build-time vars (they must be present **at build time**, not just runtime):
-   - `REACT_APP_BASE_API_URL` — the Railway-provided URL of the backend service.
-   - `REACT_APP_N8N_WEBHOOK_URL` — n8n webhook URL (optional; required for receipt parsing).
+2. Set variables on the frontend service:
+   - `REACT_APP_BASE_API_URL` — backend URL. The browser does not call this host. nginx proxies `/api` and `/user` to it at container start, so the session cookie stays on the page's host. `up.railway.app` is a public suffix, and a cookie set on the API host is not sent from the page.
+   - `REACT_APP_N8N_WEBHOOK_URL` — n8n webhook URL (optional; required for receipt parsing). This one is baked into the bundle at build time.
 3. Railway reads `frontend/railway.json` and builds with `frontend/Dockerfile`.
 4. Health check: `GET /health` (returns `200 OK` via nginx).
 
@@ -172,15 +172,14 @@ Deploy is triggered by pushing to the linked Git branch (typically `main`).
 | `N8N_WEBHOOK_URL` | *(empty)* | n8n webhook base URL |
 | `N8N_WEBHOOK_TOKEN` | *(empty)* | n8n webhook auth token |
 
-### Frontend (build-time, required for production)
+### Frontend
 
-| Variable | Description |
-|----------|-------------|
-| `REACT_APP_BASE_API_URL` | Full URL of the backend API |
-| `REACT_APP_N8N_WEBHOOK_URL` | n8n webhook URL for receipt parsing (optional) |
+| Variable | When it is read | Description |
+|----------|-----------------|-------------|
+| `REACT_APP_BASE_API_URL` | Container start | Backend URL used by nginx as the proxy target. No trailing path. |
+| `REACT_APP_N8N_WEBHOOK_URL` | Image build | n8n webhook URL for receipt parsing (optional) |
 
-> **Important:** React bakes `REACT_APP_*` variables into the static bundle at build time.
-> Changing them requires a **redeploy**, not just a restart.
+> **Important:** `REACT_APP_N8N_WEBHOOK_URL` is baked into the static bundle. Changing it requires a rebuild. `REACT_APP_BASE_API_URL` is read when nginx starts. Changing it requires a redeploy of the frontend service, not a backend redeploy.
 
 ---
 
