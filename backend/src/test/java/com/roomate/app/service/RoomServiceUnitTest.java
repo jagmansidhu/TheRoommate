@@ -130,7 +130,7 @@ class RoomServiceUnitTest {
         RoomDto result = roomService.joinRoom(joinCode, "joiner@example.com");
 
         assertNotNull(result);
-        assertEquals(2, result.getMembers().size()); // 1 original + 1 joiner
+        assertEquals(2, result.getMembers().size());
         verify(roomRepository, times(1)).save(room);
     }
 

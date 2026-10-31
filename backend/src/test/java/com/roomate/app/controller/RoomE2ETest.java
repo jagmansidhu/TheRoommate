@@ -69,7 +69,6 @@ class RoomE2ETest {
     @Test
     @WithMockUser(username = "roome2e@example.com")
     void testGetRoomsEndpoint() throws Exception {
-        // First create a room so we can retrieve it
         CreateRoomRequest request = new CreateRoomRequest();
         request.setName("E2E Retrieve Room");
         request.setAddress("404 HTTP Ave");
@@ -78,7 +77,6 @@ class RoomE2ETest {
                         .content(objectMapper.writeValueAsString(request))))
                 .andExpect(status().isOk());
 
-        // Then retrieve rooms
         mockMvc.perform(get("/api/rooms"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
