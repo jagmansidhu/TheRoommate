@@ -6,10 +6,24 @@ const apiClient = axios.create({
     withCredentials: true,
 });
 
+// XSRF-TOKEN is set on the API host, so a split-origin page reads X-CSRF-TOKEN instead.
+let csrfToken = null;
+
+function rememberCsrf(response) {
+    const headers = response && response.headers;
+    if (!headers) {
+        return;
+    }
+    const token = typeof headers.get === 'function' ? headers.get('x-csrf-token') : headers['x-csrf-token'];
+    if (token) {
+        csrfToken = token;
+    }
+}
+
 apiClient.interceptors.request.use((config) => {
     const method = (config.method || 'get').toLowerCase();
     if (method === 'post' || method === 'put' || method === 'patch' || method === 'delete') {
-        const token = getCookie('XSRF-TOKEN');
+        const token = csrfToken || getCookie('XSRF-TOKEN');
         if (token) {
             config.headers['X-CSRF-TOKEN'] = token;
         }
@@ -17,7 +31,11 @@ apiClient.interceptors.request.use((config) => {
     return config;
 });
 
-apiClient.interceptors.response.use((response) => response, (error) => {
+apiClient.interceptors.response.use((response) => {
+    rememberCsrf(response);
+    return response;
+}, (error) => {
+    rememberCsrf(error.response);
     if (error.response && error.response.status === 401) {
         const msg = error.response.data?.message || '';
         const isAuthError = msg.toLowerCase().includes('log in') || msg.toLowerCase().includes('unauthorized');

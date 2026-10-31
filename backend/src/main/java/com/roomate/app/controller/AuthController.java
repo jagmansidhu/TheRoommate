@@ -1,5 +1,6 @@
 package com.roomate.app.controller;
 
+import com.roomate.app.config.security.RequestHttps;
 import com.roomate.app.dto.AuthDto;
 import com.roomate.app.dto.LoginDto;
 import com.roomate.app.dto.RegisterDto;
@@ -111,7 +112,7 @@ public class AuthController {
 
         String token = jwtService.generateToken(user);
 
-        boolean isSecure = request.isSecure() || "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
+        boolean isSecure = RequestHttps.isHttps(request);
 
         ResponseCookie cookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true)
@@ -159,7 +160,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        boolean isSecure = request.isSecure() || "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
+        boolean isSecure = RequestHttps.isHttps(request);
 
         ResponseCookie cookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
