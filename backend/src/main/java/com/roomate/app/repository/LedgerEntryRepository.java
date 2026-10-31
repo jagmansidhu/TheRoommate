@@ -43,4 +43,8 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntryEntity, 
     @Modifying
     @Query("DELETE FROM LedgerEntryEntity e WHERE e.room.id = :roomId")
     void deleteAllByRoomId(@Param("roomId") UUID roomId);
+
+    @Modifying
+    @Query("UPDATE LedgerEntryEntity e SET e.createdBy = NULL WHERE e.createdBy.id = :memberId")
+    void clearCreatedByMember(@Param("memberId") UUID memberId);
 }

@@ -13,7 +13,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString(exclude = {"room", "user"})
-@Table(name = "room_member", indexes = {
+@Table(name = "room_member", uniqueConstraints = @UniqueConstraint(columnNames = {"room_id", "user_id"}), indexes = {
         @Index(name = "idx_room_member_room_id", columnList = "room_id"),
         @Index(name = "idx_room_member_user_id", columnList = "user_id")
 })

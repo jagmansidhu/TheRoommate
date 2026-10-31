@@ -29,6 +29,7 @@ public class UserEntity implements UserDetails {
     @NotNull
     @Column(unique = true)
     private String email;
+    @JsonIgnore
     @Column(nullable = true)
     private String password;
     private String phone;
@@ -123,6 +124,7 @@ public class UserEntity implements UserDetails {
     }
 
     @Override
+    @JsonIgnore
     public String getPassword() {
         return password;
     }

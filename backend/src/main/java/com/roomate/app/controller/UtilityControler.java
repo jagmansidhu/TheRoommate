@@ -3,7 +3,6 @@ package com.roomate.app.controller;
 import com.roomate.app.dto.UtilityCreateDto;
 import com.roomate.app.dto.UtilityDto;
 import com.roomate.app.dto.CompletionUpdateDto;
-import com.roomate.app.entities.UtilityEntity;
 import com.roomate.app.service.UtilityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,13 +23,16 @@ public class UtilityControler {
     private final UtilityService utilityService;
 
     @PostMapping("/create")
-    public ResponseEntity<List<UtilityEntity>> createUtility(@RequestBody UtilityCreateDto dto) {
-        List<UtilityEntity> utility = utilityService.createUtility(dto);
+    public ResponseEntity<List<UtilityDto>> createUtility(@RequestBody UtilityCreateDto dto) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<UtilityDto> utility = utilityService.createUtility(dto, email);
         return ResponseEntity.ok(utility);
     }
 
     @GetMapping("/{roomId}")
     public ResponseEntity<List<UtilityDto>> getUtilitiesByRoom(@PathVariable UUID roomId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        utilityService.validateRoomMembership(roomId, email);
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS).cachePrivate())
                 .body(utilityService.getUtilitiesByRoom(roomId));
@@ -39,14 +41,17 @@ public class UtilityControler {
     @GetMapping("/{memberId}/room/{roomId}")
     public ResponseEntity<List<UtilityDto>> getUtilitiesByRoomabdMemberId(@PathVariable UUID roomId,
                                                                           @PathVariable UUID memberId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        utilityService.validateRoomMembership(roomId, email);
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS).cachePrivate())
                 .body(utilityService.getUtilitiesByRoomandMemberId(roomId, memberId));
     }
 
     @GetMapping("/upcoming")
-    public ResponseEntity<List<UtilityDto>> getUpcomingUtilities(@RequestParam String id) {
-        List<UtilityDto> utilities = utilityService.getUpcomingUtilities(id);
+    public ResponseEntity<List<UtilityDto>> getUpcomingUtilities() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<UtilityDto> utilities = utilityService.getUpcomingUtilities(email);
         if (utilities.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -69,7 +74,8 @@ public class UtilityControler {
 
     @DeleteMapping("/{utilityId}")
     public ResponseEntity<Boolean> deleteUtility(@PathVariable UUID utilityId) {
-        utilityService.deleteUtility(utilityId);
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        utilityService.deleteUtility(utilityId, email);
         return ResponseEntity.ok().build();
     }
 

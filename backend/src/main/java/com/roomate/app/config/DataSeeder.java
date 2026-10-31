@@ -10,18 +10,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Seeds test data for development purposes.
- * Only runs when 'dev' profile is active OR when TEST_DATA_EMAIL environment
- * variable is set.
- */
 @Configuration
+@Profile("dev")
 public class DataSeeder {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);

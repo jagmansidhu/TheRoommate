@@ -5,6 +5,7 @@ import com.roomate.app.dto.ChoreDto;
 import com.roomate.app.entities.ChoreEntity;
 import com.roomate.app.entities.room.RoomEntity;
 import com.roomate.app.entities.room.RoomMemberEntity;
+import com.roomate.app.exceptions.UserApiError;
 import com.roomate.app.repository.ChoreRepository;
 import com.roomate.app.repository.RoomMemberRepository;
 import com.roomate.app.repository.RoomRepository;
@@ -35,9 +36,11 @@ public class ChoreServiceImplt implements ChoreService {
     @Override
     @Transactional
     @CacheEvict(value = {"roomChores", "userChores"}, allEntries = true)
-    public List<ChoreDto> distributeChores(UUID roomId, ChoreCreateDto choreDTO) {
+    public List<ChoreDto> distributeChores(UUID roomId, ChoreCreateDto choreDTO, String userEmail) {
         RoomEntity room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new EntityNotFoundException("Room not found"));
+        roomMemberRepository.findByRoomIdAndUserEmail(room.getId(), userEmail)
+                .orElseThrow(() -> new UserApiError("You are not a member of this room"));
 
         List<RoomMemberEntity> roomMembers = roomMemberRepository.findByRoomID(roomId);
         if (roomMembers.isEmpty()) {
@@ -99,11 +102,19 @@ public class ChoreServiceImplt implements ChoreService {
     }
 
     @Override
+    public void validateRoomMembership(UUID roomId, String userEmail) {
+        roomMemberRepository.findByRoomIdAndUserEmail(roomId, userEmail)
+                .orElseThrow(() -> new UserApiError("You are not a member of this room"));
+    }
+
+    @Override
     @Transactional
     @CacheEvict(value = {"roomChores", "userChores"}, allEntries = true)
-    public void redistributeChores(UUID roomId) {
+    public void redistributeChores(UUID roomId, String userEmail) {
         RoomEntity room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new EntityNotFoundException("Room not found"));
+        roomMemberRepository.findByRoomIdAndUserEmail(room.getId(), userEmail)
+                .orElseThrow(() -> new UserApiError("You are not a member of this room"));
 
         List<RoomMemberEntity> roomMembers = roomMemberRepository.findByRoomID(roomId);
         List<ChoreEntity> chores = choreRepository.findByRoomWithMemberAndUser(room);
@@ -125,15 +136,21 @@ public class ChoreServiceImplt implements ChoreService {
     @Override
     @Transactional
     @CacheEvict(value = {"roomChores", "userChores"}, allEntries = true)
-    public void deleteChore(UUID choreId) {
+    public void deleteChore(UUID choreId, String userEmail) {
+        ChoreEntity chore = choreRepository.findByChoreId(choreId)
+                .orElseThrow(() -> new EntityNotFoundException("Chore not found"));
+        roomMemberRepository.findByRoomIdAndUserEmail(chore.getRoom().getId(), userEmail)
+                .orElseThrow(() -> new UserApiError("You are not a member of this room"));
         choreRepository.deleteById(choreId);
     }
 
     @Override
     @Transactional
     @CacheEvict(value = {"roomChores", "userChores"}, allEntries = true)
-    public void deleteChoresByType(UUID roomId, String choreName) {
+    public void deleteChoresByType(UUID roomId, String choreName, String userEmail) {
         roomRepository.findById(roomId).orElseThrow(() -> new EntityNotFoundException("Room not found"));
+        roomMemberRepository.findByRoomIdAndUserEmail(roomId, userEmail)
+                .orElseThrow(() -> new UserApiError("You are not a member of this room"));
         choreRepository.deleteAllByRoomIdAndChoreName(roomId, choreName);
     }
 

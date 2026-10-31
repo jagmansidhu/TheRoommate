@@ -1,7 +1,9 @@
 package com.roomate.app.dto.ledger;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +18,7 @@ import java.util.UUID;
 public class AssignSplitsDto {
 
     @NotEmpty(message = "At least one split assignment is required")
+    @Valid
     private List<SplitAssignment> assignments;
 
     @Data
@@ -26,6 +29,7 @@ public class AssignSplitsDto {
         private UUID memberId;
 
         @NotNull(message = "Amount is required")
+        @Positive(message = "Amount must be positive")
         private BigDecimal amount;
 
         private String notes;

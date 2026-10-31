@@ -4,6 +4,7 @@ import com.roomate.app.dto.AuthDto;
 import com.roomate.app.dto.LoginDto;
 import com.roomate.app.dto.RegisterDto;
 import com.roomate.app.dto.UserDTOS.UpdateProfileDto;
+import com.roomate.app.dto.UserDTOS.UserDto;
 import com.roomate.app.entities.UserEntity;
 import com.roomate.app.repository.UserRepository;
 import com.roomate.app.service.JWTService;
@@ -76,11 +77,17 @@ public class AuthController {
     }
 
     @PutMapping("/updateProfile")
-    public ResponseEntity<UserEntity> updateProfile(@Valid @RequestBody UpdateProfileDto req,
+    public ResponseEntity<UserDto> updateProfile(@Valid @RequestBody UpdateProfileDto req,
             HttpServletRequest request) {
         String email = request.getUserPrincipal().getName();
         UserEntity updatedUser = userService.updateUserProfile(email, req);
-        return ResponseEntity.ok(updatedUser);
+        UserDto response = new UserDto();
+        response.setId(updatedUser.getId());
+        response.setEmail(updatedUser.getEmail());
+        response.setFirstName(updatedUser.getFirstName());
+        response.setLastName(updatedUser.getLastName());
+        response.setPhone(updatedUser.getPhone());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
@@ -111,7 +118,7 @@ public class AuthController {
                 .secure(isSecure)
                 .path("/")
                 .sameSite(isSecure ? "None" : "Lax")
-                .maxAge(7 * 24 * 60 * 60)
+                .maxAge(4 * 60 * 60)
                 .build();
 
         response.setHeader("Set-Cookie", cookie.toString());

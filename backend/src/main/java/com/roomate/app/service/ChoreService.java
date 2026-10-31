@@ -7,15 +7,17 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ChoreService {
-    List<ChoreDto> distributeChores(UUID roomId, ChoreCreateDto choreDTO);
+    List<ChoreDto> distributeChores(UUID roomId, ChoreCreateDto choreDTO, String userEmail);
 
-    void redistributeChores(UUID roomId);
+    void redistributeChores(UUID roomId, String userEmail);
 
     List<ChoreDto> getChoresByRoomId(UUID roomId);
 
-    void deleteChore(UUID choreId);
+    void validateRoomMembership(UUID roomId, String userEmail);
 
-    void deleteChoresByType(UUID roomId, String choreName);
+    void deleteChore(UUID choreId, String userEmail);
+
+    void deleteChoresByType(UUID roomId, String choreName, String userEmail);
 
     List<ChoreDto> getChoresByUserId(String id);
 

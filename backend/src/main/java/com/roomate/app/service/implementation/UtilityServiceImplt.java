@@ -6,6 +6,7 @@ import com.roomate.app.entities.UtilityEntity;
 import com.roomate.app.entities.UtilDistributionEnum;
 import com.roomate.app.entities.room.RoomEntity;
 import com.roomate.app.entities.room.RoomMemberEntity;
+import com.roomate.app.exceptions.UserApiError;
 import com.roomate.app.repository.RoomMemberRepository;
 import com.roomate.app.repository.RoomRepository;
 import com.roomate.app.repository.UtilityRepository;
@@ -18,12 +19,14 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -36,9 +39,11 @@ public class UtilityServiceImplt implements UtilityService {
     @Override
     @Transactional
     @CacheEvict(value = {"roomUtilities", "userUtilities"}, allEntries = true)
-    public List<UtilityEntity> createUtility(UtilityCreateDto dto) {
+    public List<UtilityDto> createUtility(UtilityCreateDto dto, String userEmail) {
         RoomEntity room = roomRepository.findById(dto.getRoomId())
                 .orElseThrow(() -> new EntityNotFoundException("Room not found"));
+        roomMemberRepository.findByRoomIdAndUserEmail(room.getId(), userEmail)
+                .orElseThrow(() -> new UserApiError("You are not a member of this room"));
         Hibernate.initialize(room.getMembers());
 
 
@@ -90,13 +95,21 @@ public class UtilityServiceImplt implements UtilityService {
 
             if (dto.getUtilDistributionEnum() == UtilDistributionEnum.EQUALSPLIT) {
                 List<RoomMemberEntity> members = room.getMembers();
-                double share = dto.getUtilityPrice() / members.size();
+                int count = members.size();
+                BigDecimal price = BigDecimal.valueOf(dto.getUtilityPrice());
+                BigDecimal share = price.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
+                BigDecimal remainder = price.subtract(share.multiply(BigDecimal.valueOf(count)));
 
-                for (RoomMemberEntity member : members) {
+                for (int i = 0; i < count; i++) {
+                    BigDecimal amount = share;
+                    if (i == 0 && remainder.compareTo(BigDecimal.ZERO) != 0) {
+                        amount = amount.add(remainder);
+                    }
+                    RoomMemberEntity member = members.get(i);
                     UtilityEntity utility = new UtilityEntity();
                     utility.setUtilityName(dto.getUtilityName());
                     utility.setDescription(dto.getDescription());
-                    utility.setUtilityPrice(share);
+                    utility.setUtilityPrice(amount.doubleValue()); // shortcut: price column is double, upgrade when the column is BigDecimal
                     utility.setUtilDistributionEnum(dto.getUtilDistributionEnum());
                     utility.setRoom(room);
                     utility.setAssignedToMember(member);
@@ -110,6 +123,9 @@ public class UtilityServiceImplt implements UtilityService {
                     Double splitAmount = entry.getValue();
                     if (member == null) {
                         throw new EntityNotFoundException("Member not found");
+                    }
+                    if (!member.getRoom().getId().equals(room.getId())) {
+                        throw new UserApiError("Custom split member is not in this room");
                     }
 
                     UtilityEntity utility = new UtilityEntity();
@@ -139,7 +155,14 @@ public class UtilityServiceImplt implements UtilityService {
             }
         } while (!dueDate.isAfter(deadline));
 
-        return utilityRepository.saveAll(toSave);
+        return utilityRepository.saveAll(toSave).stream()
+                .map(utility -> new UtilityDto(utility.getId(), utility.getUtilityName(),
+                        utility.getUtilityPrice(),
+                        utility.getRoom() != null ? utility.getRoom().getId() : null,
+                        utility.getDueAt(),
+                        utility.getChoreFrequencyUnitEnum(),
+                        utility.isCompleted()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -169,6 +192,12 @@ public class UtilityServiceImplt implements UtilityService {
     }
 
     @Override
+    public void validateRoomMembership(UUID roomId, String userEmail) {
+        roomMemberRepository.findByRoomIdAndUserEmail(roomId, userEmail)
+                .orElseThrow(() -> new UserApiError("You are not a member of this room"));
+    }
+
+    @Override
     @Transactional
     @Cacheable(value = "userUtilities", key = "#id")
     public List<UtilityDto> getUpcomingUtilities(String id) {
@@ -185,11 +214,13 @@ public class UtilityServiceImplt implements UtilityService {
     }
 
     @Override
+    @Transactional
     @CacheEvict(value = {"roomUtilities", "userUtilities"}, allEntries = true)
-    public void deleteUtility(UUID utilityId) {
-        if (!utilityRepository.existsById(utilityId)) {
-            throw new EntityNotFoundException("Utility with id " + utilityId + " not found");
-        }
+    public void deleteUtility(UUID utilityId, String userEmail) {
+        UtilityEntity utility = utilityRepository.findByUtilityId(utilityId)
+                .orElseThrow(() -> new EntityNotFoundException("Utility with id " + utilityId + " not found"));
+        roomMemberRepository.findByRoomIdAndUserEmail(utility.getRoom().getId(), userEmail)
+                .orElseThrow(() -> new UserApiError("You are not a member of this room"));
         utilityRepository.deleteById(utilityId);
     }
 

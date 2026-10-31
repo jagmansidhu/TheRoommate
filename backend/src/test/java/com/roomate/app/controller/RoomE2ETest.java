@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.roomate.app.dto.CreateRoomRequest;
 import com.roomate.app.entities.UserEntity;
 import com.roomate.app.repository.UserRepository;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -54,9 +56,9 @@ class RoomE2ETest {
         request.setAddress("123 Mocking Blvd");
         request.setDescription("E2E Testing Room");
 
-        mockMvc.perform(post("/api/rooms")
+        mockMvc.perform(withCsrf(post("/api/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.name").value("E2E Test Room"))
@@ -67,19 +69,22 @@ class RoomE2ETest {
     @Test
     @WithMockUser(username = "roome2e@example.com")
     void testGetRoomsEndpoint() throws Exception {
-        // First create a room so we can retrieve it
         CreateRoomRequest request = new CreateRoomRequest();
         request.setName("E2E Retrieve Room");
         request.setAddress("404 HTTP Ave");
-        mockMvc.perform(post("/api/rooms")
+        mockMvc.perform(withCsrf(post("/api/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request))))
                 .andExpect(status().isOk());
 
-        // Then retrieve rooms
         mockMvc.perform(get("/api/rooms"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].name").value("E2E Retrieve Room"));
+    }
+
+    private MockHttpServletRequestBuilder withCsrf(MockHttpServletRequestBuilder request) throws Exception {
+        Cookie token = mockMvc.perform(get("/user/status")).andReturn().getResponse().getCookie("XSRF-TOKEN");
+        return request.cookie(token).header("X-CSRF-TOKEN", token.getValue());
     }
 }
