@@ -39,7 +39,7 @@ public class RoomController {
     }
 
     @PostMapping
-    public ResponseEntity<RoomDto> createRoom(@RequestBody CreateRoomRequest request,
+    public ResponseEntity<?> createRoom(@RequestBody CreateRoomRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String email = userDetails.getUsername();
@@ -47,8 +47,7 @@ public class RoomController {
             RoomDto createdRoom = roomService.createRoom(request, email);
             return ResponseEntity.ok(createdRoom);
         } catch (UserApiError e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
